@@ -1,0 +1,81 @@
+# Весь проект одной командой → http://localhost:3000
+#   docker compose up --build
+# Сервисы: frontend (nginx) → backend → ml → llm; worker — напоминания; postgres с pgvector.
+# Отключить LLM: OLLAMA_URL= в .env — всё работает на шаблонах.
+
+x-backend-env: &backend-env
+  DATABASE_URL: "postgresql+psycopg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-naparnik}"
+  ML_URL: "http://ml:8001"
+  SECRET_KEY: "${SECRET_KEY:-change-me-before-deployment-naparnik-demo-key}"
+  CORS_ORIGINS: "${CORS_ORIGINS:-http://localhost:3000,http://localhost:5173}"
+  TIMEZONE: "${TIMEZONE:-Europe/Moscow}"
+  SLACK_BOT_TOKEN: "${SLACK_BOT_TOKEN:-}"
+  SLACK_DEMO_CHANNEL: "${SLACK_DEMO_CHANNEL:-}"
+
+services:
+  frontend:
+    build: ./frontend
+    ports: ["3000:3000"]
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+
+  backend:
+    build: ./backend
+    ports: ["8000:8000"]
+    environment: *backend-env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  worker:
+    build: ./backend
+    command: ["python", "-m", "app.worker"]
+    environment: *backend-env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      disable: true
+    restart: unless-stopped
+
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-naparnik}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-naparnik}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  ml:
+    build: ./ml
+    ports: ["8001:8001"]
+    environment:
+      OLLAMA_URL: ${OLLAMA_URL-http://llm:11434}
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen3:4b}
+      EMBED_MODEL: ${EMBED_MODEL:-}
+      LLM_TIMEOUT_SECONDS: ${LLM_TIMEOUT_SECONDS:-30}
+    restart: unless-stopped
+
+  llm:
+    build:
+      context: ./llm
+      args:
+        OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen3:4b}
+    ports: ["11434:11434"]
+    environment:
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen3:4b}
+    mem_limit: 6g
+    restart: unless-stopped
+
+volumes:
+  pgdata:

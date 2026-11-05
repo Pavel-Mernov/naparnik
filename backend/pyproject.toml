@@ -1,0 +1,30 @@
+[project]
+name = "naparnik-backend"
+version = "0.1.0"
+description = "Напарник — backend: вход, роли, задачи, напоминания, карточки коллег, доска ментора; выполняет действия агента"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.32",
+    "sqlmodel>=0.0.22",
+    "psycopg[binary]>=3.2",
+    "httpx>=0.27",
+    "pydantic-settings>=2.6",
+    "pyjwt>=2.9",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3",
+    "ruff>=0.7",
+]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[tool.ruff]
+line-length = 120

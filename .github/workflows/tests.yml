@@ -1,0 +1,54 @@
+# Проверки на каждый пуш и PR. Пока кода нет — шаги пропускаются, CI зелёный.
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  python:
+    name: ${{ matrix.service }} — ruff + pytest
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service: [backend, ml]
+    defaults:
+      run:
+        working-directory: ${{ matrix.service }}
+    env:
+      OLLAMA_URL: ""   # тесты не зависят от LLM
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install uv==0.11.14
+      - run: uv sync --frozen
+      - name: Линт
+        run: uv run ruff check .
+      - name: Тесты (код 5 = тестов пока нет)
+        run: uv run pytest -q || [ $? -eq 5 ]
+
+  frontend:
+    name: frontend — тесты и сборка
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - name: Тесты и сборка (если есть код)
+        run: |
+          if [ -f src/main.tsx ]; then npm test && npm run build; else echo "кода пока нет"; fi
