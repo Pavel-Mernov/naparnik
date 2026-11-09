@@ -1,7 +1,7 @@
 [project]
 name = "naparnik-ml"
 version = "0.1.0"
-description = "Напарник — агент: роутер намерений, RAG с цитатами, черновики сообщений, локальная LLM"
+description = "AI-buddy — агент: инструкции, инструменты (MCP), провайдеры LLM (Claude, DeepSeek, mock)"
 requires-python = ">=3.12,<3.13"
 dependencies = [
     "fastapi>=0.115",
@@ -9,11 +9,15 @@ dependencies = [
     "pydantic>=2.9",
     "httpx>=0.27",
     "pyyaml>=6.0",
+    "python-dotenv>=1.0",
+    "anthropic>=1.0",
+    "openai>=1.50",
 ]
 
 [dependency-groups]
 dev = [
     "pytest>=8.3",
+    "pytest-cov>=7.1.0",
     "ruff>=0.7",
 ]
 

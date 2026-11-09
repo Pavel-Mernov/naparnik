@@ -1,0 +1,106 @@
+# Синтетические данные для прототипа (docs/spec/02-departments.md). Все люди выдуманы.
+# demo: true — тестовая инструкция прототипа, НЕ регламент Авито (PDF, ограничение 03).
+# demo: false — публичный источник Авито (чек-лист стажёра, AvitoTech Playbook).
+
+today: "2026-11-10"  # фиксированная «сегодняшняя» дата демо, чтобы сценарии были воспроизводимы
+
+departments:
+  backend: {name: "Backend, юнит «Доставка»"}
+  frontend: {name: "Frontend, юнит «Объявления»"}
+  analytics: {name: "Аналитика, юнит «Монетизация»"}
+
+users:
+  artem:  {name: "Артём Белов", role: intern, department: backend, week: 2, mentor: oleg, manager: irina}
+  nina:   {name: "Нина Орлова", role: intern, department: backend, week: 9, mentor: oleg, manager: irina}
+  oleg:   {name: "Олег Ким", role: mentor, department: backend, title: "Senior Go-разработчик", topics: [go, задачи, код-ревью, стейдж], hours: "10–19"}
+  irina:  {name: "Ирина Соколова", role: manager, department: backend, title: "Тимлид юнита", topics: [доступы, отгулы, цели], hours: "10–19"}
+  pavel:  {name: "Павел Лебедев", role: employee, department: backend, title: "Платформа, PaaS", topics: [paas, деплой, kubernetes], hours: "11–20"}
+  liza:   {name: "Лиза Миронова", role: intern, department: frontend, week: 3, mentor: denis, manager: maria}
+  denis:  {name: "Денис Захаров", role: mentor, department: frontend, title: "Senior Frontend", topics: [react, дизайн-система], hours: "10–19"}
+  maria:  {name: "Мария Гусева", role: manager, department: frontend, title: "Тимлид", topics: [доступы, отгулы], hours: "10–19"}
+  dima:   {name: "Дима Сафонов", role: intern, department: analytics, week: 4, mentor: anna, manager: sergey}
+  anna:   {name: "Анна Ветрова", role: mentor, department: analytics, title: "Ведущий аналитик", topics: [sql, trino, clickstream], hours: "10–19"}
+  sergey: {name: "Сергей Пахомов", role: manager, department: analytics, title: "Руководитель аналитики", topics: [доступы, отгулы], hours: "10–19"}
+
+# Шаги маршрута. Backend — по чек-листу стажёра Авито (вкладки «Материалы для всех» и «Чек-лист Backend»).
+checklist:
+  backend:
+    - {id: b1, title: "Познакомься с командой", period: 1, owner: intern, type: meeting, demo: false}
+    - {id: b2, title: "Попроси добавить тебя в канал Tech-dep", period: 1, owner: intern, type: access, demo: false}
+    - {id: b3, title: "Настрой avito-cli", period: 1, owner: intern, type: setup, demo: false}
+    - {id: b4, title: "Добавь ключи в stash", period: 1, owner: intern, type: setup, demo: false}
+    - {id: b5, title: "Запроси доступ в пространство своего кластера и/или команды", period: 1, owner: intern, type: access, demo: false}
+    - {id: b6, title: "Изучи документацию по работе с базами данных в Авито", period: 2, owner: intern, type: study, demo: false}
+    - {id: b7, title: "Расскажи о Observer", period: 2, owner: intern, type: study, demo: false}
+    - {id: b8, title: "Изучи PaaS: дашборд и новости", period: 2, owner: intern, type: study, demo: false}
+    - {id: b9, title: "Изучи Zero Bug Policy (ZBP)", period: 4, owner: intern, type: study, demo: false}
+    - {id: b10, title: "Расскажи о Grafana", period: 4, owner: intern, type: study, demo: false}
+    - {id: m1, title: "Назначь со стажёром регулярные 1:1", period: 1, owner: mentor, type: meeting, demo: false}
+    - {id: m2, title: "Проверь, запросил ли стажёр доступы", period: 1, owner: mentor, type: access, demo: false}
+  frontend:
+    - {id: f1, title: "Изучи дизайн-систему Авито", period: 1, owner: intern, type: study, demo: true}
+    - {id: f2, title: "Запроси доступ к библиотеке компонентов", period: 1, owner: intern, type: access, demo: true}
+    - {id: f3, title: "Собери первый компонент по гайдлайну", period: 3, owner: intern, type: study, demo: true}
+  analytics:
+    - {id: a1, title: "Получи доступ к Redash", period: 1, owner: intern, type: access, demo: true}
+    - {id: a2, title: "Разберись со структурой clickstream", period: 2, owner: intern, type: study, demo: true}
+    - {id: a3, title: "Сделай первый запрос в Trino", period: 4, owner: intern, type: study, demo: true}
+
+# Начальные статусы шагов (остальные — todo)
+progress:
+  artem: {b1: done, b2: done, b3: done, b4: in_progress, m1: done}
+  nina: {b1: done, b2: done, b3: done, b4: done, b5: done, b6: done, b7: done, b8: done, b9: done, b10: done}
+  liza: {f1: done}
+  dima: {a1: done}
+
+# Статьи базы знаний по отделам (имитация пространства Confluence)
+knowledge:
+  backend:
+    - title: "Шаталити"
+      source: "Чек-лист стажёра Авито, вкладка «Чек-лист Backend»"
+      demo: false
+      text: "Шаталити — процесс, который помогает планировать свои задачи и делать так, чтобы плановые работы на разных сервисах не совпадали по времени."
+    - title: "Релизы и release train"
+      source: "AvitoTech Playbook, «Процессы и стандарты»"
+      demo: false
+      text: "Релизы идут по модели release train: сайт выпускается два раза в день, мобильные приложения — раз в две недели. Команды со своими микросервисами работают в Continuous Delivery."
+    - title: "SPT: работа с обращениями пользователей"
+      source: "AvitoTech Playbook, раздел SPT"
+      demo: false
+      text: "SPT — процесс работы с обращениями пользователей. Подробности — в разделе Playbook «SPT: работа с обращениями пользователей»."
+    - title: "Как настроить avito-cli"
+      source: "Демо-регламент юнита «Доставка»"
+      demo: true
+      text: "Установи avito-cli по инструкции в пространстве юнита, авторизуйся корпоративной учёткой и проверь доступ командой статуса. Если не получается — спроси наставника."
+  frontend:
+    - title: "Bottom sheet"
+      source: "Статья «Как устроена библиотека дизайн-системы Авито в Фигме», Хабр"
+      demo: false
+      text: "Bottom sheet — мобильный компонент дизайн-системы. Его гайдлайн описывает выбор варианта, высоту, анимацию, футер, отступы, кнопки и примеры «как не надо»."
+  analytics:
+    - title: "Где смотреть clickstream"
+      source: "Демо-регламент юнита «Монетизация»"
+      demo: true
+      text: "Сырые события clickstream доступны в хранилище через Trino, готовые дашборды — в Redash в папке юнита."
+
+glossary:
+  - {term: "Шаталити", definition: "Процесс планирования плановых работ, чтобы работы на разных сервисах не совпадали по времени.", source: "Чек-лист стажёра Авито", demo: false}
+  - {term: "ZBP", definition: "Zero Bug Policy — политика работы с багами; подробности в материалах юнита.", source: "Чек-лист стажёра Авито", demo: false}
+  - {term: "LSR", definition: "Live Site Review — разбор инцидентов в проде с постмортемом и action items.", source: "AvitoTech Playbook", demo: false}
+  - {term: "PaaS", definition: "Платформа разработки Авито для запуска и эксплуатации сервисов.", source: "AvitoTech Playbook", demo: false}
+  - {term: "Экватор", definition: "Встреча после 3 месяцев стажировки: стажёр показывает промежуточные результаты.", source: "Чек-лист стажёра Авито", demo: false}
+
+absence_rules:
+  отгул: {text: "Отгул согласуется с руководителем не позже чем за 2 рабочих дня. Заявка подаётся в сервисе отсутствий.", min_days_ahead: 2, source: "Демо-регламент прототипа", demo: true}
+  отпуск: {text: "Отпуск подаётся не позже чем за 14 дней и согласуется с руководителем.", min_days_ahead: 14, source: "Демо-регламент прототипа", demo: true}
+
+# Встречи для предпроверки отгула
+calendar:
+  artem:
+    - {date: "2026-11-13", title: "1:1 с Олегом Кимом"}
+release_days: ["2026-11-12"]  # демо: день релиза юнита
+
+accesses:
+  backend: {1: [Confluence, Jira, stash, Slack], 2: ["пространство юнита", Grafana, Sentry], 4: [Redash, Lens]}
+  frontend: {1: [Confluence, Jira, "библиотека компонентов"]}
+  analytics: {1: [Confluence, Jira, Redash], 2: [Trino]}
