@@ -169,6 +169,8 @@ func TestPostgresRestartAndConcurrentWrites(t *testing.T) {
 func TestPostgresAnswerAndPublish(t *testing.T) {
 	dsn := postgresSchema(t)
 	_, h1 := persistentServer(t, dsn)
+	_, initial := call(t, h1, "GET", "/api/kb/pages", "intern.egorova", "")
+	initialCount := len(initial["pages"].([]any))
 	_, r := call(t, h1, "POST", "/api/chat/messages", "intern.sokolov", `{"text":"Где взять шаблон презентации для экватора?"}`)
 	d := r["drafts"].([]any)[0].(map[string]any)["id"].(string)
 	_, receipt := call(t, h1, "POST", "/api/drafts/"+d+"/confirm", "intern.sokolov", "{}")
@@ -190,7 +192,7 @@ func TestPostgresAnswerAndPublish(t *testing.T) {
 	parallelCalls(t, []http.Handler{h1, h2}, "/api/kb/pages/"+pageID+"/approve", "buddy.belova", "{}", "")
 	_, h3 := persistentServer(t, dsn)
 	_, pages := call(t, h3, "GET", "/api/kb/pages", "intern.egorova", "")
-	if len(pages["pages"].([]any)) != 20 {
+	if len(pages["pages"].([]any)) != initialCount+1 {
 		t.Fatal("публикация потеряна или продублирована")
 	}
 }

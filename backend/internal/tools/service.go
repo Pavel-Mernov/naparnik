@@ -124,8 +124,10 @@ func decide(c Ctx, id, decision, reason, comment string) (store.Request, *Error)
 	return out, nil
 }
 
-// Catalog — что можно оформить в сервисе: типы отсутствий, доступные системы, порядок «сделай сам» и коды причин.
-// Стажёру — только системы своего отдела и недели (BR-40); остальным — только справочник кодов.
+// Catalog — что можно оформить в сервисе: типы отсутствий, системы, порядок «сделай сам» и коды причин.
+// Стажёру — все системы своего отдела, которые он вправе запросить, с отметкой «нужен сейчас» или «по плану
+// с N-й недели» (заявку раньше срока руководитель может отклонить с кодом NOT_NEEDED_YET).
+// Чужие системы и системы с ПДн не показываются (BR-40). Остальным ролям — только справочник кодов.
 func Catalog(c Ctx) map[string]any {
 	abs := c.Store.Data.Absence
 	out := map[string]any{
@@ -133,8 +135,33 @@ func Catalog(c Ctx) map[string]any {
 			"approver": c.Store.Name(c.User.LeadID)},
 		"access": map[string]any{"systems": []map[string]string{}, "reason_codes": c.Store.Data.Access.ReasonCodes},
 	}
-	if res := Run(c, "get_required_accesses", nil); res.OK {
-		out["access"].(map[string]any)["systems"] = res.Data.(map[string]any)["systems"]
+	if store.HasRole(c.User, store.RoleIntern) {
+		out["access"].(map[string]any)["systems"] = requestableSystems(c)
+	}
+	return out
+}
+
+// SystemView — система в форме заявки на доступ.
+type SystemView struct {
+	System   string `json:"system"`
+	Title    string `json:"title"`
+	Status   string `json:"status"`
+	WeekFrom int    `json:"week_from"`
+	Now      bool   `json:"now"` // нужен на текущей неделе по плану
+}
+
+func requestableSystems(c Ctx) []SystemView {
+	week, status := c.Store.Week(c.User), accessStatus(c)
+	var out []SystemView
+	for _, s := range c.Store.Data.Access.Systems {
+		if checkAccess(c, s.ID) != nil || s.WeekFrom == nil {
+			continue
+		}
+		st := status[s.ID]
+		if st == "" {
+			st = "not_requested"
+		}
+		out = append(out, SystemView{s.ID, s.Title, st, *s.WeekFrom, *s.WeekFrom <= week})
 	}
 	return out
 }

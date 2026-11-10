@@ -427,7 +427,7 @@ function renderKB() {
   grid.replaceChildren();
   const search = $('kbSearch').value.trim().toLowerCase();
   const pages = (state.kb.pages || []).filter((p) => (!state.kbType || p.type === state.kbType) && (!state.kbFolder || p.folder === state.kbFolder)
-    && (!search || (p.title + ' ' + p.excerpt).toLowerCase().includes(search)));
+    && (!search || (p.title + ' ' + (p.body || p.excerpt)).toLowerCase().includes(search)));
   if (!pages.length) grid.appendChild(el('div', 'empty', 'Ничего не нашлось. Спроси Напарника — он поищет и подскажет, к кому идти.'));
   for (const p of pages) {
     const card = el('article', 'kb-card');
@@ -438,7 +438,7 @@ function renderKB() {
     if (p.test_instruction) meta.appendChild(el('span', 'badge amber', 'Тестовая инструкция'));
     card.appendChild(meta);
     card.onclick = () => openModal(p.title, `${p.author} · обновлено ${ruDate(p.updated_at, { day: 'numeric', month: 'long', year: 'numeric' })}`,
-      [p.test_instruction ? el('span', 'badge amber', 'Тестовая инструкция, не регламент Авито') : null, el('p', '', p.excerpt)],
+      [p.test_instruction ? el('span', 'badge amber', 'Тестовая инструкция, не регламент Авито') : null, renderMarkdown(p.body || p.excerpt, 'kb-text md')],
       [{ label: 'Закрыть' }, { label: 'Спросить Напарника', primary: true, onClick: () => openChat(`Расскажи подробнее: ${p.title}`) }]);
     grid.appendChild(card);
   }
@@ -610,18 +610,43 @@ function openSelfService(kind = 'absence') {
       el('p', 'meta', `Согласующий подставится сам: ${abs.approver || 'руководитель'}. Порядок — тестовая инструкция, не регламент Авито.`));
     submit = () => ({ kind, type: type.value, date: date.value, comment: comment.value });
   } else {
-    const systems = ((svc.access && svc.access.systems) || []).filter((x) => x.status === 'not_requested' || x.status === 'rejected');
-    if (!systems.length) {
-      body.push(el('div', 'empty', 'Все доступы этой недели уже запрошены или выданы.'));
+    const all = (svc.access && svc.access.systems) || [];
+    const free = all.filter((x) => x.status === 'not_requested' || x.status === 'rejected');
+    if (!free.length) {
+      body.push(el('div', 'empty', 'Все доступы отдела уже запрошены или выданы.'));
     } else {
       const sys = el('select', 'field');
-      systems.forEach((x) => { const o = el('option', '', x.title); o.value = x.system; sys.appendChild(o); });
+      [['Нужны сейчас', true], ['По плану позже', false]].forEach(([label, now]) => {
+        const items = free.filter((x) => x.now === now);
+        if (!items.length) return;
+        const g = el('optgroup');
+        g.label = label;
+        items.forEach((x) => {
+          const o = el('option', '', now ? x.title : `${x.title} — с ${x.week_from}-й недели`);
+          o.value = x.system;
+          g.appendChild(o);
+        });
+        sys.appendChild(g);
+      });
+      const hint = el('div');
+      const showHint = () => {
+        const x = free.find((s) => s.system === sys.value);
+        hint.replaceChildren(x && !x.now ? el('div', 'warn', `⚠ По плану этот доступ нужен с ${x.week_from}-й недели. Руководитель может отклонить заявку как преждевременную.`) : '');
+      };
+      sys.onchange = showHint;
+      showHint();
       const reason = el('input', 'field');
       reason.placeholder = 'Например: шаг плана — доступ к дашбордам отдела';
-      body.push(el('div', 'field-label', 'Система'), sys, el('div', 'field-label', 'Зачем'), reason,
-        el('p', 'meta', 'Показаны только системы твоего отдела и текущей недели.'));
+      body.push(el('div', 'field-label', 'Система'), sys, hint, el('div', 'field-label', 'Зачем'), reason);
       submit = () => ({ kind, system: sys.value, reason: reason.value || 'Шаг плана адаптации' });
     }
+    const taken = all.filter((x) => x.status === 'granted' || x.status === 'pending');
+    if (taken.length) {
+      const list = el('div', 'access-list');
+      taken.forEach((x) => { const row = el('div', 'meta'); row.append(badge(x.status), document.createTextNode(x.title)); list.appendChild(row); });
+      body.push(el('div', 'field-label', 'Уже есть или на согласовании'), list);
+    }
+    body.push(el('p', 'meta', 'Показаны только системы твоего отдела. Системы с персональными данными стажёру не выдаются.'));
   }
   const actions = [{ label: 'Отмена' }];
   if (submit) actions.push({ label: 'Отправить в сервис', primary: true, onClick: () => sendSelf(submit()) });
@@ -793,16 +818,17 @@ function inlineMd(text) {
   return frag;
 }
 
-function renderMarkdown(text) {
-  const box = el('div', 'bubble bot md');
+function renderMarkdown(text, cls = 'bubble bot md') {
+  const box = el('div', cls);
   let list = null;
   for (const raw of (text || '').split('\n')) {
     const line = raw.trimEnd();
-    const item = line.match(/^\s*(?:[-*•]|\d+[.)])\s+(.*)$/);
+    const item = line.match(/^\s*([-*•]|\d+[.)])\s+(.*)$/);
     if (item) {
-      if (!list) { list = el('ul'); box.appendChild(list); }
+      const tag = /\d/.test(item[1]) ? 'ol' : 'ul';
+      if (!list || list.tagName.toLowerCase() !== tag) { list = el(tag); box.appendChild(list); }
       const li = el('li');
-      li.appendChild(inlineMd(item[1]));
+      li.appendChild(inlineMd(item[2]));
       list.appendChild(li);
       continue;
     }

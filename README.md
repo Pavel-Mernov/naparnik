@@ -94,7 +94,7 @@ cd backend && go test ./...            # PostgreSQL-тесты требуют TE
 ./scripts/coverage.sh                  # из корня: отчёт о покрытии
 ```
 
-Отчёт — [docs/coverage/coverage.txt](docs/coverage/coverage.txt) (по функциям и итог) и `docs/coverage/coverage.html`. Покрытие строк прикладного кода — **96.5%**. Считаются `backend/internal` и `backend/cmd/buddy`; не входят зависимости, тесты и точка входа `cmd/server`. Порог 80% проверяется в CI ([.github/workflows/tests.yml](.github/workflows/tests.yml)).
+Отчёт — [docs/coverage/coverage.txt](docs/coverage/coverage.txt) (по функциям и итог) и `docs/coverage/coverage.html`. Покрытие строк прикладного кода — **96.6%**. Считаются `backend/internal` и `backend/cmd/buddy`; не входят зависимости, тесты и точка входа `cmd/server`. Порог 80% проверяется в CI ([.github/workflows/tests.yml](.github/workflows/tests.yml)).
 
 Тесты не обращаются к внешней модели: используется заглушка, для Claude и DeepSeek — локальный тестовый HTTP-сервер.
 

@@ -62,7 +62,7 @@ func answerQuestion(c Ctx, questionID, text string) (store.Question, mockdata.Pa
 	}
 	folder, similar := placePage(c, title)
 	page := mockdata.Page{
-		ID: c.Store.NextID("kb"), Space: c.Store.Data.Team.Department.KBSpaceID, Folder: folder, Type: "qa", Status: "Draft",
+		ID: nextPageID(c), Space: c.Store.Data.Team.Department.KBSpaceID, Folder: folder, Type: "qa", Status: "Draft",
 		Title: title, AuthorID: c.User.ID,
 		UpdatedAt: c.Store.Today.Format(time.DateOnly), Body: text, SourceQuestion: q.ID, SimilarPageID: similar,
 	}
@@ -71,6 +71,19 @@ func answerQuestion(c Ctx, questionID, text string) (store.Question, mockdata.Pa
 		x.Status, x.Answer, x.AnsweredBy, x.AnsweredAt, x.PageID = "Answered", text, c.User.ID, time.Now().Format(time.RFC3339), page.ID
 	})
 	return q, page, nil
+}
+
+// nextPageID — следующий свободный номер страницы: в мок-данных есть страницы и с номерами выше kb-20.
+func nextPageID(c Ctx) string {
+	taken := map[string]bool{}
+	for _, p := range c.Store.Pages() {
+		taken[p.ID] = true
+	}
+	for {
+		if id := c.Store.NextID("kb"); !taken[id] {
+			return id
+		}
+	}
 }
 
 // placePage — папка по самой похожей опубликованной странице и похожая страница для BR-32.

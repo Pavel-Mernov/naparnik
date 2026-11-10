@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/worker4556/naparnik/backend/internal/mockdata"
 	"github.com/worker4556/naparnik/backend/internal/store"
 )
 
@@ -146,5 +147,19 @@ func TestQuestionTitle(t *testing.T) {
 	_, page, _ := AnswerQuestion(ctxFor(t, s, "expert.orlov"), r.Data.(*store.Question).ID, "ответ")
 	if page.Title != "конверсия в дашборде расходится с выгрузкой из ads_mart." || page.Folder == defaultFolder {
 		t.Fatalf("страница из письма: %q, папка %q", page.Title, page.Folder)
+	}
+}
+
+// Номера новых страниц не пересекаются со страницами мок-данных (kb-30…kb-38).
+func TestNextPageIDSkipsTaken(t *testing.T) {
+	c := ctxFor(t, newStore(t), "expert.orlov")
+	seen := map[string]bool{}
+	for i := 0; i < 12; i++ {
+		id := nextPageID(c)
+		c.Store.AddPage(mockdata.Page{ID: id})
+		seen[id] = true
+	}
+	if seen["kb-30"] || seen["kb-38"] || !seen["kb-20"] || !seen["kb-39"] {
+		t.Fatalf("номера: %v", seen)
 	}
 }
