@@ -1,0 +1,64 @@
+{
+  "_meta": {
+    "description": "Заглушка сервиса отсутствий (сервис из кейса Авито). Порядок оформления — тестовая инструкция kb-02 с пометкой «не регламент Авито». Действие считается выполненным, когда заглушка вернула результат, а AI-buddy его показал и сохранил (требование кейса).",
+    "mode_env": "INTEGRATIONS_MODE=mock",
+    "used_by": ["SC-14", "SC-15", "SC-29"]
+  },
+  "request_types": [
+    { "type": "day_off", "title": "Отгул", "min_notice_workdays": 2, "approver_role": "lead" },
+    { "type": "vacation", "title": "Отпуск", "min_notice_days": 14, "approver_role": "lead" },
+    { "type": "sick_leave", "title": "Больничный", "min_notice_days": 0, "approver_role": "lead", "notify": ["buddy", "lead"] }
+  ],
+  "forbidden_fields": ["salary", "bank_account", "passport", "diagnosis"],
+  "self_service": {
+    "title": "Сделай сам",
+    "steps": ["Открой сервис отсутствий", "Выбери тип «Отгул» и дату", "Согласующий подставится автоматически — руководитель отдела", "Нажми «Отправить» и дождись номера заявки"],
+    "link": "https://absence.mock.local/new",
+    "source_page": "kb-02"
+  },
+  "precheck": {
+    "description": "Предупреждения в черновике, не блокирующие отправку",
+    "rules": [
+      { "code": "PAST_DATE", "message": "Дата уже прошла" },
+      { "code": "SHORT_NOTICE", "message": "По тестовой инструкции отгул подают за 2 рабочих дня" },
+      { "code": "MEETING_CONFLICT", "message": "В этот день у тебя встреча: {event}" },
+      { "code": "STEP_DEADLINE", "message": "В этот день срок шага плана: {step}" }
+    ]
+  },
+  "endpoints": {
+    "create": { "method": "POST", "path": "/absence/requests", "body_example": { "employee_id": "u-sokolov", "type": "day_off", "dates": ["2026-11-13"], "comment": "" } },
+    "get": { "method": "GET", "path": "/absence/requests/{id}" },
+    "list": { "method": "GET", "path": "/absence/requests?employee_id={id}" }
+  },
+  "responses": {
+    "accepted": {
+      "http": 201,
+      "body": { "ok": true, "receipt": { "id": "ABS-1042", "type": "day_off", "dates": ["2026-11-13"], "status": "pending", "approver_id": "u-kovalev", "created_at": "2026-11-11T10:40:00+03:00" } }
+    },
+    "unavailable": {
+      "http": 503,
+      "trigger": "заголовок X-Mock-Fail: absence или env MOCK_FAIL=absence",
+      "body": { "ok": false, "error": { "code": "unavailable", "message": "Сервис отсутствий временно недоступен" } },
+      "expected_ui": "«Не получилось связаться с сервисом отсутствий. Черновик сохранил — попробуем ещё раз?» + кнопка «Повторить»"
+    },
+    "validation": {
+      "http": 422,
+      "trigger": "dates пустые или в прошлом",
+      "body": { "ok": false, "error": { "code": "validation", "message": "Укажи будущую дату" } }
+    }
+  },
+  "status_flow": [
+    { "from": "pending", "to": "approved", "after": "60 секунд в mock или вручную через /mock/absence/{id}/approve", "notify": ["intern:web", "intern:telegram"] },
+    { "from": "pending", "to": "rejected", "manual": "/mock/absence/{id}/reject?reason=DATE_CONFLICT", "notify": ["intern:web", "intern:telegram"] }
+  ],
+  "reason_codes": [
+    { "code": "DATE_CONFLICT", "text": "В эту дату важное событие команды — предложим другую" },
+    { "code": "TOO_LATE", "text": "Подано позже срока по тестовой инструкции" },
+    { "code": "NEED_INFO", "text": "Не хватает данных — уточни и подай снова" },
+    { "code": "OTHER", "text": "Другое — с комментарием" }
+  ],
+  "persistence_check": {
+    "scenario": "SC-29",
+    "expected": "Квитанция ABS-1042 хранится в БД AI-buddy и видна в чате, в «Моих заявках» и в ленте руководителя после перезагрузки страницы и после повторного входа"
+  }
+}

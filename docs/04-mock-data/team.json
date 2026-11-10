@@ -1,0 +1,157 @@
+{
+  "_meta": {
+    "description": "Справочник синтетического отдела. Все люди выдуманы, совпадения случайны (BR-63).",
+    "demo_today": "2026-11-11",
+    "timezone": "Europe/Moscow",
+    "used_by": [
+      "SC-01",
+      "SC-02",
+      "SC-04",
+      "SC-07",
+      "SC-08",
+      "SC-09",
+      "SC-10",
+      "SC-20",
+      "SC-21",
+      "SC-23",
+      "SC-13"
+    ]
+  },
+  "department": {
+    "id": "dept-analytics",
+    "name": "Отдел продуктовой аналитики",
+    "kb_space_id": "space-analytics",
+    "lead_id": "u-kovalev",
+    "kb_owner_id": "u-kovalev",
+    "plan_template_id": "tpl-analytics-v1",
+    "digest_times": [
+      "11:00",
+      "16:00"
+    ]
+  },
+  "users": [
+    {
+      "id": "u-kovalev",
+      "login": "lead.kovalev",
+      "name": "Андрей Ковалёв",
+      "position": "Руководитель отдела",
+      "roles": [
+        "lead",
+        "expert"
+      ],
+      "responsibility": "Приоритеты отдела, планы адаптации, найм стажёров",
+      "working_hours": "10:00-19:00",
+      "digest_mode": "digest",
+      "tg_connected": false
+    },
+    {
+      "id": "u-belova",
+      "login": "buddy.belova",
+      "name": "Екатерина Белова",
+      "position": "Старший аналитик",
+      "roles": [
+        "buddy",
+        "expert"
+      ],
+      "buddy_for": [
+        "u-sokolov",
+        "u-egorova"
+      ],
+      "responsibility": "Регулярная отчётность, онбординг, процессы отдела",
+      "working_hours": "10:00-19:00",
+      "digest_mode": "digest",
+      "tg_connected": true
+    },
+    {
+      "id": "u-orlov",
+      "login": "expert.orlov",
+      "name": "Михаил Орлов",
+      "position": "Ведущий аналитик данных",
+      "roles": [
+        "expert"
+      ],
+      "responsibility": "Витрины DWH, качество данных, расхождения метрик",
+      "working_hours": "11:00-20:00",
+      "digest_mode": "digest",
+      "tg_connected": true
+    },
+    {
+      "id": "u-smirnova",
+      "login": "expert.smirnova",
+      "name": "Ольга Смирнова",
+      "position": "Аналитик экспериментов",
+      "roles": [
+        "expert"
+      ],
+      "responsibility": "A/B-платформа, дизайн и разбор экспериментов",
+      "working_hours": "09:00-18:00",
+      "digest_mode": "digest",
+      "tg_connected": true
+    },
+    {
+      "id": "u-lebedeva",
+      "login": "expert.lebedeva",
+      "name": "Наталья Лебедева",
+      "position": "Продуктовый аналитик",
+      "roles": [
+        "expert"
+      ],
+      "responsibility": "Дашборды и продуктовые метрики раздела «Объявления»",
+      "working_hours": "10:00-19:00",
+      "digest_mode": "instant",
+      "tg_connected": false
+    },
+    {
+      "id": "u-sokolov",
+      "login": "intern.sokolov",
+      "name": "Даниил Соколов",
+      "position": "Стажёр-аналитик",
+      "roles": [
+        "intern"
+      ],
+      "buddy_id": "u-belova",
+      "lead_id": "u-kovalev",
+      "start_date": "2026-11-09",
+      "working_hours": "10:00-17:00",
+      "settings": {
+        "proactivity": "daily_plan",
+        "question_text_visible_to_buddy": true,
+        "reminders": [
+          "1d",
+          "1h"
+        ]
+      },
+      "tg_connected": true
+    },
+    {
+      "id": "u-egorova",
+      "login": "intern.egorova",
+      "name": "Полина Егорова",
+      "position": "Стажёр-аналитик",
+      "roles": [
+        "intern"
+      ],
+      "buddy_id": "u-belova",
+      "lead_id": "u-kovalev",
+      "start_date": "2026-12-07",
+      "working_hours": "10:00-17:00",
+      "settings": {
+        "proactivity": "deadlines_and_meetings",
+        "question_text_visible_to_buddy": false,
+        "reminders": [
+          "1h"
+        ],
+        "note": "SC-13: текст вопросов скрыт от бадди, адресат и статус видны"
+      },
+      "tg_connected": false
+    }
+  ],
+  "other_teams": [
+    {
+      "id": "dept-dwh-core",
+      "name": "Команда ядра DWH (другой отдел)",
+      "kb_space_id": "space-dwh-pii",
+      "note": "Пространство с витринами, содержащими персональные данные. Стажёру отдела аналитики недоступно (SC-16)."
+    }
+  ]
+}

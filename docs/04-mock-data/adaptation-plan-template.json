@@ -1,0 +1,39 @@
+{
+  "_meta": {
+    "description": "Шаблон плана адаптации отдела аналитики. Общие шаги — из листа «Материалы для всех» чек-листа стажёра Авито (материалы кейса). Шаги с source=demo-analytics — синтетические, по образцу листа «Чек-лист Backend», помечены «демо».",
+    "id": "tpl-analytics-v1",
+    "department_id": "dept-analytics",
+    "due_offset": "рабочие дни от start_date стажёра",
+    "owner": "intern — шаг стажёра; buddy — шаг бадди; lead — шаг руководителя. Стажёру в «шагах на сегодня» показываются только шаги owner=intern",
+    "used_by": ["SC-01", "SC-02", "SC-18", "SC-20", "SC-21", "SC-27"]
+  },
+  "stages": [
+    { "id": "st-w1", "title": "Неделя 1: знакомство и доступы", "order": 1 },
+    { "id": "st-w2", "title": "Неделя 2: инструменты и документация", "order": 2 },
+    { "id": "st-m1", "title": "Месяц 1: первые задачи", "order": 3 },
+    { "id": "st-m2", "title": "Месяц 2–3: самостоятельная работа", "order": 4 },
+    { "id": "st-eq", "title": "Экватор (после 3 месяцев)", "order": 5 }
+  ],
+  "steps": [
+    { "id": "s-01", "stage": "st-w1", "owner": "intern", "type": "meet", "title": "Познакомься с командой", "due_offset": 2, "source": "avito-checklist:all", "prepared_action": "team_map", "note": "Открывает карту команды (SCR-I5), черновики сообщений" },
+    { "id": "s-02", "stage": "st-w1", "owner": "intern", "type": "access", "title": "Запроси доступ в пространство своей команды в базе знаний", "due_offset": 1, "source": "avito-checklist:all", "prepared_action": "access_request:sys-kb-analytics" },
+    { "id": "s-03", "stage": "st-w1", "owner": "intern", "type": "meet", "title": "Работа с наставником: договорись о встречах, заведи конспект встреч", "due_offset": 3, "source": "avito-checklist:all" },
+    { "id": "s-04", "stage": "st-w1", "owner": "intern", "type": "access", "title": "Запроси доступ к Redash (дашборды отдела)", "due_offset": 3, "source": "demo-analytics", "prepared_action": "access_request:sys-redash" },
+    { "id": "s-05", "stage": "st-w1", "owner": "buddy", "type": "setup", "title": "Добавь стажёра в чаты и каналы, проверь, запросил ли он доступы", "due_offset": 2, "source": "avito-checklist:all" },
+    { "id": "s-06", "stage": "st-w1", "owner": "buddy", "type": "meet", "title": "Назначь регулярные 1:1", "due_offset": 2, "source": "avito-checklist:all" },
+    { "id": "s-07", "stage": "st-w1", "owner": "lead", "type": "meet", "title": "Обсуди цели, план адаптации и критерии успешной стажировки", "due_offset": 5, "source": "avito-checklist:all" },
+    { "id": "s-08", "stage": "st-w2", "owner": "intern", "type": "study", "title": "Изучи документы и мануалы отдела, которыми поделился бадди", "due_offset": 8, "source": "avito-checklist:all", "related_pages": ["kb-01", "kb-02", "kb-05"] },
+    { "id": "s-09", "stage": "st-w2", "owner": "intern", "type": "goal", "title": "Внеси в трекер прогресса цели, задачи и ожидания", "due_offset": 9, "source": "avito-checklist:all" },
+    { "id": "s-10", "stage": "st-w2", "owner": "intern", "type": "access", "title": "Запроси доступ на чтение к витринам DWH отдела", "due_offset": 7, "source": "demo-analytics", "prepared_action": "access_request:sys-dwh-marts-ro" },
+    { "id": "s-11", "stage": "st-w2", "owner": "intern", "type": "study", "title": "Разберись, как устроены витрины объявлений", "due_offset": 9, "source": "demo-analytics", "related_pages": ["kb-03", "kb-04", "kb-06"] },
+    { "id": "s-12", "stage": "st-m1", "owner": "intern", "type": "study", "title": "Изучи основы защиты персональных данных и политику работы с конфиденциальной информацией", "due_offset": 20, "source": "avito-checklist:all" },
+    { "id": "s-13", "stage": "st-m1", "owner": "intern", "type": "task", "title": "Первая задача: собери дашборд конверсии карточки объявления", "due_offset": 15, "source": "demo-analytics", "first_useful_task_candidate": true },
+    { "id": "s-14", "stage": "st-m1", "owner": "intern", "type": "study", "title": "Разбери, как в отделе проводят A/B-эксперименты", "due_offset": 18, "source": "demo-analytics", "related_pages": ["kb-08", "kb-09"] },
+    { "id": "s-15", "stage": "st-m2", "owner": "intern", "type": "study", "title": "Изучи памятку, как закрывать практику и писать учебные работы", "due_offset": 40, "source": "avito-checklist:all" },
+    { "id": "s-16", "stage": "st-m2", "owner": "intern", "type": "task", "title": "Самостоятельный разбор эксперимента", "due_offset": 50, "source": "demo-analytics" },
+    { "id": "s-17", "stage": "st-eq", "owner": "intern", "type": "prepare", "title": "Подготовься к экваторной встрече: мастер-классы, структура презентации", "due_offset": 62, "source": "avito-checklist:all" },
+    { "id": "s-18", "stage": "st-eq", "owner": "intern", "type": "meet", "title": "Экваторная встреча: выступление и подведение итогов", "due_offset": 65, "source": "avito-checklist:all" },
+    { "id": "s-19", "stage": "st-eq", "owner": "buddy", "type": "review", "title": "Проверь презентацию стажёра, по запросу проведи репетицию", "due_offset": 63, "source": "avito-checklist:all" },
+    { "id": "s-20", "stage": "st-eq", "owner": "intern", "type": "survey", "title": "Пройди опрос о том, как прошла стажировка", "due_offset": 66, "source": "avito-checklist:all" }
+  ]
+}

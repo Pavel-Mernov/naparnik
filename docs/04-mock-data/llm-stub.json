@@ -1,0 +1,19 @@
+{
+  "_meta": {
+    "description": "Режимы заглушки LLM для проверки неблокирующего интерфейса и сбоев (BR-70, ограничения 09–10 кейса). Включаются переменной окружения или заголовком в тестах.",
+    "used_by": ["SC-26"]
+  },
+  "env": {
+    "LLM_PROVIDER": "внешний провайдер или stub",
+    "LLM_MODEL": "имя модели",
+    "LLM_API_KEY": "ключ, не коммитится; пример — в .env.example",
+    "LLM_TIMEOUT_SEC": 30,
+    "LLM_MODE": "live | stub_ok | stub_slow | stub_timeout | stub_error"
+  },
+  "modes": [
+    { "mode": "stub_ok", "behavior": "Ответ за 1–2 с по фикстурам questions.json", "expected_ui": "маскот thinking → has_answer" },
+    { "mode": "stub_slow", "behavior": "Ответ через 15 с", "expected_ui": "«Думаю…», интерфейс доступен, можно отмечать шаги и переходить по разделам" },
+    { "mode": "stub_timeout", "behavior": "Нет ответа 30 с", "expected_ui": "Понятная ошибка, «Повторить», введённый вопрос сохранён" },
+    { "mode": "stub_error", "behavior": "HTTP 500 от провайдера", "expected_ui": "Шаблонный ответ: найденные фрагменты базы без пересказа; кнопки действий работают без модели" }
+  ]
+}

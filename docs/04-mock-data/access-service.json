@@ -1,0 +1,39 @@
+{
+  "_meta": {
+    "description": "Заглушка сервиса доступов (заявки в стиле Jira). Порядок — тестовая инструкция kb-11. Закрывает тему «Доступы» с обложки кейса.",
+    "mode_env": "INTEGRATIONS_MODE=mock",
+    "used_by": ["SC-27", "SC-01", "SC-16"]
+  },
+  "systems": [
+    { "id": "sys-kb-analytics", "title": "База знаний: пространство отдела аналитики", "week_from": 1, "role": "reader", "department": "dept-analytics" },
+    { "id": "sys-redash", "title": "Redash (дашборды)", "week_from": 1, "role": "viewer", "department": "dept-analytics" },
+    { "id": "sys-dwh-marts-ro", "title": "Витрины DWH отдела, только чтение", "week_from": 2, "role": "read_only", "department": "dept-analytics" },
+    { "id": "sys-ab-platform-ro", "title": "A/B-платформа, только чтение", "week_from": 4, "role": "viewer", "department": "dept-analytics" },
+    { "id": "sys-dwh-pii", "title": "Витрины с персональными данными", "week_from": null, "role": null, "department": "dept-dwh-core", "requestable_by_intern": false, "note": "SC-16: стажёру не предлагается и не показывается; на прямую просьбу — объяснение и запрос руководителю" }
+  ],
+  "current_state": {
+    "u-sokolov": [
+      { "system": "sys-kb-analytics", "status": "granted", "receipt_id": "ACC-2001", "granted_at": "2026-11-10T11:05:00+03:00" },
+      { "system": "sys-redash", "status": "not_requested", "related_step": "s-04" },
+      { "system": "sys-dwh-marts-ro", "status": "not_requested", "related_step": "s-10" }
+    ]
+  },
+  "endpoints": {
+    "create": { "method": "POST", "path": "/access/requests", "body_example": { "employee_id": "u-sokolov", "system": "sys-redash", "reason": "Шаг плана s-04: доступ к дашбордам отдела" } },
+    "get": { "method": "GET", "path": "/access/requests/{id}" }
+  },
+  "responses": {
+    "accepted": { "http": 201, "body": { "ok": true, "receipt": { "id": "ACC-2002", "system": "sys-redash", "status": "pending", "approver_id": "u-kovalev", "created_at": "2026-11-11T10:20:00+03:00" } } },
+    "forbidden": { "http": 403, "trigger": "system = sys-dwh-pii от имени стажёра", "body": { "ok": false, "error": { "code": "forbidden", "message": "Эта система вне зоны отдела", "who_can": "u-kovalev" } } },
+    "unavailable": { "http": 503, "trigger": "X-Mock-Fail: access", "body": { "ok": false, "error": { "code": "unavailable", "message": "Сервис доступов временно недоступен" } } }
+  },
+  "status_flow": [
+    { "from": "pending", "to": "granted", "after": "60 секунд в mock или /mock/access/{id}/grant", "side_effect": "шаг s-04 предлагается отметить выполненным — стажёр подтверждает" },
+    { "from": "pending", "to": "rejected", "manual": "/mock/access/{id}/reject?reason=NOT_NEEDED_YET" }
+  ],
+  "reason_codes": [
+    { "code": "NOT_NEEDED_YET", "text": "Доступ понадобится позже, на другом этапе" },
+    { "code": "NEED_INFO", "text": "Не хватает данных — уточни и подай снова" },
+    { "code": "OTHER", "text": "Другое — с комментарием" }
+  ]
+}

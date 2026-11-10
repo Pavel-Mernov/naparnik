@@ -1,0 +1,51 @@
+{
+  "_meta": {
+    "description": "Заглушка трекера (в стиле Jira): планы адаптации как эпики, шаги как подзадачи. Прогресс читается из статусов (BR-82). Состояние — на demo_today.",
+    "demo_today": "2026-11-11",
+    "statuses": ["Planned", "Today", "Done", "Overdue"],
+    "used_by": ["SC-01", "SC-18", "SC-19", "SC-20", "SC-21", "SC-27"]
+  },
+  "plans": [
+    {
+      "id": "plan-sokolov",
+      "epic_key": "ADAPT-101",
+      "intern_id": "u-sokolov",
+      "template_id": "tpl-analytics-v1",
+      "status": "approved",
+      "approved_by": "u-kovalev",
+      "approved_at": "2026-11-06T15:20:00+03:00",
+      "steps": [
+        { "step_id": "s-02", "issue_key": "ADAPT-102", "due_date": "2026-11-10", "status": "Done", "done_at": "2026-11-10T11:05:00+03:00", "receipt_id": "ACC-2001" },
+        { "step_id": "s-04", "issue_key": "ADAPT-103", "due_date": "2026-11-10", "status": "Overdue", "note": "SC-18: вчера не сделан, утром переносится с вопросом «нужна помощь?»; SC-27: заявка на доступ к Redash" },
+        { "step_id": "s-01", "issue_key": "ADAPT-104", "due_date": "2026-11-11", "status": "Today" },
+        { "step_id": "s-03", "issue_key": "ADAPT-105", "due_date": "2026-11-12", "status": "Today" },
+        { "step_id": "s-05", "issue_key": "ADAPT-106", "due_date": "2026-11-11", "status": "Done", "done_at": "2026-11-09T12:00:00+03:00", "done_by": "u-belova" },
+        { "step_id": "s-06", "issue_key": "ADAPT-107", "due_date": "2026-11-11", "status": "Done", "done_at": "2026-11-09T12:10:00+03:00", "done_by": "u-belova" },
+        { "step_id": "s-07", "issue_key": "ADAPT-108", "due_date": "2026-11-16", "status": "Planned" },
+        { "step_id": "s-08", "issue_key": "ADAPT-109", "due_date": "2026-11-19", "status": "Planned" },
+        { "step_id": "s-09", "issue_key": "ADAPT-110", "due_date": "2026-11-20", "status": "Planned" },
+        { "step_id": "s-10", "issue_key": "ADAPT-111", "due_date": "2026-11-18", "status": "Planned" },
+        { "step_id": "s-11", "issue_key": "ADAPT-112", "due_date": "2026-11-20", "status": "Planned" },
+        { "step_id": "s-12", "issue_key": "ADAPT-113", "due_date": "2026-12-07", "status": "Planned" },
+        { "step_id": "s-13", "issue_key": "ADAPT-114", "due_date": "2026-11-30", "status": "Planned", "first_useful_task_candidate": true },
+        { "step_id": "s-14", "issue_key": "ADAPT-115", "due_date": "2026-12-03", "status": "Planned" }
+      ],
+      "last_activity_at": "2026-11-11T10:12:00+03:00"
+    },
+    {
+      "id": "plan-egorova",
+      "epic_key": "ADAPT-201",
+      "intern_id": "u-egorova",
+      "template_id": "tpl-analytics-v1",
+      "status": "draft",
+      "created_by": "system",
+      "created_at": "2026-11-11T09:00:00+03:00",
+      "edited_by": null,
+      "note": "SC-20: черновик из шаблона → Екатерина правит → Андрей утверждает. Без решения 2 рабочих дня → auto_activated (BR-81)"
+    }
+  ],
+  "scenario_variants": [
+    { "scenario": "SC-19", "demo_today": "2026-11-13", "override": { "plan-sokolov.last_activity_at": "2026-11-11T10:12:00+03:00" }, "expected": "Екатерина получает сигнал «простаивает» (2 рабочих дня без активности)" },
+    { "scenario": "SC-12", "demo_today": "2026-12-08", "override": { "u-egorova.active": true }, "expected": "Полина спрашивает Q6, ответ из страницы kb-20, созданной в SC-04" }
+  ]
+}

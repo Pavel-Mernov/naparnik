@@ -1,0 +1,61 @@
+{
+  "_meta": {
+    "description": "Заготовленные ответы людей для прогона сценариев без живых участников. В демо их можно вводить вручную от имени тестовых учёток или подставлять автоматически.",
+    "used_by": ["SC-04", "SC-06", "SC-07", "SC-08", "SC-09", "SC-10", "SC-11", "SC-22", "SC-23"]
+  },
+  "answers": [
+    {
+      "question_id": "q-02", "by": "u-orlov", "action": "answer_text", "at": "2026-11-11T16:40:00+03:00",
+      "text": "Дашборд в Redash берёт данные из ads_mart, а в ads_mart просмотры считаются без ботов и только по активным объявлениям. В сырой выгрузке боты и снятые объявления остаются, поэтому конверсия ниже примерно на 8–12%. Сравнивай с той же фильтрацией: is_bot = false и status = 'active'.",
+      "page_review": { "decision": "approve", "edits": null }
+    },
+    {
+      "question_id": "q-11", "by": "u-orlov", "action": "answer_text", "at": "2026-11-11T11:25:00+03:00",
+      "text": "Поле продвижения лежит не в ads_mart, а в таблице ad_promotions. Джойнь по ad_id и дате. В ads_mart его добавим в следующем релизе витрины.",
+      "page_review": { "decision": "approve", "edits": null }
+    },
+    {
+      "question_id": "q-04", "by": "u-belova", "action": "answer_text", "at": "2026-11-12T11:10:00+03:00",
+      "text": "Шаблон экваторной презентации даёт куратор стажировки ближе к сроку, а пока возьми структуру: задачи, результаты в цифрах, чему научился, планы. До экватора ещё два месяца, напомню.",
+      "page_review": { "decision": "edit", "edits": "Добавлено: «Шаблон присылает куратор за месяц до экватора»" }
+    },
+    {
+      "question_id": "q-05", "by": "u-lebedeva", "action": "not_mine", "at": "2026-11-11T12:05:00+03:00",
+      "suggested_addressee": "u-orlov",
+      "comment": "Не ко мне: когорты считаются в витрине user_cohorts, это Михаил."
+    },
+    {
+      "question_id": "q-05", "by": "u-orlov", "action": "answer_text", "at": "2026-11-11T16:45:00+03:00",
+      "text": "Retention по когортам считай из user_cohorts: когорта — неделя первого действия, удержание — доля вернувшихся на 1, 7 и 30 день. В дашборде используй готовый запрос retention_weekly из папки «Объявления».",
+      "page_review": { "decision": "approve", "edits": null }
+    },
+    {
+      "question_id": "q-12", "by": "u-belova", "action": "redirect", "at": "2026-11-11T13:00:00+03:00",
+      "from": "u-lebedeva", "to": "u-orlov",
+      "comment": "Разметка категорий — это витрина, переадресую Михаилу."
+    },
+    {
+      "question_id": "q-03", "by": "u-smirnova", "action": "meeting", "at": "2026-11-11T16:20:00+03:00",
+      "chosen_slot": "2026-11-12T14:00:00+03:00", "meeting_id": "MTG-301",
+      "page_review": { "decision": "approve", "edits": null }
+    },
+    {
+      "question_id": "q-10", "by": "u-smirnova", "action": "meeting", "at": "2026-11-12T10:00:00+03:00",
+      "meeting_id": "MTG-302",
+      "after_no_recording": { "offer": "Записи встречи нет. Сформируем ответ текстом?", "decision": "no" }
+    },
+    {
+      "question_id": "q-seed-open", "by": "u-kovalev", "action": "assign_open_question", "at": "2026-11-11T17:00:00+03:00",
+      "to": "u-smirnova"
+    }
+  ],
+  "sla_variant": {
+    "scenario": "SC-23",
+    "question_id": "q-02",
+    "override": "Михаил не отвечает",
+    "timeline": [
+      { "at": "2026-11-12T16:00:00+03:00", "event": "истёк SLA 1 рабочий день → напоминание u-orlov" },
+      { "at": "2026-11-13T16:00:00+03:00", "event": "истёк повторно → u-belova получает предложение переадресовать" }
+    ]
+  }
+}

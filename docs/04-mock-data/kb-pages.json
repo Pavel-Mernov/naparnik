@@ -1,0 +1,146 @@
+{
+  "_meta": {
+    "description": "Заглушка базы знаний (в стиле Confluence). Все тексты синтетические. Страницы с test_instruction=true показываются с пометкой «тестовая инструкция, не регламент Авито» (BR-05).",
+    "demo_today": "2026-11-11",
+    "gaps": "Специально НЕТ ответов на вопросы Q2, Q3, Q4, Q5, Q10 из questions.json — на них проверяется маршрутизация к людям",
+    "used_by": ["SC-02", "SC-03", "SC-04", "SC-07", "SC-08", "SC-12", "SC-14", "SC-16", "SC-22", "SC-27"]
+  },
+  "spaces": [
+    { "id": "space-analytics", "name": "Продуктовая аналитика", "department_id": "dept-analytics", "readers": "dept-analytics" },
+    { "id": "space-dwh-pii", "name": "Ядро DWH: персональные данные", "department_id": "dept-dwh-core", "readers": "dept-dwh-core", "note": "Стажёру аналитики недоступно — не ищется и не упоминается (BR-40)" }
+  ],
+  "folders": [
+    { "id": "f-start", "space": "space-analytics", "title": "Стажировка и онбординг" },
+    { "id": "f-process", "space": "space-analytics", "title": "Процессы отдела" },
+    { "id": "f-dwh", "space": "space-analytics", "title": "Данные и витрины" },
+    { "id": "f-metrics", "space": "space-analytics", "title": "Метрики и дашборды" },
+    { "id": "f-ab", "space": "space-analytics", "title": "Эксперименты" },
+    { "id": "f-glossary", "space": "space-analytics", "title": "Глоссарий" },
+    { "id": "f-pii", "space": "space-dwh-pii", "title": "Витрины с ПДн" }
+  ],
+  "pages": [
+    {
+      "id": "kb-01", "space": "space-analytics", "folder": "f-start", "type": "article", "status": "Published",
+      "title": "Кто есть кто в отделе аналитики", "author_id": "u-belova", "created_at": "2025-09-01", "updated_at": "2026-10-20", "test_instruction": false,
+      "body": "Андрей Ковалёв — руководитель, приоритеты и планы адаптации. Екатерина Белова — регулярная отчётность и онбординг. Михаил Орлов — витрины DWH и качество данных. Ольга Смирнова — A/B-платформа и эксперименты. Наталья Лебедева — дашборды раздела «Объявления». С вопросами по данным — к Михаилу, по экспериментам — к Ольге."
+    },
+    {
+      "id": "kb-02", "space": "space-analytics", "folder": "f-process", "type": "article", "status": "Published",
+      "title": "Отгулы, отпуск и больничный: как оформить", "author_id": "u-kovalev", "created_at": "2026-01-15", "updated_at": "2026-09-02", "test_instruction": true,
+      "body": "Тестовая инструкция прототипа. Отгул оформляется в сервисе отсутствий не позже чем за 2 рабочих дня; согласует руководитель отдела. Отпуск — не позже чем за 14 дней. Больничный — в день открытия, сообщить бадди и руководителю. После подачи заявки приходит номер и статус «на согласовании»."
+    },
+    {
+      "id": "kb-03", "space": "space-analytics", "folder": "f-dwh", "type": "article", "status": "Published",
+      "title": "Витрины DWH: обзор для новичков", "author_id": "u-orlov", "created_at": "2025-11-10", "updated_at": "2026-10-28", "test_instruction": false,
+      "body": "Витрина — подготовленная таблица в хранилище, собранная из сырых событий под конкретную задачу. Основные витрины отдела: ads_mart (объявления), user_cohorts (когорты пользователей), funnel_daily (воронки). Витрина объявлений лежит в схеме ads_mart, обновляется раз в сутки в 06:00."
+    },
+    {
+      "id": "kb-04", "space": "space-analytics", "folder": "f-dwh", "type": "article", "status": "Published",
+      "title": "Витрина объявлений ads_mart: поля и обновление", "author_id": "u-orlov", "created_at": "2026-02-03", "updated_at": "2026-10-28", "test_instruction": false,
+      "body": "Ключевые поля: ad_id, category_id, region_id, created_dt, views, contacts. Данные за сутки появляются к 06:00 следующего дня. Для свежих данных за сегодня используйте сырые события, а не витрину."
+    },
+    {
+      "id": "kb-05", "space": "space-analytics", "folder": "f-glossary", "type": "glossary", "status": "Published",
+      "title": "Глоссарий отдела", "author_id": "u-belova", "created_at": "2025-09-01", "updated_at": "2026-10-01", "test_instruction": false,
+      "body": "Витрина — подготовленная таблица под задачу. Когорта — группа пользователей с общей датой первого действия. MAU — уникальные активные пользователи за 30 дней. Гардрейл — метрика, которая не должна ухудшиться в эксперименте. Сплит — разбиение аудитории на группы эксперимента."
+    },
+    {
+      "id": "kb-06", "space": "space-analytics", "folder": "f-dwh", "type": "article", "status": "Published",
+      "title": "Как проверить свежесть и полноту витрины", "author_id": "u-orlov", "created_at": "2026-05-12", "updated_at": "2026-10-27", "test_instruction": false,
+      "body": "Перед расчётом проверьте дату последней загрузки в таблице load_log и число строк за вчера по сравнению со средним за неделю. Отклонение больше 20% — повод написать в канал качества данных."
+    },
+    {
+      "id": "kb-07", "space": "space-analytics", "folder": "f-metrics", "type": "article", "status": "Published",
+      "title": "Черновик: дашборд удержания пользователей", "author_id": "u-lebedeva", "created_at": "2024-02-14", "updated_at": "2024-03-01", "test_instruction": false,
+      "body": "Набросок дашборда удержания: метрики D1, D7, D30. Расчёт когорт не описан, страница не обновлялась. Используется как слабый сигнал маршрутизации на Наталью (SC-08)."
+    },
+    {
+      "id": "kb-08", "space": "space-analytics", "folder": "f-ab", "type": "article", "status": "Published",
+      "title": "A/B-платформа: как завести эксперимент", "author_id": "u-smirnova", "created_at": "2025-12-01", "updated_at": "2026-10-15", "test_instruction": false,
+      "body": "Эксперимент заводится в A/B-платформе: гипотеза, целевая метрика, гардрейлы, доля трафика. До запуска нужен расчёт размера выборки и согласование с Ольгой Смирновой. Длительность для разных уровней трафика в этой статье не описана."
+    },
+    {
+      "id": "kb-09", "space": "space-analytics", "folder": "f-ab", "type": "article", "status": "Published",
+      "title": "Метрики-гардрейлы в экспериментах", "author_id": "u-smirnova", "created_at": "2026-03-20", "updated_at": "2026-09-30", "test_instruction": false,
+      "body": "Гардрейлы отдела: число контактов на объявление, доля жалоб, время загрузки карточки. Если гардрейл ухудшился статистически значимо, эксперимент не раскатывается, даже если целевая метрика выросла."
+    },
+    {
+      "id": "kb-10", "space": "space-analytics", "folder": "f-metrics", "type": "article", "status": "Published",
+      "title": "Дашборды отдела в Redash: где что лежит", "author_id": "u-lebedeva", "created_at": "2026-04-01", "updated_at": "2026-10-10", "test_instruction": false,
+      "body": "Папка «Объявления» — основные продуктовые дашборды. Папка «Эксперименты» — результаты A/B. Папка «Песочница» — для черновиков стажёров. Публиковать в основные папки можно после ревью бадди."
+    },
+    {
+      "id": "kb-11", "space": "space-analytics", "folder": "f-start", "type": "article", "status": "Published",
+      "title": "Какие доступы нужны аналитику и как их запросить", "author_id": "u-belova", "created_at": "2026-01-20", "updated_at": "2026-10-05", "test_instruction": true,
+      "body": "Тестовая инструкция прототипа. Неделя 1: пространство отдела в базе знаний, Redash. Неделя 2: витрины DWH на чтение. Месяц 1: A/B-платформа на чтение. Заявки подаются в сервис доступов, согласует руководитель отдела, обычно за 1 рабочий день."
+    },
+    {
+      "id": "kb-12", "space": "space-analytics", "folder": "f-process", "type": "article", "status": "Published",
+      "title": "Шаблон еженедельного отчёта", "author_id": "u-belova", "created_at": "2025-10-01", "updated_at": "2026-08-15", "test_instruction": false,
+      "body": "Отчёт по пятницам: три ключевые метрики раздела, что изменилось, гипотезы. Шаблон лежит в папке «Отчёты» в Redash."
+    },
+    {
+      "id": "kb-13", "space": "space-analytics", "folder": "f-process", "type": "article", "status": "Published",
+      "title": "Встречи и ритуалы отдела", "author_id": "u-belova", "created_at": "2025-09-01", "updated_at": "2026-09-01", "test_instruction": false,
+      "body": "Синк отдела — понедельник 12:00. Ревью экспериментов — пятница 14:00. 1:1 стажёра с бадди — раз в неделю. Вопросы, которые копятся, можно приносить на 1:1."
+    },
+    {
+      "id": "kb-14", "space": "space-analytics", "folder": "f-start", "type": "qa", "status": "Published",
+      "title": "Как получить доступ к Redash", "author_id": "u-belova", "created_at": "2025-06-10", "updated_at": "2025-06-10", "test_instruction": false,
+      "body": "Подай заявку в сервис доступов, система Redash, роль viewer. Согласует руководитель.",
+      "duplicate_group": "dup-redash"
+    },
+    {
+      "id": "kb-15", "space": "space-analytics", "folder": "f-metrics", "type": "qa", "status": "Published",
+      "title": "Доступ в Redash для новичков", "author_id": "u-lebedeva", "created_at": "2026-02-18", "updated_at": "2026-02-18", "test_instruction": false,
+      "body": "Чтобы смотреть дашборды, нужна роль viewer в Redash. Запрос — через сервис доступов, одобряет Андрей Ковалёв. Для публикации дашбордов нужна роль editor после ревью.",
+      "duplicate_group": "dup-redash"
+    },
+    {
+      "id": "kb-16", "space": "space-analytics", "folder": "f-metrics", "type": "article", "status": "Published",
+      "title": "Что такое MAU и как мы его считаем", "author_id": "u-orlov", "created_at": "2026-01-10", "updated_at": "2026-07-01", "test_instruction": false,
+      "body": "MAU — уникальные пользователи хотя бы с одним действием за скользящие 30 дней. Считается по витрине user_cohorts, боты исключаются по флагу is_bot."
+    },
+    {
+      "id": "kb-17", "space": "space-analytics", "folder": "f-metrics", "type": "article", "status": "Published",
+      "title": "Конверсия карточки объявления в просмотр контактов", "author_id": "u-lebedeva", "created_at": "2026-03-05", "updated_at": "2026-09-12", "test_instruction": false,
+      "body": "Конверсия = просмотры контактов / просмотры карточки за день по ads_mart. Учитываются только активные объявления.",
+      "similar_group": "sim-conversion"
+    },
+    {
+      "id": "kb-18", "space": "space-analytics", "folder": "f-metrics", "type": "article", "status": "Published",
+      "title": "Конверсия объявления в сделку", "author_id": "u-orlov", "created_at": "2026-04-22", "updated_at": "2026-09-20", "test_instruction": false,
+      "body": "Конверсия в сделку считается по событию подтверждённой сделки, источник — витрина funnel_daily. Это другая метрика, чем конверсия в просмотр контактов.",
+      "similar_group": "sim-conversion"
+    },
+    {
+      "id": "kb-19", "space": "space-analytics", "folder": "f-start", "type": "article", "status": "Published",
+      "title": "Песочница для стажёров: правила", "author_id": "u-belova", "created_at": "2026-02-01", "updated_at": "2026-10-01", "test_instruction": false,
+      "body": "В папке «Песочница» в Redash можно экспериментировать с запросами. Не используйте продовые дашборды для черновиков."
+    },
+    {
+      "id": "kb-R1", "space": "space-dwh-pii", "folder": "f-pii", "type": "article", "status": "Published",
+      "title": "Витрина клиентов с контактными данными", "author_id": null, "created_at": "2026-05-01", "updated_at": "2026-10-01", "test_instruction": false,
+      "body": "[Содержимое недоступно пространству аналитики. В тестах проверяется, что поиск от имени стажёра не возвращает эту страницу и ИИ её не упоминает.]"
+    }
+  ],
+  "expected_after_scenarios": [
+    { "id": "kb-20", "created_in": "SC-04", "type": "qa", "folder": "f-dwh", "title": "Почему конверсия в дашборде отличается от выгрузки из DWH", "author_id": "u-orlov", "source_question": "q-02", "used_in": "SC-12" },
+    { "id": "kb-21", "created_in": "SC-07", "type": "qa", "folder": "f-start", "title": "Где взять шаблон презентации для экватора", "author_id": "u-belova", "source_question": "q-04" },
+    { "id": "kb-22", "created_in": "SC-10", "type": "meeting", "folder": "f-ab", "title": "Длительность A/B-теста при низком трафике", "author_id": "u-smirnova", "source_question": "q-03", "recording_meeting": "MTG-301" },
+    { "id": "kb-23", "created_in": "SC-08", "type": "qa", "folder": "f-metrics", "title": "Как посчитать retention по когортам", "author_id": "u-orlov", "source_question": "q-05" }
+  ],
+  "maintenance_seed": {
+    "duplicate_pairs": [
+      { "id": "dp-01", "pages": ["kb-14", "kb-15"], "expected_decision": "merge", "proposed_title": "Доступ к Redash: роли viewer и editor" },
+      { "id": "dp-02", "pages": ["kb-17", "kb-18"], "expected_decision": "not_duplicate", "reason": "Разные метрики: просмотр контактов и сделка" }
+    ],
+    "open_questions": [
+      { "id": "q-seed-open", "text": "Как в A/B-платформе исключить ботов из выборки?", "asked_by": "u-sokolov", "status": "Open", "reason": "Встреча без записи, ответ текстом не дан (как в SC-11)", "expected_assignee": "u-smirnova" }
+    ],
+    "unconfirmed_drafts": [
+      { "id": "kb-draft-01", "title": "Где лежит шаблон еженедельного отчёта в Redash", "author_id": "u-lebedeva", "created_at": "2026-11-03", "status": "OnReview", "note": "Не подтверждён 6 рабочих дней → в «Поддержке базы» (BR-33)" }
+    ],
+    "next_scheduled_check": "2027-01-15"
+  }
+}
