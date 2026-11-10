@@ -347,7 +347,8 @@ function renderQuestions() {
   for (const q of qs.slice(0, 3)) {
     const row = el('div', 'question');
     const body = el('div');
-    body.append(el('p', '', questionText(q)), el('small', '', `${q.addressee}${q.urgent ? ' · срочно' : ''}`));
+    const short = questionText(q).length > 90 ? questionText(q).slice(0, 90) + '…' : questionText(q);
+    body.append(el('p', '', short), el('small', '', `${q.addressee}${q.urgent ? ' · срочно' : ''}`));
     row.append(body, badge(q.status));
     row.onclick = () => openQuestion(q);
     day.appendChild(row);
@@ -522,6 +523,45 @@ function renderDraft(d) {
   return box;
 }
 
+// Ответ модели — с Markdown (**жирный**, `код`, списки, цитаты). Рисуем через DOM-узлы, без innerHTML:
+// текст модели не может вставить в страницу свою разметку или скрипт.
+function inlineMd(text) {
+  const frag = document.createDocumentFragment();
+  const re = /\*\*(.+?)\*\*|`([^`]+)`/g;
+  let last = 0;
+  let m;
+  while ((m = re.exec(text))) {
+    if (m.index > last) frag.appendChild(document.createTextNode(text.slice(last, m.index)));
+    frag.appendChild(m[1] !== undefined ? el('b', '', m[1]) : el('code', '', m[2]));
+    last = re.lastIndex;
+  }
+  if (last < text.length) frag.appendChild(document.createTextNode(text.slice(last)));
+  return frag;
+}
+
+function renderMarkdown(text) {
+  const box = el('div', 'bubble bot md');
+  let list = null;
+  for (const raw of (text || '').split('\n')) {
+    const line = raw.trimEnd();
+    const item = line.match(/^\s*(?:[-*•]|\d+[.)])\s+(.*)$/);
+    if (item) {
+      if (!list) { list = el('ul'); box.appendChild(list); }
+      const li = el('li');
+      li.appendChild(inlineMd(item[1]));
+      list.appendChild(li);
+      continue;
+    }
+    list = null;
+    if (!line.trim()) continue;
+    const quote = line.match(/^>\s?(.*)$/);
+    const p = el(quote ? 'blockquote' : 'p');
+    p.appendChild(inlineMd(quote ? quote[1] : line.replace(/^#{1,6}\s+/, '')));
+    box.appendChild(p);
+  }
+  return box;
+}
+
 function renderSource(s) {
   const box = el('div', 'source');
   if (s.label) box.appendChild(el('span', 'badge amber', s.label));
@@ -570,7 +610,7 @@ async function ask(text) {
     return;
   }
   const r = res.data;
-  addToChat(el('div', 'bubble bot', r.text));
+  addToChat(renderMarkdown(r.text));
   (r.sources || []).slice(0, 2).forEach((s) => addToChat(renderSource(s)));
   if ((r.sources || []).length) addToChat(feedbackRow(text));
   (r.drafts || []).forEach((d) => addToChat(renderDraft(d)));

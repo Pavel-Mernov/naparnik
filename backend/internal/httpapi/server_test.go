@@ -188,8 +188,8 @@ func TestTodayUsersAndStatic(t *testing.T) {
 	}
 	rec := httptest.NewRecorder()
 	h.ServeHTTP(rec, httptest.NewRequest("GET", "/", nil))
-	if rec.Code != 200 || !strings.Contains(rec.Body.String(), "buddy") {
-		t.Fatalf("фронт не отдаётся: %d", rec.Code)
+	if rec.Code != 200 || !strings.Contains(rec.Body.String(), "buddy") || rec.Header().Get("Cache-Control") != "no-cache" {
+		t.Fatalf("фронт не отдаётся или кэшируется: %d %q", rec.Code, rec.Header().Get("Cache-Control"))
 	}
 }
 

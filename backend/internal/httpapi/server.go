@@ -37,7 +37,12 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/users", s.users)
 	mux.HandleFunc("GET /api/kb/pages", s.auth(s.kbPages))
 	if s.StaticDir != "" {
-		mux.Handle("GET /", http.FileServer(http.Dir(s.StaticDir)))
+		files := http.FileServer(http.Dir(s.StaticDir))
+		mux.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) {
+			// no-cache: браузер каждый раз сверяется с сервером — после обновления кода не остаётся старая версия
+			w.Header().Set("Cache-Control", "no-cache")
+			files.ServeHTTP(w, r)
+		})
 	}
 	return mux
 }
