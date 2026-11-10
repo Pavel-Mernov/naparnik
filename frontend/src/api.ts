@@ -42,8 +42,10 @@ export type Question = {
   asked_by: string;
   addressee_id: string;
   addressee: string;
+  title?: string;
   text?: string;
   text_hidden?: boolean;
+  answer?: string;
   urgent: boolean;
   status: string;
 };
@@ -55,6 +57,7 @@ export type RequestItem = {
   date?: string;
   system?: string;
   title?: string;
+  source?: string;
   employee_id: string;
   approver_id: string;
   status: string;
@@ -76,7 +79,7 @@ export type TeamOverview = {
 
 export type Services = {
   absence: { reason_codes: Array<{ code: string; text: string }> };
-  access: { reason_codes: Array<{ code: string; text: string }> };
+  access: { reason_codes: Array<{ code: string; text: string }>; systems?: Array<{ system: string; title: string; status: string }> };
 };
 
 export type KbPage = {
@@ -85,6 +88,7 @@ export type KbPage = {
   type: string;
   title: string;
   excerpt: string;
+  body?: string;
   author: string;
   updated_at: string;
   test_instruction: boolean;

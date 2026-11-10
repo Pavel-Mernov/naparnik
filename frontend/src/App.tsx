@@ -11,7 +11,6 @@ import {
   CardContent,
   Checkbox,
   Chip,
-  CircularProgress,
   Container,
   CssBaseline,
   Dialog,
@@ -19,7 +18,6 @@ import {
   DialogContent,
   DialogTitle,
   Divider,
-  Drawer,
   FormControl,
   IconButton,
   InputLabel,
@@ -47,7 +45,6 @@ import {
   AutoAwesomeRounded,
   CalendarMonthRounded,
   CheckCircleRounded,
-  CloseRounded,
   DescriptionRounded,
   EventAvailableRounded,
   FolderRounded,
@@ -56,11 +53,11 @@ import {
   MenuBookRounded,
   NotificationsNoneRounded,
   OpenInNewRounded,
-  SendRounded,
   TaskAltRounded,
 } from "@mui/icons-material";
 import avitoLogo from "../avito-logo.svg";
 import mascotCat from "../mascot-cat.png";
+import { ChatDrawer, Markdown, type ChatMessage, type Lookup } from "./chat";
 import {
   api,
   ApiError,
@@ -118,7 +115,6 @@ type DataState = {
   managedPlans: Array<{ id: string; name: string; plan?: PlanData }>;
   services?: Services;
 };
-type ChatMessage = { role: "user" | "assistant"; text: string; reply?: ChatReply };
 
 const viewItems: Array<{ value: View; label: string; icon: ReactElement }> = [
   { value: "day", label: "Мой день", icon: <HomeRounded /> },
@@ -239,7 +235,7 @@ function App() {
         nextRole === "intern" || nextRole === "lead" ? api<{ requests: RequestItem[] }>(login, "/api/requests", options) : undefined,
         nextRole === "lead" ? api<{ ok: boolean; data: TeamOverview }>(login, "/api/dashboard/team", options).then(unwrap) : undefined,
         nextRole === "buddy" ? Promise.all(me.interns.map(async (intern) => ({ ...intern, plan: await optionalPlan(intern.id) }))) : [],
-        nextRole === "lead" ? api<Services>(login, "/api/services", options) : undefined,
+        nextRole === "lead" || nextRole === "intern" ? api<Services>(login, "/api/services", options) : undefined,
       ]);
       if (!current()) return;
       setData({ me, users: usersPayload.users, today, plan, questions: questions.questions,
@@ -254,6 +250,9 @@ function App() {
 
   useEffect(() => { void load(); return () => { loadController.current?.abort(); }; }, [load]);
   useEffect(() => () => { actions.current.forEach((controller) => controller.abort()); }, []);
+  // Чат на экране начинается с чистого листа — и разговор с агентом на сервере тоже.
+  // Иначе после перезагрузки или смены учётки модель продолжает невидимый старый диалог.
+  useEffect(() => { void api(login, "/api/chat/reset", { method: "POST", body: "{}" }).catch(() => undefined); }, [login]);
 
   const switchUser = (nextLogin: string) => {
     if (nextLogin === account.current) return;
@@ -272,17 +271,18 @@ function App() {
     setLoading(true); setLogin(nextLogin);
   };
 
-  const sendChat = async () => {
-    const text = chatText.trim();
+  const sendChat = async (retry?: string) => {
+    const text = (retry ?? chatText).trim();
     if (!text || chatLoading || account.current !== login) return;
     const owner = login, epoch = generation.current;
     const controller = new AbortController(); actions.current.add(controller);
-    setChatText(""); setMessages((current) => [...current, { role: "user", text }]); setChatLoading(true);
+    if (!retry) setChatText("");
+    setMessages((current) => [...current, { role: "user", text }]); setChatLoading(true);
     try {
       const reply = await api<ChatReply>(owner, "/api/chat/messages", { method: "POST", body: JSON.stringify({ text }), signal: controller.signal });
-      if (isCurrent(owner, epoch)) setMessages((current) => [...current, { role: "assistant", text: reply.text, reply }]);
+      if (isCurrent(owner, epoch)) setMessages((current) => [...current, { role: "assistant", text: reply.text, reply, retryText: reply.retry ? text : undefined }]);
     } catch (e) {
-      if (isCurrent(owner, epoch)) setMessages((current) => [...current, { role: "assistant", text: e instanceof Error ? e.message : "Не получилось ответить" }]);
+      if (isCurrent(owner, epoch)) setMessages((current) => [...current, { role: "assistant", text: e instanceof Error ? e.message : "Не получилось ответить", retryText: text }]);
     } finally {
       actions.current.delete(controller);
       if (isCurrent(owner, epoch)) setChatLoading(false);
@@ -307,7 +307,11 @@ function App() {
     if (!internId) return;
     await perform(`/api/plan-steps/${step.id}`, "PATCH", { intern_id: internId }, "Шаг отмечен выполненным");
   };
-  const confirmDraft = async (id: string) => { await perform(`/api/drafts/${id}/confirm`, "POST", {}, "Действие подтверждено"); };
+  const look: Lookup = {
+    userName: (id) => (data?.users ?? users).find((u) => u.id === id)?.name ?? id,
+    systemTitle: (id) => data?.services?.access.systems?.find((x) => x.system === id)?.title ?? id,
+    stepTitle: (id) => data?.plan?.steps.find((x) => x.id === id)?.title ?? id,
+  };
   const decideRequest = async (request: RequestItem, decision: "approve" | "reject") => {
     if (role !== "lead" || deciding) return;
     const owner = login, epoch = generation.current;
@@ -333,7 +337,7 @@ function App() {
               <Box component="img" src={avitoLogo} alt="Avito" sx={{ width: { xs: 82, md: 104 }, height: 42, objectFit: "contain" }} />
               <Divider orientation="vertical" flexItem sx={{ my: 2.2 }} />
               <Typography fontWeight={800} sx={{ display: { xs: "none", sm: "block" }, whiteSpace: "nowrap", fontSize: 22 }}>Start · Напарник</Typography>
-              <Tabs value={data ? view : false} onChange={(_, value: View) => setView(value)} variant="scrollable" scrollButtons={false} sx={{ flex: { xs: "1 0 100%", md: 1 }, order: { xs: 1, md: 0 }, minWidth: 0, "& .MuiTabs-indicator": { bgcolor: "#000", height: 3 }, "& .MuiTab-root": { minWidth: 76, px: { xs: 1, md: 2 }, color: "#161616" }, "& .Mui-selected": { color: "#000 !important", fontWeight: 800 } }}>
+              <Tabs value={data ? view : false} onChange={(_, value: View) => setView(value)} variant="scrollable" scrollButtons="auto" allowScrollButtonsMobile sx={{ flex: { xs: "1 0 100%", md: 1 }, order: { xs: 1, md: 0 }, minWidth: 0, "& .MuiTabs-indicator": { bgcolor: "#000", height: 3 }, "& .MuiTab-root": { minWidth: 76, px: { xs: 1, md: 2 }, color: "#161616" }, "& .Mui-selected": { color: "#000 !important", fontWeight: 800 } }}>
                 {visibleItems.map((item) => <Tab key={item.value} value={item.value} label={item.label} icon={item.icon} iconPosition="start" />)}
               </Tabs>
               {role && role !== "intern" && <Tooltip title="Спросить Напарника"><IconButton aria-label="Спросить Напарника" onClick={() => setChatOpen(true)}><ForumRounded /></IconButton></Tooltip>}
@@ -371,10 +375,11 @@ function App() {
           </IconButton>
         </Tooltip>}
 
-        <ChatDrawer open={chatOpen} onClose={() => setChatOpen(false)} text={chatText} setText={setChatText} messages={messages} loading={chatLoading} onSend={sendChat} onConfirm={confirmDraft} />
+        <ChatDrawer open={chatOpen} onClose={() => setChatOpen(false)} text={chatText} setText={setChatText} messages={messages} loading={chatLoading}
+          onSend={(retry) => void sendChat(retry)} login={login} look={look} onAction={() => void load()} />
         <Dialog open={Boolean(selectedPage)} onClose={() => setSelectedPage(null)} maxWidth="sm" fullWidth>
           <DialogTitle>{selectedPage?.title}</DialogTitle>
-          <DialogContent><Typography color="text.secondary" mb={2}>{selectedPage?.author} · {selectedPage?.updated_at}</Typography><Typography>{selectedPage?.excerpt}</Typography>{selectedPage?.test_instruction && <Chip label="Тестовая инструкция" color="warning" size="small" sx={{ mt: 3 }} />}</DialogContent>
+          <DialogContent><Typography color="text.secondary" mb={2}>{selectedPage?.author} · {selectedPage?.updated_at}</Typography>{selectedPage && <Markdown text={selectedPage.body || selectedPage.excerpt} />}{selectedPage?.test_instruction && <Chip label="Тестовая инструкция" color="warning" size="small" sx={{ mt: 3 }} />}</DialogContent>
           <DialogActions><Button onClick={() => setSelectedPage(null)}>Закрыть</Button></DialogActions>
         </Dialog>
         <Dialog open={Boolean(rejection) && role === "lead"} onClose={() => !deciding && setRejection(null)} fullWidth maxWidth="sm">
@@ -430,7 +435,7 @@ const DayView = ({ data, onOpenChat, onMarkDone }: { data: DataState; onOpenChat
       </Stack>
       <Stack spacing={3}>
         <Card sx={{ bgcolor: "#eaf2ff" }}><CardContent sx={{ p: 3 }}><Typography variant="h5" fontWeight={800} mb={2}>Ближайшее</Typography>{events.length ? events.map((event) => <Stack key={`${event.start}-${event.title}`} direction="row" spacing={2} py={1.5}><Typography variant="h5" color="primary" fontWeight={800}>{event.start}</Typography><Typography fontWeight={700}>{event.title}</Typography></Stack>) : <Typography color="text.secondary">Событий нет</Typography>}</CardContent></Card>
-        <Card><CardContent sx={{ p: 3 }}><Typography variant="h5" fontWeight={800} mb={1}>Вопросы</Typography>{data.questions.slice(0, 3).map((question) => <Stack key={question.id} direction="row" justifyContent="space-between" gap={1} py={1.5} borderTop="1px solid #eee"><Box><Typography fontWeight={700}>{question.text || "Текст скрыт"}</Typography><Typography variant="caption" color="text.secondary">{question.addressee}</Typography></Box><StatusChip status={question.status} /></Stack>)}{!data.questions.length && <Typography color="text.secondary">Пока нет вопросов людям</Typography>}</CardContent></Card>
+        <Card><CardContent sx={{ p: 3 }}><Typography variant="h5" fontWeight={800} mb={1}>Вопросы</Typography>{data.questions.slice(0, 3).map((question) => <Stack key={question.id} direction="row" justifyContent="space-between" gap={1} py={1.5} borderTop="1px solid #eee"><Box><Typography fontWeight={700}>{question.text_hidden ? "Текст скрыт" : question.title || question.text}</Typography><Typography variant="caption" color="text.secondary">{question.addressee}</Typography></Box><StatusChip status={question.status} /></Stack>)}{!data.questions.length && <Typography color="text.secondary">Пока нет вопросов людям</Typography>}</CardContent></Card>
       </Stack>
     </Box>
   </>;
@@ -445,7 +450,7 @@ const PlanView = ({ plan, week, title, onMarkDone }: { plan?: PlanData; week?: n
 
 const QuestionsView = ({ data, onAsk }: { data: DataState; onAsk: () => void }) => <>
   <Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" alignItems={{ sm: "end" }} mb={4}><SectionTitle eyebrow={`${data.questions.length} вопросов`} title={roleLabel(primaryRole(data.me.roles), "questions")} text="Вопросы и ответы, доступные твоей роли." />{primaryRole(data.me.roles) === "intern" && <Button variant="contained" size="large" startIcon={<ForumRounded />} onClick={onAsk}>Задать вопрос</Button>}</Stack>
-  <Stack spacing={2}>{data.questions.map((question) => <Card key={question.id}><CardContent sx={{ p: 3 }}><Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" gap={2}><Box><Stack direction="row" gap={1} alignItems="center"><Typography variant="h6" fontWeight={800}>{question.text || "Текст вопроса скрыт"}</Typography>{question.urgent && <Chip label="Срочно" color="error" size="small" />}</Stack><Typography color="text.secondary">Адресат: {question.addressee}</Typography></Box><StatusChip status={question.status} /></Stack></CardContent></Card>)}{!data.questions.length && <EmptyState>{primaryRole(data.me.roles) === "intern" ? "Спроси Напарника — он сначала проверит базу" : "Входящих вопросов пока нет"}</EmptyState>}</Stack>
+  <Stack spacing={2}>{data.questions.map((question) => <Card key={question.id}><CardContent sx={{ p: 3 }}><Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" gap={2}><Box><Stack direction="row" gap={1} alignItems="center"><Typography variant="h6" fontWeight={800}>{question.text_hidden ? "Текст вопроса скрыт настройками стажёра" : question.title || question.text}</Typography>{question.urgent && <Chip label="Срочно" color="error" size="small" />}</Stack><Typography color="text.secondary">Адресат: {question.addressee}</Typography>{question.answer && <Paper sx={{ p: 2, mt: 1.5, bgcolor: "#e4f6eb" }}><Typography fontWeight={800}>Ответ: {question.addressee}</Typography><Markdown text={question.answer} /></Paper>}</Box><StatusChip status={question.status} /></Stack></CardContent></Card>)}{!data.questions.length && <EmptyState>{primaryRole(data.me.roles) === "intern" ? "Спроси Напарника — он сначала проверит базу" : "Входящих вопросов пока нет"}</EmptyState>}</Stack>
   </>;
 
 const KnowledgeView = ({ data, onOpen }: { data: DataState; onOpen: (page: KbPage) => void }) => <>
@@ -457,10 +462,8 @@ const RequestsView = ({ data, onCreate, onApprove, onReject, deciding }: { data:
   const isLead = primaryRole(data.me.roles) === "lead";
   return <>
     <Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" alignItems={{ sm: "end" }} mb={4}><SectionTitle eyebrow="Корпоративные сервисы" title={isLead ? "Согласование заявок" : "Мои заявки"} text={isLead ? "Заявки стажёров, по которым ты принимаешь решение." : "Сначала черновик и проверка, затем подтверждение и квитанция."} />{!isLead && <Button variant="contained" size="large" startIcon={<EventAvailableRounded />} onClick={onCreate}>Новая заявка</Button>}</Stack>
-    <Stack spacing={2}>{data.requests.map((request) => <Card key={request.id}><CardContent sx={{ p: 3 }}><Stack direction="row" alignItems="center" spacing={2}><Avatar sx={{ bgcolor: request.kind === "absence" ? "#fff3d6" : "#e8f6ff", color: "text.primary" }}>{request.kind === "absence" ? <CalendarMonthRounded /> : <OpenInNewRounded />}</Avatar><Box flex={1}><Typography fontWeight={800}>{request.kind === "absence" ? `${absenceLabel(request.type)} · ${request.date}` : `Доступ: ${request.title || request.system}`}</Typography>{isLead && <Typography>{data.users.find((u) => u.id === request.employee_id)?.name ?? "Стажёр"}</Typography>}<Typography variant="body2" color="text.secondary">{request.id} · {request.created_at}</Typography></Box><StatusChip status={request.status} /></Stack>{isLead && request.approver_id === data.me.id && request.status === "pending" && <Stack direction="row" gap={1} mt={2}><Button disabled={deciding} variant="contained" onClick={() => onApprove(request)}>{request.kind === "access" ? "Выдать доступ" : "Согласовать"}</Button><Button disabled={deciding} color="error" onClick={() => onReject(request)}>Отклонить</Button></Stack>}</CardContent></Card>)}{!data.requests.length && <EmptyState>{isLead ? "Заявок на согласование пока нет" : "Заявок пока нет"}</EmptyState>}</Stack>
+    <Stack spacing={2}>{data.requests.map((request) => <Card key={request.id}><CardContent sx={{ p: 3 }}><Stack direction="row" alignItems="center" spacing={2}><Avatar sx={{ bgcolor: request.kind === "absence" ? "#fff3d6" : "#e8f6ff", color: "text.primary" }}>{request.kind === "absence" ? <CalendarMonthRounded /> : <OpenInNewRounded />}</Avatar><Box flex={1}><Typography fontWeight={800}>{request.kind === "absence" ? `${absenceLabel(request.type)} · ${request.date ? new Date(`${request.date}T12:00:00`).toLocaleDateString("ru-RU", { day: "numeric", month: "long" }) : ""}` : `Доступ: ${request.title || request.system}`}</Typography>{isLead && <Typography>{data.users.find((u) => u.id === request.employee_id)?.name ?? "Стажёр"}</Typography>}<Typography variant="body2" color="text.secondary">{request.id} · {data.users.find((u) => u.id === request.employee_id)?.name ?? request.employee_id} · {request.source === "self" ? "оформлена сам" : "через Напарника"} · {new Date(request.created_at).toLocaleString("ru-RU", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</Typography></Box><StatusChip status={request.status} /></Stack>{isLead && request.approver_id === data.me.id && request.status === "pending" && <Stack direction="row" gap={1} mt={2}><Button disabled={deciding} variant="contained" onClick={() => onApprove(request)}>{request.kind === "access" ? "Выдать доступ" : "Согласовать"}</Button><Button disabled={deciding} color="error" onClick={() => onReject(request)}>Отклонить</Button></Stack>}</CardContent></Card>)}{!data.requests.length && <EmptyState>{isLead ? "Заявок на согласование пока нет" : "Заявок пока нет"}</EmptyState>}</Stack>
   </>;
 };
-
-const ChatDrawer = ({ open, onClose, text, setText, messages, loading, onSend, onConfirm }: { open: boolean; onClose: () => void; text: string; setText: (text: string) => void; messages: ChatMessage[]; loading: boolean; onSend: () => void; onConfirm: (id: string) => void }) => <Drawer anchor="right" open={open} onClose={onClose} PaperProps={{ sx: { width: { xs: "100%", sm: 440 }, borderRadius: { sm: "28px 0 0 28px" } } }}><Stack height="100%"><Stack direction="row" alignItems="center" spacing={1.5} sx={{ p: 2.5, bgcolor: "#f0f6ff" }}><Avatar src={mascotCat} sx={{ width: 58, height: 58, bgcolor: "#dff1ff" }} /><Box flex={1}><Typography fontWeight={800}>Напарник</Typography><Typography variant="caption" color="success.main">● рядом и готов помочь</Typography></Box><IconButton aria-label="Закрыть чат" onClick={onClose}><CloseRounded /></IconButton></Stack><Stack spacing={2} sx={{ p: 2.5, flex: 1, overflowY: "auto" }}>{messages.map((message, index) => <Box key={`${message.role}-${index}`} alignSelf={message.role === "user" ? "flex-end" : "flex-start"} maxWidth="88%"><Paper sx={{ p: 1.5, borderRadius: 4, bgcolor: message.role === "user" ? "primary.main" : "#f2f2f2", color: message.role === "user" ? "white" : "text.primary" }}><Typography>{message.text}</Typography></Paper>{message.reply?.sources.map((source) => <Paper variant="outlined" key={source.page_id} sx={{ p: 1.5, mt: 1, borderRadius: 3 }}><Typography fontWeight={800}>{source.title}</Typography><Typography variant="caption" color="text.secondary">{source.author} · {source.updated_at}</Typography></Paper>)}{message.reply?.drafts.map((draft) => <Paper key={draft.id} sx={{ p: 1.5, mt: 1, borderRadius: 3, bgcolor: "#fff6d8" }}><Typography fontWeight={800}>Черновик действия</Typography><Typography variant="caption">{draft.tool}</Typography><Button fullWidth variant="contained" sx={{ mt: 1 }} onClick={() => void onConfirm(draft.id)}>Подтвердить</Button></Paper>)}</Box>)}{loading && <CircularProgress size={24} />}</Stack><Stack direction="row" spacing={1} sx={{ p: 2, borderTop: "1px solid #eee" }}><TextField fullWidth multiline maxRows={4} value={text} onChange={(event) => setText(event.target.value)} placeholder="Спроси о команде или задачах…" onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); void onSend(); } }} /><IconButton aria-label="Отправить сообщение" color="primary" onClick={() => void onSend()} disabled={!text.trim() || loading}><SendRounded /></IconButton></Stack></Stack></Drawer>;
 
 export default App;

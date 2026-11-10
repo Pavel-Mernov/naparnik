@@ -234,3 +234,34 @@ func TestErrorResetsConversation(t *testing.T) {
 		t.Fatal("после ошибки модели разговор сбрасывается")
 	}
 }
+
+// Модель пообещала черновик, но не вызвала инструмент — агент один раз просит довести дело,
+// и стажёр получает черновик с кнопкой «Подтвердить».
+func TestPromisedDraftIsCreated(t *testing.T) {
+	base := newAgent(t, "stub_ok", time.Second)
+	promise := llm.Step{Text: "Проверил дату. Сейчас покажу черновик — проверь и подтверди."}
+	call := llm.Step{ToolCalls: []llm.ToolCall{{ID: "1", Name: "create_absence_request", Input: map[string]any{"type": "day_off", "date": "2026-11-17"}}}}
+	done := llm.Step{Text: "Черновик готов, нажми «Подтвердить»."}
+	a := New(base.Store, &scriptedProvider{steps: []llm.Step{promise, call, done}}, time.Second)
+	r := ask(t, a, "intern.sokolov", "Отгул 17 ноября, сделай за меня")
+	if len(r.Drafts) != 1 || r.Drafts[0].Tool != "create_absence_request" || r.Text != done.Text {
+		t.Fatalf("черновик не создан: %+v", r)
+	}
+	// обычный ответ без обещаний — без повторного запроса к модели
+	plain := New(base.Store, &scriptedProvider{steps: []llm.Step{{Text: "Отгул подают за 2 рабочих дня."}, call}}, time.Second)
+	if r := ask(t, plain, "intern.sokolov", "Как оформить отгул?"); len(r.Drafts) != 0 {
+		t.Fatalf("лишний черновик: %+v", r)
+	}
+	// у руководителя нет инструментов с подтверждением — не подталкиваем
+	if r := ask(t, New(base.Store, &scriptedProvider{steps: []llm.Step{promise, call}}, time.Second), "lead.kovalev", "?"); len(r.Drafts) != 0 {
+		t.Fatalf("руководитель: %+v", r)
+	}
+	for text, want := range map[string]bool{
+		"Черновик готов: отгул 17 ноября": true, "Подготовлю черновик заявки": true, "Нажми «Подтвердить»": true,
+		"Отгул подают за 2 рабочих дня": false, "Черновик плана утверждает руководитель": false,
+	} {
+		if promisesDraft(text) != want {
+			t.Errorf("%q: ожидалось %v", text, want)
+		}
+	}
+}

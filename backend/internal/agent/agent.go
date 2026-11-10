@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -129,17 +130,11 @@ func (a *Agent) Ask(ctx context.Context, login, text string) (Reply, error) {
 	c.turns++
 	a.mu.Unlock()
 	session := c.session
-	step, err := session.SendUser(ctx, text)
-	for round := 0; err == nil && len(step.ToolCalls) > 0; round++ {
-		if round == maxToolRounds {
-			step = llm.Step{Text: "Не получилось довести запрос до конца. Попробуй сформулировать иначе."}
-			break
-		}
-		results := make([]llm.ToolResult, 0, len(step.ToolCalls))
-		for _, call := range step.ToolCalls {
-			results = append(results, llm.ToolResult{Call: call, Content: a.handle(tc, call, &reply)})
-		}
-		step, err = session.SendToolResults(ctx, results)
+	step, err := a.run(ctx, session, tc, &reply, text)
+	// Модель иногда обещает «сейчас покажу черновик», но не вызывает инструмент — ход заканчивается
+	// пустым обещанием, и стажёру нечего подтверждать. Код замечает это и один раз просит довести дело.
+	if err == nil && len(reply.Drafts) == 0 && promisesDraft(step.Text) && canDraft(u) {
+		step, err = a.run(ctx, session, tc, &reply, draftNudge)
 	}
 	if err != nil {
 		// История могла оборваться посреди вызова инструментов — начинаем разговор заново.
@@ -187,6 +182,40 @@ func (a *Agent) handle(tc tools.Ctx, call llm.ToolCall, reply *Reply) string {
 	}
 	raw, _ := json.Marshal(res)
 	return string(raw)
+}
+
+// run — один ход: сообщение модели и цикл вызова инструментов до текстового ответа.
+func (a *Agent) run(ctx context.Context, session llm.Session, tc tools.Ctx, reply *Reply, text string) (llm.Step, error) {
+	step, err := session.SendUser(ctx, text)
+	for round := 0; err == nil && len(step.ToolCalls) > 0; round++ {
+		if round == maxToolRounds {
+			return llm.Step{Text: "Не получилось довести запрос до конца. Попробуй сформулировать иначе."}, nil
+		}
+		results := make([]llm.ToolResult, 0, len(step.ToolCalls))
+		for _, call := range step.ToolCalls {
+			results = append(results, llm.ToolResult{Call: call, Content: a.handle(tc, call, reply)})
+		}
+		step, err = session.SendToolResults(ctx, results)
+	}
+	return step, err
+}
+
+const draftNudge = "[Служебная заметка системы, не от стажёра] Ты написал про черновик, но не вызвал инструмент, " +
+	"поэтому черновика нет. Если данных хватает — вызови нужный инструмент (create_absence_request, request_access " +
+	"или send_question) прямо сейчас и коротко скажи, что черновик ждёт подтверждения. Если данных не хватает — задай один уточняющий вопрос."
+
+var promiseRe = regexp.MustCompile(`(?i)черновик[а-я]*\s+(готов|ниже|подготов|сейчас|покажу|ждёт|ждет)|(покажу|подготовлю|оформлю|соберу|сделаю)\s+(тебе\s+)?черновик|нажми\s+(кнопку\s+)?«?подтверд`)
+
+// promisesDraft — в ответе обещан черновик или кнопка подтверждения.
+func promisesDraft(text string) bool { return promiseRe.MatchString(text) }
+
+func canDraft(u *mockdata.User) bool {
+	for _, t := range tools.For(u) {
+		if t.Confirm {
+			return true
+		}
+	}
+	return false
 }
 
 // fallback — BR-70 и режим stub_error: модель недоступна → найденные фрагменты базы без пересказа.

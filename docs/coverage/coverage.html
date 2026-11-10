@@ -54,61 +54,61 @@
 		<div id="topbar">
 			<div id="nav">
 				<select id="files">
-
+				
 				<option value="file0">github.com/worker4556/naparnik/backend/cmd/buddy/main.go (90.0%)</option>
-
-				<option value="file1">github.com/worker4556/naparnik/backend/internal/agent/agent.go (96.7%)</option>
-
+				
+				<option value="file1">github.com/worker4556/naparnik/backend/internal/agent/agent.go (96.1%)</option>
+				
 				<option value="file2">github.com/worker4556/naparnik/backend/internal/agent/guard.go (100.0%)</option>
-
+				
 				<option value="file3">github.com/worker4556/naparnik/backend/internal/app/app.go (78.3%)</option>
-
+				
 				<option value="file4">github.com/worker4556/naparnik/backend/internal/app/dotenv.go (100.0%)</option>
-
-				<option value="file5">github.com/worker4556/naparnik/backend/internal/httpapi/server.go (97.2%)</option>
-
+				
+				<option value="file5">github.com/worker4556/naparnik/backend/internal/httpapi/server.go (94.4%)</option>
+				
 				<option value="file6">github.com/worker4556/naparnik/backend/internal/llm/anthropic.go (100.0%)</option>
-
+				
 				<option value="file7">github.com/worker4556/naparnik/backend/internal/llm/llm.go (100.0%)</option>
-
+				
 				<option value="file8">github.com/worker4556/naparnik/backend/internal/llm/openai.go (100.0%)</option>
-
+				
 				<option value="file9">github.com/worker4556/naparnik/backend/internal/llm/stub.go (99.3%)</option>
-
+				
 				<option value="file10">github.com/worker4556/naparnik/backend/internal/mockdata/mockdata.go (100.0%)</option>
-
-				<option value="file11">github.com/worker4556/naparnik/backend/internal/store/persistence.go (88.1%)</option>
-
+				
+				<option value="file11">github.com/worker4556/naparnik/backend/internal/store/persistence.go (56.9%)</option>
+				
 				<option value="file12">github.com/worker4556/naparnik/backend/internal/store/store.go (97.2%)</option>
-
-				<option value="file13">github.com/worker4556/naparnik/backend/internal/tools/answers.go (95.8%)</option>
-
+				
+				<option value="file13">github.com/worker4556/naparnik/backend/internal/tools/answers.go (91.5%)</option>
+				
 				<option value="file14">github.com/worker4556/naparnik/backend/internal/tools/dashboard.go (100.0%)</option>
-
+				
 				<option value="file15">github.com/worker4556/naparnik/backend/internal/tools/kb.go (98.6%)</option>
-
+				
 				<option value="file16">github.com/worker4556/naparnik/backend/internal/tools/plan.go (98.4%)</option>
-
+				
 				<option value="file17">github.com/worker4556/naparnik/backend/internal/tools/requests.go (98.8%)</option>
-
-				<option value="file18">github.com/worker4556/naparnik/backend/internal/tools/service.go (98.6%)</option>
-
+				
+				<option value="file18">github.com/worker4556/naparnik/backend/internal/tools/service.go (97.2%)</option>
+				
 				<option value="file19">github.com/worker4556/naparnik/backend/internal/tools/tools.go (100.0%)</option>
-
-				<option value="file20">github.com/worker4556/naparnik/backend/internal/tools/transaction.go (92.5%)</option>
-
+				
+				<option value="file20">github.com/worker4556/naparnik/backend/internal/tools/transaction.go (77.5%)</option>
+				
 				</select>
 			</div>
 			<div id="legend">
 				<span>not tracked</span>
-
+			
 				<span class="cov0">not covered</span>
 				<span class="cov8">covered</span>
-
+			
 			</div>
 		</div>
 		<div id="content">
-
+		
 		<pre class="file" id="file0" style="display: none">// Поговорить с агентом из терминала:
 //
 //        go run ./cmd/buddy -user intern.sokolov "Что такое витрина и где лежит витрина объявлений?"
@@ -193,7 +193,7 @@ func show(out io.Writer, in *bufio.Reader, a *agent.Agent, user string, r agent.
         }
 }
 </pre>
-
+		
 		<pre class="file" id="file1" style="display: none">// Package agent — цикл AI-buddy: вопрос → модель выбирает инструменты → код проверяет права и выполняет
 // (или готовит черновик) → модель отвечает. Источники и черновики отдаются интерфейсу отдельно от текста.
 package agent
@@ -204,6 +204,7 @@ import (
         "encoding/json"
         "errors"
         "fmt"
+        "regexp"
         "strings"
         "sync"
         "time"
@@ -325,18 +326,12 @@ func (a *Agent) Ask(ctx context.Context, login, text string) (Reply, error) {
         <span class="cov8" title="1">c.turns++
         a.mu.Unlock()
         session := c.session
-        step, err := session.SendUser(ctx, text)
-        for round := 0; err == nil &amp;&amp; len(step.ToolCalls) &gt; 0; round++ </span>{
-                <span class="cov8" title="1">if round == maxToolRounds </span>{
-                        <span class="cov8" title="1">step = llm.Step{Text: "Не получилось довести запрос до конца. Попробуй сформулировать иначе."}
-                        break</span>
-                }
-                <span class="cov8" title="1">results := make([]llm.ToolResult, 0, len(step.ToolCalls))
-                for _, call := range step.ToolCalls </span>{
-                        <span class="cov8" title="1">results = append(results, llm.ToolResult{Call: call, Content: a.handle(tc, call, &amp;reply)})
-</span>                }
-                <span class="cov8" title="1">step, err = session.SendToolResults(ctx, results)</span>
-        }
+        step, err := a.run(ctx, session, tc, &amp;reply, text)
+</span>        // Модель иногда обещает «сейчас покажу черновик», но не вызывает инструмент — ход заканчивается
+        // пустым обещанием, и стажёру нечего подтверждать. Код замечает это и один раз просит довести дело.
+        <span class="cov8" title="1">if err == nil &amp;&amp; len(reply.Drafts) == 0 &amp;&amp; promisesDraft(step.Text) &amp;&amp; canDraft(u) </span>{
+                <span class="cov8" title="1">step, err = a.run(ctx, session, tc, &amp;reply, draftNudge)
+</span>        }
         <span class="cov8" title="1">if err != nil </span>{
                 // История могла оборваться посреди вызова инструментов — начинаем разговор заново.
                 <span class="cov8" title="1">a.mu.Lock()
@@ -383,6 +378,40 @@ func (a *Agent) handle(tc tools.Ctx, call llm.ToolCall, reply *Reply) string {
         }
         <span class="cov8" title="1">raw, _ := json.Marshal(res)
         return string(raw)</span>
+}
+
+// run — один ход: сообщение модели и цикл вызова инструментов до текстового ответа.
+func (a *Agent) run(ctx context.Context, session llm.Session, tc tools.Ctx, reply *Reply, text string) (llm.Step, error) {
+        <span class="cov8" title="1">step, err := session.SendUser(ctx, text)
+        for round := 0; err == nil &amp;&amp; len(step.ToolCalls) &gt; 0; round++ </span>{
+                <span class="cov8" title="1">if round == maxToolRounds </span>{
+                        <span class="cov8" title="1">return llm.Step{Text: "Не получилось довести запрос до конца. Попробуй сформулировать иначе."}, nil
+</span>                }
+                <span class="cov8" title="1">results := make([]llm.ToolResult, 0, len(step.ToolCalls))
+                for _, call := range step.ToolCalls </span>{
+                        <span class="cov8" title="1">results = append(results, llm.ToolResult{Call: call, Content: a.handle(tc, call, reply)})
+</span>                }
+                <span class="cov8" title="1">step, err = session.SendToolResults(ctx, results)</span>
+        }
+        <span class="cov8" title="1">return step, err</span>
+}
+
+const draftNudge = "[Служебная заметка системы, не от стажёра] Ты написал про черновик, но не вызвал инструмент, " +
+        "поэтому черновика нет. Если данных хватает — вызови нужный инструмент (create_absence_request, request_access " +
+        "или send_question) прямо сейчас и коротко скажи, что черновик ждёт подтверждения. Если данных не хватает — задай один уточняющий вопрос."
+
+var promiseRe = regexp.MustCompile(`(?i)черновик[а-я]*\s+(готов|ниже|подготов|сейчас|покажу|ждёт|ждет)|(покажу|подготовлю|оформлю|соберу|сделаю)\s+(тебе\s+)?черновик|нажми\s+(кнопку\s+)?«?подтверд`)
+
+// promisesDraft — в ответе обещан черновик или кнопка подтверждения.
+func promisesDraft(text string) bool { <span class="cov8" title="1">return promiseRe.MatchString(text) }</span>
+
+func canDraft(u *mockdata.User) bool {
+        <span class="cov8" title="1">for _, t := range tools.For(u) </span>{
+                <span class="cov8" title="1">if t.Confirm </span>{
+                        <span class="cov8" title="1">return true
+</span>                }
+        }
+        <span class="cov8" title="1">return false</span>
 }
 
 // fallback — BR-70 и режим stub_error: модель недоступна → найденные фрагменты базы без пересказа.
@@ -444,7 +473,7 @@ func (a *Agent) Confirm(login, draftID string) tools.Result {
                 return nil</span>
         })
         <span class="cov8" title="1">if err != nil &amp;&amp; res.Error == nil </span>{
-                <span class="cov8" title="1">return tools.Result{Error: &amp;tools.Error{Code: "unavailable", Message: "Не удалось сохранить действие. Повтори подтверждение."}}
+                <span class="cov0" title="0">return tools.Result{Error: &amp;tools.Error{Code: "unavailable", Message: "Не удалось сохранить действие. Повтори подтверждение."}}
 </span>        }
         <span class="cov8" title="1">return res</span>
 }
@@ -455,7 +484,7 @@ func (a *Agent) Draft(id string) (Draft, bool) {
         return Draft{ID: d.ID, UserID: d.UserID, Tool: d.Tool, Args: d.Args}, ok &amp;&amp; len(d.Result) == 0
 </span>}
 </pre>
-
+		
 		<pre class="file" id="file2" style="display: none">package agent
 
 import (
@@ -511,7 +540,7 @@ func guard(text string) (string, bool) {
         <span class="cov8" title="1">return "", false</span>
 }
 </pre>
-
+		
 		<pre class="file" id="file3" style="display: none">// Package app собирает приложение из переменных окружения: мок-данные, состояние, модель, агент.
 package app
 
@@ -566,7 +595,7 @@ func New() (*App, error) {
         <span class="cov8" title="1">return &amp;App{Store: s, Agent: agent.New(s, llm.New(cfg, today), cfg.Timeout), LLM: cfg}, nil</span>
 }
 </pre>
-
+		
 		<pre class="file" id="file4" style="display: none">package app
 
 import (
@@ -602,7 +631,7 @@ func LoadDotEnv(paths ...string) string {
         <span class="cov8" title="1">return ""</span>
 }
 </pre>
-
+		
 		<pre class="file" id="file5" style="display: none">// Package httpapi — HTTP API для фронта (пути из docs/03-requirements/07-FRONTEND.md, раздел 9).
 //
 // Авторизация в прототипе — заголовок X-User с логином тестовой учётки (A5: в Авито авторизация уже есть,
@@ -916,14 +945,14 @@ func nonNil[T any](xs []T) []T {
 
 // drafts восстанавливает незавершённые действия после перезапуска сервера.
 func (s *Server) drafts(w http.ResponseWriter, _ *http.Request, u *mockdata.User) {
-        <span class="cov8" title="1">out := []agent.Draft{}
+        <span class="cov0" title="0">out := []agent.Draft{}
         for _, d := range s.Store.PendingDrafts(u.ID) </span>{
-                <span class="cov8" title="1">out = append(out, agent.Draft{ID: d.ID, Tool: d.Tool, Args: d.Args})
+                <span class="cov0" title="0">out = append(out, agent.Draft{ID: d.ID, Tool: d.Tool, Args: d.Args})
 </span>        }
-        <span class="cov8" title="1">writeJSON(w, 200, map[string]any{"drafts": out})</span>
+        <span class="cov0" title="0">writeJSON(w, 200, map[string]any{"drafts": out})</span>
 }
 </pre>
-
+		
 		<pre class="file" id="file6" style="display: none">package llm
 
 import (
@@ -1033,7 +1062,7 @@ func toStrings(v any) []string {
         <span class="cov8" title="1">return nil</span>
 }
 </pre>
-
+		
 		<pre class="file" id="file7" style="display: none">// Package llm — общий интерфейс провайдера модели. Агент не знает, что внутри: Claude, DeepSeek или заглушка.
 //
 // Сессия хранит историю в «родном» формате своего API и наружу отдаёт только текст и вызовы инструментов.
@@ -1158,7 +1187,7 @@ func New(c Config, today time.Time) Provider {
         }
 }
 </pre>
-
+		
 		<pre class="file" id="file8" style="display: none">package llm
 
 import (
@@ -1238,7 +1267,7 @@ func (s *openaiSession) SendToolResults(ctx context.Context, results []ToolResul
         <span class="cov8" title="1">return s.call(ctx)</span>
 }
 </pre>
-
+		
 		<pre class="file" id="file9" style="display: none">package llm
 
 import (
@@ -1548,7 +1577,7 @@ func (s *stubSession) describe(tool string, raw json.RawMessage) (string, *ToolC
         <span class="cov8" title="1">return "", nil</span>
 }
 </pre>
-
+		
 		<pre class="file" id="file10" style="display: none">// Package mockdata читает синтетические данные команды из docs/04-mock-data.
 //
 // Источник правды — JSON-файлы команды; код их не дублирует. Поля, которые бэкенду пока не нужны,
@@ -1783,7 +1812,7 @@ func Load(dir string) (*Data, error) {
         return d, nil</span>
 }
 </pre>
-
+		
 		<pre class="file" id="file11" style="display: none">package store
 
 import (
@@ -1861,42 +1890,42 @@ func OpenPostgres(ctx context.Context, d *mockdata.Data, today time.Time, url st
                 <span class="cov8" title="1">if err := db.PingContext(ctx); err != nil </span>{
                         <span class="cov8" title="1">return err
 </span>                }
-                <span class="cov8" title="1">tx, err := db.BeginTx(ctx, nil)
+                <span class="cov0" title="0">tx, err := db.BeginTx(ctx, nil)
                 if err != nil </span>{
                         <span class="cov0" title="0">return err
 </span>                }
-                <span class="cov8" title="1">defer tx.Rollback()
+                <span class="cov0" title="0">defer tx.Rollback()
 </span>                // Два первых запуска тоже не должны одновременно создавать системную таблицу.
-                <span class="cov8" title="1">if _, err := tx.ExecContext(ctx, `SELECT pg_advisory_xact_lock(7394556)`); err != nil </span>{
+                <span class="cov0" title="0">if _, err := tx.ExecContext(ctx, `SELECT pg_advisory_xact_lock(7394556)`); err != nil </span>{
                         <span class="cov0" title="0">return err
 </span>                }
-                <span class="cov8" title="1">if _, err := tx.ExecContext(ctx, `CREATE TABLE IF NOT EXISTS naparnik_state (
+                <span class="cov0" title="0">if _, err := tx.ExecContext(ctx, `CREATE TABLE IF NOT EXISTS naparnik_state (
                         id integer PRIMARY KEY CHECK (id = 1), payload jsonb NOT NULL)`); err != nil </span>{
                         <span class="cov0" title="0">return err
 </span>                }
-                <span class="cov8" title="1">raw, err := json.Marshal(s.snapshot())
+                <span class="cov0" title="0">raw, err := json.Marshal(s.snapshot())
                 if err != nil </span>{
                         <span class="cov0" title="0">return err
 </span>                }
-                <span class="cov8" title="1">if _, err := tx.ExecContext(ctx, `INSERT INTO naparnik_state(id, payload) VALUES (1, $1)
+                <span class="cov0" title="0">if _, err := tx.ExecContext(ctx, `INSERT INTO naparnik_state(id, payload) VALUES (1, $1)
                         ON CONFLICT (id) DO NOTHING`, raw); err != nil </span>{
                         <span class="cov0" title="0">return err
 </span>                }
-                <span class="cov8" title="1">if err := tx.Commit(); err != nil </span>{
+                <span class="cov0" title="0">if err := tx.Commit(); err != nil </span>{
                         <span class="cov0" title="0">return err
 </span>                }
-                <span class="cov8" title="1">return s.Refresh(ctx)</span>
+                <span class="cov0" title="0">return s.Refresh(ctx)</span>
         }()
         <span class="cov8" title="1">if err != nil </span>{
                 <span class="cov8" title="1">_ = db.Close()
                 return nil, fmt.Errorf("open persistent store: %w", err)
 </span>        }
-        <span class="cov8" title="1">return s, nil</span>
+        <span class="cov0" title="0">return s, nil</span>
 }
 
 func (s *Store) Close() error {
         <span class="cov8" title="1">if s.db != nil </span>{
-                <span class="cov8" title="1">return s.db.Close()
+                <span class="cov0" title="0">return s.db.Close()
 </span>        }
         <span class="cov8" title="1">return nil</span>
 }
@@ -1906,13 +1935,13 @@ func (s *Store) Refresh(ctx context.Context) error {
         <span class="cov8" title="1">if s.db == nil </span>{
                 <span class="cov8" title="1">return nil
 </span>        }
-        <span class="cov8" title="1">s.mu.Lock()
+        <span class="cov0" title="0">s.mu.Lock()
         defer s.mu.Unlock()
         var raw []byte
         if err := s.db.QueryRowContext(ctx, `SELECT payload FROM naparnik_state WHERE id = 1`).Scan(&amp;raw); err != nil </span>{
                 <span class="cov0" title="0">return err
 </span>        }
-        <span class="cov8" title="1">return s.decode(raw)</span>
+        <span class="cov0" title="0">return s.decode(raw)</span>
 }
 
 // Transaction применяет изменение к отдельной копии. При ошибке нет ни частичного
@@ -1929,11 +1958,11 @@ func (s *Store) Transaction(fn func(*Store) error) error {
         var raw []byte
         var err error
         if s.db != nil </span>{
-                <span class="cov8" title="1">tx, err = s.db.BeginTx(ctx, nil)
+                <span class="cov0" title="0">tx, err = s.db.BeginTx(ctx, nil)
                 if err != nil </span>{
                         <span class="cov0" title="0">return err
 </span>                }
-                <span class="cov8" title="1">defer tx.Rollback()
+                <span class="cov0" title="0">defer tx.Rollback()
                 err = tx.QueryRowContext(ctx, `SELECT payload FROM naparnik_state WHERE id = 1 FOR UPDATE`).Scan(&amp;raw)</span>
         } else {
                 <span class="cov8" title="1">raw, err = json.Marshal(s.snapshot())
@@ -1954,10 +1983,10 @@ func (s *Store) Transaction(fn func(*Store) error) error {
                 <span class="cov0" title="0">return err
 </span>        }
         <span class="cov8" title="1">if tx != nil </span>{
-                <span class="cov8" title="1">if _, err := tx.ExecContext(ctx, `UPDATE naparnik_state SET payload = $1 WHERE id = 1`, raw); err != nil </span>{
-                        <span class="cov8" title="1">return err
+                <span class="cov0" title="0">if _, err := tx.ExecContext(ctx, `UPDATE naparnik_state SET payload = $1 WHERE id = 1`, raw); err != nil </span>{
+                        <span class="cov0" title="0">return err
 </span>                }
-                <span class="cov8" title="1">if err := tx.Commit(); err != nil </span>{
+                <span class="cov0" title="0">if err := tx.Commit(); err != nil </span>{
                         <span class="cov0" title="0">return err
 </span>                }
         }
@@ -1996,21 +2025,21 @@ func (s *Store) PutOperation(key string, v Operation) {
 </span>}
 
 func (s *Store) PendingDrafts(userID string) []ActionDraft {
-        <span class="cov8" title="1">s.mu.Lock()
+        <span class="cov0" title="0">s.mu.Lock()
         defer s.mu.Unlock()
         out := []ActionDraft{}
         for _, d := range s.drafts </span>{
-                <span class="cov8" title="1">if d.UserID == userID &amp;&amp; len(d.Result) == 0 </span>{
-                        <span class="cov8" title="1">raw, _ := json.Marshal(d)
+                <span class="cov0" title="0">if d.UserID == userID &amp;&amp; len(d.Result) == 0 </span>{
+                        <span class="cov0" title="0">raw, _ := json.Marshal(d)
                         var copy ActionDraft
                         _ = json.Unmarshal(raw, &amp;copy)
                         out = append(out, copy)
 </span>                }
         }
-        <span class="cov8" title="1">return out</span>
+        <span class="cov0" title="0">return out</span>
 }
 </pre>
-
+		
 		<pre class="file" id="file12" style="display: none">// Package store — состояние прототипа: мок-данные плюс то, что меняется во время демо
 // (статусы шагов, заявки, вопросы). PostgreSQL сохраняет изменения транзакционно; тесты работают в памяти.
 package store
@@ -2295,7 +2324,7 @@ func (s *Store) Questions() []Question {
         <span class="cov8" title="1">return out</span>
 }
 </pre>
-
+		
 		<pre class="file" id="file13" style="display: none">package tools
 
 import (
@@ -2345,9 +2374,9 @@ func answerQuestion(c Ctx, questionID, text string) (store.Question, mockdata.Pa
                 <span class="cov8" title="1">return store.Question{}, mockdata.Page{}, &amp;Error{Code: "forbidden", Message: "Ответить может только адресат вопроса."}
 </span>        }
         <span class="cov8" title="1">if q.Status == "Answered" &amp;&amp; q.Answer == text </span>{
-                <span class="cov8" title="1">for _, p := range c.Store.Pages() </span>{
-                        <span class="cov8" title="1">if p.ID == q.PageID </span>{
-                                <span class="cov8" title="1">return q, p, nil
+                <span class="cov0" title="0">for _, p := range c.Store.Pages() </span>{
+                        <span class="cov0" title="0">if p.ID == q.PageID </span>{
+                                <span class="cov0" title="0">return q, p, nil
 </span>                        }
                 }
         }
@@ -2449,7 +2478,7 @@ func approvePage(c Ctx, pageID, title, body string) (mockdata.Page, *Error) {
         <span class="cov8" title="1">return page, nil</span>
 }
 </pre>
-
+		
 		<pre class="file" id="file14" style="display: none">package tools
 
 import "github.com/worker4556/naparnik/backend/internal/store"
@@ -2555,7 +2584,7 @@ func TeamDashboard(c Ctx) Result {
         <span class="cov8" title="1">return ok(out)</span>
 }
 </pre>
-
+		
 		<pre class="file" id="file15" style="display: none">package tools
 
 import (
@@ -2883,7 +2912,7 @@ func clip(s string) string {
         <span class="cov8" title="1">return s</span>
 }
 </pre>
-
+		
 		<pre class="file" id="file16" style="display: none">package tools
 
 import (
@@ -3009,7 +3038,7 @@ func containsStr(xs []string, x string) bool {
         <span class="cov8" title="1">return false</span>
 }
 </pre>
-
+		
 		<pre class="file" id="file17" style="display: none">package tools
 
 import (
@@ -3184,7 +3213,7 @@ func requestAccess(c Ctx, args map[string]any) Result {
         return Result{OK: true, Data: r, Receipt: map[string]string{"id": r.ID, "status": "pending", "approver": c.Store.Name(r.ApproverID)}}</span>
 }
 </pre>
-
+		
 		<pre class="file" id="file18" style="display: none">package tools
 
 import (
@@ -3266,7 +3295,7 @@ func decide(c Ctx, id, decision, reason, comment string) (store.Request, *Error)
         case req.ApproverID != c.User.ID:
                 <span class="cov8" title="1">return store.Request{}, &amp;Error{Code: "forbidden", Message: "Решение принимает согласующий заявки."}</span>
         case req.Status != "pending" &amp;&amp; ((decision == "approve" &amp;&amp; (req.Status == "approved" || req.Status == "granted") &amp;&amp; req.Decision == comment) || (decision == "reject" &amp;&amp; req.Status == "rejected" &amp;&amp; req.ReasonCode == reason &amp;&amp; req.Decision == comment)):
-                <span class="cov8" title="1">return *req, nil</span>
+                <span class="cov0" title="0">return *req, nil</span>
         case req.Status != "pending":
                 <span class="cov8" title="1">return store.Request{}, &amp;Error{Code: "validation", Message: "По заявке уже есть решение."}</span>
         }
@@ -3353,7 +3382,7 @@ func requestableSystems(c Ctx) []SystemView {
         <span class="cov8" title="1">return out</span>
 }
 </pre>
-
+		
 		<pre class="file" id="file19" style="display: none">// Package tools — инструменты агента AI-buddy.
 //
 // Правила из docs/03-requirements, которые проверяет код (а не промпт):
@@ -3562,7 +3591,7 @@ func Check(c Ctx, name string, args map[string]any) *Error {
         <span class="cov8" title="1">return nil</span>
 }
 </pre>
-
+		
 		<pre class="file" id="file20" style="display: none">package tools
 
 import (
@@ -3610,7 +3639,7 @@ func atomicResult(c Ctx, fn func(Ctx) Result) Result {
 // содержимым возвращает первую квитанцию, другое содержимое с тем же ключом запрещено.
 func CreateSelfOnce(c Ctx, key, kind string, args map[string]any) Result {
         <span class="cov8" title="1">if key == "" || len(key) &gt; 128 </span>{
-                <span class="cov8" title="1">return fail("validation", "Нужен Idempotency-Key длиной до 128 символов.")
+                <span class="cov0" title="0">return fail("validation", "Нужен Idempotency-Key длиной до 128 символов.")
 </span>        }
         <span class="cov8" title="1">raw, err := json.Marshal(struct {
                 Kind string
@@ -3624,14 +3653,14 @@ func CreateSelfOnce(c Ctx, key, kind string, args map[string]any) Result {
         scope := c.User.ID + ":create-request:" + key
         return atomicResult(c, func(c Ctx) Result </span>{
                 <span class="cov8" title="1">if previous, ok := c.Store.Operation(scope); ok </span>{
-                        <span class="cov8" title="1">if previous.Fingerprint != fingerprint </span>{
-                                <span class="cov8" title="1">return fail("validation", "Этот Idempotency-Key уже использован для другой заявки.")
+                        <span class="cov0" title="0">if previous.Fingerprint != fingerprint </span>{
+                                <span class="cov0" title="0">return fail("validation", "Этот Idempotency-Key уже использован для другой заявки.")
 </span>                        }
-                        <span class="cov8" title="1">var result Result
+                        <span class="cov0" title="0">var result Result
                         if json.Unmarshal(previous.Result, &amp;result) != nil </span>{
                                 <span class="cov0" title="0">return fail("unavailable", "Не удалось прочитать результат заявки.")
 </span>                        }
-                        <span class="cov8" title="1">return result</span>
+                        <span class="cov0" title="0">return result</span>
                 }
                 <span class="cov8" title="1">res := CreateSelf(c, kind, args)
                 if res.OK </span>{
@@ -3642,7 +3671,7 @@ func CreateSelfOnce(c Ctx, key, kind string, args map[string]any) Result {
         })
 }
 </pre>
-
+		
 		</div>
 	</body>
 	<script>
