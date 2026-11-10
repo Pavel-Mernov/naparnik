@@ -21,9 +21,11 @@
     }
     * { box-sizing: border-box; }
     html { scroll-behavior: smooth; }
-    body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.45 Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    body { margin: 0; background: radial-gradient(circle at 82% 3%, color-mix(in srgb, var(--blue) 7%, transparent), transparent 28rem), radial-gradient(circle at 8% 55%, color-mix(in srgb, #00e64d 5%, transparent), transparent 24rem), var(--bg); color: var(--text); font: 15px/1.45 Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
     button, input { font: inherit; }
-    button { color: inherit; }
+    button { color: inherit; transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease, background .18s ease, color .18s ease; }
+    button:not(.nav button):not(.check):hover { transform: translateY(-2px) scale(1.025); }
+    button:active { transform: scale(.97) !important; }
     button:focus-visible, a:focus-visible, input:focus-visible { outline: 3px solid color-mix(in srgb, var(--blue) 40%, transparent); outline-offset: 2px; }
     .app { min-height: 100vh; }
     .topbar { height: 74px; padding: 0 34px; display: flex; align-items: center; gap: 28px; border-bottom: 1px solid var(--line); background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(16px); position: sticky; top: 0; z-index: 20; }
@@ -49,7 +51,8 @@
     .week-pill b { color: var(--text); }
     .layout { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(300px, .75fr); gap: 18px; }
     .stack { display: grid; gap: 18px; align-content: start; }
-    .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 22px; box-shadow: 0 1px 0 rgba(0,0,0,.015); }
+    .card { background: color-mix(in srgb, var(--surface) 96%, transparent); border: 1px solid var(--line); border-radius: var(--radius); padding: 22px; box-shadow: 0 1px 0 rgba(0,0,0,.015); transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease; }
+    .card:hover { transform: translateY(-2px); border-color: color-mix(in srgb, var(--line) 65%, var(--blue)); box-shadow: 0 13px 35px rgba(31,44,38,.055); }
     .card-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 18px; }
     h2 { margin: 0; font-size: 20px; letter-spacing: -.45px; }
     .link-btn { border: 0; background: transparent; color: var(--blue); font-weight: 650; cursor: pointer; padding: 4px; }
@@ -93,7 +96,10 @@
     .tip p { margin: 0; font-size: 13px; }
     .tip b { display: block; margin-bottom: 3px; font-size: 14px; }
     .mascot { position: fixed; right: 28px; bottom: 26px; width: 96px; height: 96px; border: 0; background: transparent; cursor: pointer; z-index: 40; filter: drop-shadow(0 12px 15px rgba(28,70,145,.23)); transition: transform .2s; }
-    .mascot:hover { transform: translateY(-4px); }
+    .mascot svg { animation: mascot-float 4s ease-in-out infinite; transition: transform .2s ease; }
+    .mascot:hover { transform: scale(1.06); }
+    .mascot:hover svg { animation-play-state: paused; transform: translateY(-5px); }
+    @keyframes mascot-float { 0%, 100% { transform: translateY(0) rotate(-1deg); } 50% { transform: translateY(-7px) rotate(1deg); } }
     .mascot-badge { position: absolute; right: -3px; top: 2px; background: var(--red); color: white; min-width: 25px; height: 25px; display: grid; place-items: center; border-radius: 20px; border: 3px solid var(--bg); font-size: 11px; font-weight: 800; }
     .mascot-label { position: absolute; right: 83px; bottom: 59px; background: var(--text); color: var(--bg); white-space: nowrap; border-radius: 11px; padding: 8px 11px; font-size: 12px; opacity: 0; transform: translateX(6px); pointer-events: none; transition: .2s; }
     .mascot:hover .mascot-label { opacity: 1; transform: none; }
@@ -119,6 +125,38 @@
     .send { width: 42px; border: 0; border-radius: 13px; background: var(--blue); color: white; cursor: pointer; font-size: 18px; }
     .toast { position: fixed; left: 50%; bottom: 25px; transform: translate(-50%, 20px); background: var(--text); color: var(--bg); border-radius: 12px; padding: 10px 14px; z-index: 80; opacity: 0; pointer-events: none; transition: .25s; box-shadow: var(--shadow); }
     .toast.show { opacity: 1; transform: translate(-50%, 0); }
+    .clickable { cursor: pointer; }
+    .request-card, .question { transition: transform .18s ease, background .18s ease, border-color .18s ease; cursor: pointer; }
+    .request-card:hover, .question:hover { transform: translateX(4px); background: color-mix(in srgb, var(--blue-soft) 34%, var(--surface)); border-color: color-mix(in srgb, var(--blue) 35%, var(--line)); }
+    .plan-step { transition: transform .18s ease, background .18s ease; cursor: pointer; }
+    .plan-step:hover { transform: translateX(5px); background: var(--blue-soft); }
+    .badge { transition: transform .18s ease; }
+    .badge:hover { transform: scale(1.05); }
+    .stage > span { position: relative; overflow: hidden; }
+    .stage > span::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, rgba(255,255,255,.55), transparent); transform: translateX(-100%); animation: progress-shine 3.2s ease-in-out infinite; }
+    @keyframes progress-shine { 45%, 100% { transform: translateX(150%); } }
+    .modal-backdrop { position: fixed; inset: 0; z-index: 90; display: grid; place-items: center; padding: 18px; background: rgba(16,20,18,.44); backdrop-filter: blur(7px); opacity: 0; pointer-events: none; transition: opacity .22s ease; }
+    .modal-backdrop.open { opacity: 1; pointer-events: auto; }
+    .modal { width: min(520px, 100%); max-height: min(720px, calc(100vh - 36px)); overflow: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 24px; box-shadow: 0 28px 90px rgba(0,0,0,.25); padding: 24px; transform: translateY(18px) scale(.96); transition: transform .24s cubic-bezier(.2,.8,.2,1); }
+    .modal-backdrop.open .modal { transform: none; }
+    .modal-head { display: flex; align-items: flex-start; gap: 15px; margin-bottom: 18px; }
+    .modal-head h2 { font-size: 23px; }
+    .modal-head p { margin: 4px 0 0; color: var(--muted); }
+    .modal-close { margin-left: auto; flex: none; width: 36px; height: 36px; border: 0; border-radius: 11px; background: var(--surface-2); cursor: pointer; font-size: 20px; }
+    .modal-body { color: var(--text); }
+    .modal-body p { color: var(--muted); }
+    .modal-actions { display: flex; gap: 9px; margin-top: 20px; justify-content: flex-end; flex-wrap: wrap; }
+    .notification-list { display: grid; gap: 9px; }
+    .notification { display: grid; grid-template-columns: auto 1fr; gap: 11px; padding: 12px; background: var(--surface-2); border-radius: 14px; }
+    .notification.unread { box-shadow: inset 3px 0 var(--blue); }
+    .role-list { display: grid; gap: 8px; }
+    .role { border: 1px solid var(--line); border-radius: 14px; padding: 12px; display: flex; align-items: center; gap: 11px; cursor: pointer; transition: .18s; }
+    .role:hover { border-color: var(--blue); transform: scale(1.015); }
+    .role.active { background: var(--blue-soft); border-color: var(--blue); }
+    .thinking { display: inline-flex; align-items: center; gap: 4px; }
+    .thinking i { width: 5px; height: 5px; border-radius: 50%; background: var(--muted); animation: dot 1s ease-in-out infinite; }
+    .thinking i:nth-child(2) { animation-delay: .15s; } .thinking i:nth-child(3) { animation-delay: .3s; }
+    @keyframes dot { 0%, 60%, 100% { transform: translateY(0); opacity: .45; } 30% { transform: translateY(-4px); opacity: 1; } }
     .page-view { display: none; }
     .page-view.active { display: block; animation: page-in .24s ease-out; }
     @keyframes page-in { from { opacity: 0; transform: translateY(5px); } }
@@ -191,7 +229,7 @@
       </nav>
       <div class="top-actions">
         <button class="icon-btn" id="theme" aria-label="Переключить тему">☼</button>
-        <button class="icon-btn" aria-label="Уведомления">♢<span class="notif-dot"></span></button>
+        <button class="icon-btn" id="notifications" aria-label="Уведомления">♢<span class="notif-dot"></span></button>
         <button class="account" id="account" aria-label="Тестовая учётная запись Артёма Белова">
           <span class="avatar">АБ</span><span class="account-name"><b>Артём Белов</b><small>Стажёр · демо</small></span><span>⌄</span>
         </button>
@@ -333,6 +371,13 @@
       </div>
       <form class="chat-input" id="chatForm"><input id="chatText" aria-label="Сообщение" placeholder="Спроси о команде или задачах…" autocomplete="off"><button class="send" aria-label="Отправить">↑</button></form>
     </aside>
+    <div class="modal-backdrop" id="modalBackdrop" aria-hidden="true">
+      <section class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+        <div class="modal-head"><div><h2 id="modalTitle">Подробности</h2><p id="modalSubtitle"></p></div><button class="modal-close" id="modalClose" aria-label="Закрыть">×</button></div>
+        <div class="modal-body" id="modalBody"></div>
+        <div class="modal-actions" id="modalActions"></div>
+      </section>
+    </div>
     <div class="toast" id="toast" role="status"></div>
   </div>
 
@@ -341,14 +386,30 @@
     const chat = document.getElementById('chat');
     const mascot = document.getElementById('mascot');
     const toast = document.getElementById('toast');
+    const modalBackdrop = document.getElementById('modalBackdrop');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalSubtitle = document.getElementById('modalSubtitle');
+    const modalBody = document.getElementById('modalBody');
+    const modalActions = document.getElementById('modalActions');
     const showToast = (text) => { toast.textContent = text; toast.classList.add('show'); setTimeout(() => toast.classList.remove('show'), 1800); };
+    const actionButton = (label, primary = false) => `<button class="${primary ? 'primary' : 'secondary'} modal-action">${label}</button>`;
+    function openModal(title, subtitle, body, actions = [actionButton('Понятно', true)]) {
+      modalTitle.textContent = title; modalSubtitle.textContent = subtitle || ''; modalBody.innerHTML = body; modalActions.innerHTML = actions.join('');
+      modalBackdrop.classList.add('open'); modalBackdrop.setAttribute('aria-hidden', 'false'); document.body.style.overflow = 'hidden';
+      modalBackdrop.querySelector('.modal-action')?.focus();
+    }
+    function closeModal() { modalBackdrop.classList.remove('open'); modalBackdrop.setAttribute('aria-hidden', 'true'); document.body.style.overflow = ''; }
     function setChat(open) { chat.classList.toggle('open', open); chat.setAttribute('aria-hidden', String(!open)); mascot.setAttribute('aria-expanded', String(open)); if (open) document.getElementById('chatText').focus(); }
     mascot.addEventListener('click', () => setChat(!chat.classList.contains('open')));
     document.getElementById('closeChat').addEventListener('click', () => setChat(false));
-    document.getElementById('theme').addEventListener('click', () => { const dark = root.dataset.theme !== 'dark'; root.dataset.theme = dark ? 'dark' : 'light'; document.getElementById('theme').textContent = dark ? '☾' : '☼'; });
+    document.getElementById('modalClose').addEventListener('click', closeModal);
+    modalBackdrop.addEventListener('click', e => { if (e.target === modalBackdrop || e.target.closest('.modal-action')) closeModal(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeModal(); setChat(false); } });
+    document.getElementById('theme').addEventListener('click', () => { const dark = root.dataset.theme !== 'dark'; root.dataset.theme = dark ? 'dark' : 'light'; document.getElementById('theme').textContent = dark ? '☾' : '☼'; showToast(dark ? 'Тёмная тема включена' : 'Светлая тема включена'); });
+    document.getElementById('notifications').addEventListener('click', () => openModal('Уведомления', 'Три события за сегодня', `<div class="notification-list"><div class="notification unread"><span>✉</span><div><b>Ответ готов</b><div class="meta">Олег ответил про avito-cli · 20 минут назад</div></div></div><div class="notification unread"><span>◷</span><div><b>1:1 через 3 часа</b><div class="meta">Подготовь вопросы к встрече с Олегом</div></div></div><div class="notification"><span>✓</span><div><b>Доступ согласован</b><div class="meta">Заявка ACC-184 · 3 ноября</div></div></div></div>`, [actionButton('Прочитать всё', true)]));
     document.querySelectorAll('.check').forEach(btn => btn.addEventListener('click', () => { const task = btn.closest('.task'); task.classList.toggle('done'); showToast(task.classList.contains('done') ? 'Шаг отмечен выполненным' : 'Шаг возвращён в план'); }));
     document.querySelectorAll('.help-btn').forEach(btn => btn.addEventListener('click', () => setChat(true)));
-    document.querySelectorAll('.draft-btn').forEach(btn => btn.addEventListener('click', () => showToast('Открыт черновик заявки на доступ')));
+    document.querySelectorAll('.draft-btn').forEach(btn => btn.addEventListener('click', () => openModal('Черновик заявки', 'Доступ в пространство юнита', `<div class="receipt"><b>Проверь перед отправкой</b><p>Система: пространство Backend / «Доставка»<br>Причина: шаг плана адаптации<br>Согласующий: Ирина Соколова</p><span class="badge amber">Нужно подтверждение</span></div>`, [actionButton('Изменить'), actionButton('Подтвердить', true)])));
     const pageTitles = { day: 'мой день', plan: 'мой план', questions: 'вопросы', knowledge: 'база знаний', requests: 'заявки' };
     function openPage(name) {
       document.querySelectorAll('.page-view').forEach(view => view.classList.toggle('active', view.dataset.view === name));
@@ -358,12 +419,19 @@
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
     document.querySelectorAll('.nav button').forEach(btn => btn.addEventListener('click', () => openPage(btn.dataset.page)));
-    document.querySelectorAll('.filter').forEach(btn => btn.addEventListener('click', () => { const group = btn.parentElement; group.querySelectorAll('.filter').forEach(x => x.classList.remove('active')); btn.classList.add('active'); }));
-    document.querySelectorAll('.folder').forEach(btn => btn.addEventListener('click', () => { document.querySelectorAll('.folder').forEach(x => x.classList.remove('active')); btn.classList.add('active'); }));
+    document.querySelectorAll('.filter').forEach(btn => btn.addEventListener('click', () => { const group = btn.parentElement; group.querySelectorAll('.filter').forEach(x => x.classList.remove('active')); btn.classList.add('active'); showToast(`Фильтр «${btn.textContent.trim()}» применён`); }));
+    document.querySelectorAll('.folder').forEach(btn => btn.addEventListener('click', () => { document.querySelectorAll('.folder').forEach(x => x.classList.remove('active')); btn.classList.add('active'); showToast(`Открыта папка «${btn.firstElementChild.textContent}»`); }));
     document.querySelector('.page-view[data-view="day"] .link-btn').addEventListener('click', () => openPage('plan'));
+    document.querySelectorAll('.link-btn').forEach(btn => { if (btn.textContent.includes('Все')) btn.addEventListener('click', () => openPage('questions')); else if (btn.textContent.includes('Неделя')) btn.addEventListener('click', () => openModal('События недели', '10–16 ноября', `<div class="notification-list"><div class="notification"><span>Вт</span><div><b>1:1 с Олегом · 15:00</b><div class="meta">Google Meet · 45 минут</div></div></div><div class="notification"><span>Ср</span><div><b>Командный sync · 10:30</b><div class="meta">Переговорная «Волга»</div></div></div><div class="notification"><span>Пт</span><div><b>Демо первой задачи · 16:00</b><div class="meta">Подготовь короткий рассказ о результате</div></div></div></div>`)); });
     document.getElementById('newRequest').addEventListener('click', () => { showToast('Напарник откроет безопасный черновик заявки'); setChat(true); });
-    document.getElementById('account').addEventListener('click', () => showToast('Демо-переключатель ролей: стажёр Артём'));
-    document.getElementById('chatForm').addEventListener('submit', (e) => { e.preventDefault(); const input = document.getElementById('chatText'); if (!input.value.trim()) return; const bubble = document.createElement('div'); bubble.className = 'bubble user'; bubble.textContent = input.value; document.getElementById('messages').appendChild(bubble); input.value = ''; document.getElementById('messages').scrollTop = 99999; setTimeout(() => showToast('Статический прототип: ответ появится после подключения агента'), 300); });
+    document.getElementById('account').addEventListener('click', () => openModal('Тестовые учётки', 'Переключение роли для демонстрации', `<div class="role-list"><div class="role active"><span class="avatar">АБ</span><div><b>Артём Белов</b><div class="meta">Стажёр · Backend · неделя 2</div></div></div><div class="role"><span class="avatar">ОК</span><div><b>Олег Ким</b><div class="meta">Наставник · Senior Go-разработчик</div></div></div><div class="role"><span class="avatar">ИС</span><div><b>Ирина Соколова</b><div class="meta">Руководитель юнита</div></div></div></div>`, [actionButton('Оставить Артёма', true)]));
+    document.querySelectorAll('.quick button').forEach(btn => btn.addEventListener('click', () => { document.querySelectorAll('.quick button').forEach(x => x.classList.remove('active')); btn.classList.add('active'); showToast(`Спасибо, отметка «${btn.textContent}» сохранена`); }));
+    document.querySelector('.source a').addEventListener('click', e => { e.preventDefault(); openPage('knowledge'); setChat(false); showToast('Открыт источник «Настройка avito-cli»'); });
+    document.querySelectorAll('.kb-card').forEach(card => card.addEventListener('click', () => openModal(card.querySelector('h3').textContent, card.querySelector('.meta')?.textContent.trim() || 'База знаний команды', `<span class="badge amber">Тестовая инструкция</span><p>${card.querySelector('p').textContent}</p><p>Материал проверен автором. В полной версии здесь будут текст, связанные страницы и кнопка обратной связи.</p>`, [actionButton('Устарело'), actionButton('Открыть', true)])));
+    document.querySelectorAll('.request-card').forEach(card => card.addEventListener('click', () => openModal(card.querySelector('.table-title').textContent, card.querySelector('.meta').textContent, `<div class="receipt"><b>История заявки</b><p>Черновик создан → пользователь подтвердил → отправлено согласующему.</p>${card.querySelector('.badge').outerHTML}</div>`, [actionButton('Закрыть', true)])));
+    document.querySelectorAll('.table tbody tr').forEach(row => row.addEventListener('click', () => openModal(row.querySelector('.table-title').textContent, row.querySelector('.meta').textContent, `<p>Здесь показана полная история вопроса: поиск в базе, выбранный адресат, статус и полученный ответ.</p><div class="tip"><div class="tip-icon">↗</div><p><b>Маршрут прозрачен</b>Ты всегда видишь, кому и почему направлен вопрос.</p></div>`, [actionButton('Открыть в чате', true)])));
+    document.querySelectorAll('.plan-step').forEach(step => step.addEventListener('click', () => openModal('Шаг плана', step.textContent.trim(), `<p>Открой материалы шага, отметь его выполненным или попроси Напарника помочь.</p>`, [actionButton('Нужна помощь'), actionButton('Отметить готовым', true)])));
+    document.getElementById('chatForm').addEventListener('submit', (e) => { e.preventDefault(); const input = document.getElementById('chatText'); if (!input.value.trim()) return; const bubble = document.createElement('div'); bubble.className = 'bubble user'; bubble.textContent = input.value; document.getElementById('messages').appendChild(bubble); const thinking = document.createElement('div'); thinking.className = 'bubble bot thinking'; thinking.innerHTML = '<i></i><i></i><i></i>'; document.getElementById('messages').appendChild(thinking); input.value = ''; document.getElementById('messages').scrollTop = 99999; setTimeout(() => { thinking.className = 'bubble bot'; thinking.textContent = 'Я сохранил вопрос. В рабочей версии здесь появится ответ агента с источником.'; document.getElementById('messages').scrollTop = 99999; }, 900); });
     const initialPage = location.hash.slice(1);
     if (pageTitles[initialPage]) openPage(initialPage);
   </script>
