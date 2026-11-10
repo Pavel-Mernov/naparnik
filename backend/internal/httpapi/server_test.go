@@ -257,3 +257,46 @@ func TestAnswerFlowAPI(t *testing.T) {
 		t.Fatal("опубликованная страница в базе, черновик — нет")
 	}
 }
+
+// BR-42 и согласование: стажёр оформил сам → руководитель отклонил с причиной / выдал доступ → стажёр видит статус.
+func TestSelfServiceAndDecisionAPI(t *testing.T) {
+	_, h := newServer(t)
+	if code, _ := call(t, h, "POST", "/api/requests", "intern.sokolov", `не json`); code != 422 {
+		t.Fatal("битое тело — 422")
+	}
+	code, r := call(t, h, "POST", "/api/requests", "intern.sokolov", `{"kind":"absence","type":"day_off","date":"2026-11-16"}`)
+	if code != 200 || r["data"].(map[string]any)["source"] != "self" {
+		t.Fatalf("сам: %d %v", code, r)
+	}
+	call(t, h, "POST", "/api/requests", "intern.sokolov", `{"kind":"access","system":"sys-redash","reason":"шаг s-04"}`)
+	if code, _ := call(t, h, "POST", "/api/requests", "intern.sokolov", `{"kind":"access","system":"sys-dwh-pii"}`); code != 403 {
+		t.Fatal("ПДн — 403")
+	}
+	if code, _ := call(t, h, "POST", "/api/requests/ABS-1042/decision", "intern.sokolov", `{"decision":"approve"}`); code != 403 {
+		t.Fatal("решает только согласующий")
+	}
+	if code, _ := call(t, h, "POST", "/api/requests/ABS-1042/decision", "lead.kovalev", `{"decision":"reject"}`); code != 422 {
+		t.Fatal("отказ без причины")
+	}
+	code, d := call(t, h, "POST", "/api/requests/ABS-1042/decision", "lead.kovalev", `{"decision":"reject","reason":"DATE_CONFLICT","comment":" релиз "}`)
+	if code != 200 || d["request"].(map[string]any)["decision"] != "релиз" {
+		t.Fatalf("отказ: %d %v", code, d)
+	}
+	call(t, h, "POST", "/api/requests/ACC-2002/decision", "lead.kovalev", `{"decision":"approve"}`)
+	_, mine := call(t, h, "GET", "/api/requests", "intern.sokolov", "")
+	st := map[string]any{}
+	for _, x := range mine["requests"].([]any) {
+		st[x.(map[string]any)["id"].(string)] = x.(map[string]any)["status"]
+	}
+	if st["ABS-1042"] != "rejected" || st["ACC-2002"] != "granted" {
+		t.Fatalf("статусы у стажёра: %v", st)
+	}
+	_, cat := call(t, h, "GET", "/api/services", "intern.sokolov", "")
+	if len(cat["absence"].(map[string]any)["types"].([]any)) != 3 {
+		t.Fatalf("справочник: %v", cat)
+	}
+	_, pre := call(t, h, "GET", "/api/services/absence/precheck?type=day_off&date=2026-11-12", "intern.sokolov", "")
+	if len(pre["data"].(map[string]any)["warnings"].([]any)) == 0 {
+		t.Fatalf("предупреждения: %v", pre)
+	}
+}

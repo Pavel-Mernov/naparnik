@@ -282,7 +282,7 @@ func (s *stubSession) describe(tool string, raw json.RawMessage) (string, *ToolC
 			Source struct{ Title, Label string } `json:"source"`
 		}
 		_ = json.Unmarshal(raw, &d)
-		return fmt.Sprintf("%s\nИсточник: «%s» · %s. Можешь оформить сам по ссылке или я сделаю за тебя.", d.Rules, d.Source.Title, d.Source.Label), nil
+		return fmt.Sprintf("%s\nИсточник: «%s» · %s. Можешь оформить сам — раздел «Заявки» → «Оформить самому» — или я сделаю за тебя.", d.Rules, d.Source.Title, d.Source.Label), nil
 	case "team_directory":
 		var d struct {
 			People []struct{ Name, Responsibility string } `json:"people"`

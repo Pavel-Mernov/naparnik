@@ -7,6 +7,7 @@ package httpapi
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 
 	"github.com/worker4556/naparnik/backend/internal/agent"
 	"github.com/worker4556/naparnik/backend/internal/mockdata"
@@ -32,6 +33,10 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/plans/{internId}", s.auth(s.plan))
 	mux.HandleFunc("PATCH /api/plan-steps/{id}", s.auth(s.markStep))
 	mux.HandleFunc("GET /api/requests", s.auth(s.requests))
+	mux.HandleFunc("POST /api/requests", s.auth(s.createRequest))            // BR-42: «сделай сам» — форма сервиса
+	mux.HandleFunc("POST /api/requests/{id}/decision", s.auth(s.decide))     // согласование руководителем
+	mux.HandleFunc("GET /api/services", s.auth(s.services))                  // справочник сервиса заявок
+	mux.HandleFunc("GET /api/services/absence/precheck", s.auth(s.precheck)) // предупреждения формы отгула
 	mux.HandleFunc("GET /api/questions", s.auth(s.questions))
 	mux.HandleFunc("GET /api/today", s.auth(s.today))
 	mux.HandleFunc("GET /api/users", s.users)
@@ -204,6 +209,42 @@ func (s *Server) requests(w http.ResponseWriter, _ *http.Request, u *mockdata.Us
 		}
 	}
 	writeJSON(w, 200, map[string]any{"requests": nonNil(out)})
+}
+
+// createRequest — стажёр сам заполнил форму сервиса: kind = absence (type, date, comment) или access (system, reason).
+func (s *Server) createRequest(w http.ResponseWriter, r *http.Request, u *mockdata.User) {
+	var body map[string]any
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		writeJSON(w, 422, errBody("validation", "Пустая заявка"))
+		return
+	}
+	kind, _ := body["kind"].(string)
+	writeResult(w, tools.CreateSelf(tools.Ctx{Store: s.Store, User: u}, kind, body))
+}
+
+// decide — согласующий одобряет или отклоняет заявку с кодом причины.
+func (s *Server) decide(w http.ResponseWriter, r *http.Request, u *mockdata.User) {
+	var body struct {
+		Decision string `json:"decision"`
+		Reason   string `json:"reason"`
+		Comment  string `json:"comment"`
+	}
+	_ = json.NewDecoder(r.Body).Decode(&body)
+	req, e := tools.Decide(tools.Ctx{Store: s.Store, User: u}, r.PathValue("id"), body.Decision, body.Reason, strings.TrimSpace(body.Comment))
+	if e != nil {
+		writeResult(w, tools.Result{Error: e})
+		return
+	}
+	writeJSON(w, 200, map[string]any{"ok": true, "request": req})
+}
+
+func (s *Server) services(w http.ResponseWriter, _ *http.Request, u *mockdata.User) {
+	writeJSON(w, 200, tools.Catalog(tools.Ctx{Store: s.Store, User: u}))
+}
+
+func (s *Server) precheck(w http.ResponseWriter, r *http.Request, u *mockdata.User) {
+	q := r.URL.Query()
+	writeResult(w, tools.Run(tools.Ctx{Store: s.Store, User: u}, "precheck_absence", map[string]any{"type": q.Get("type"), "date": q.Get("date")}))
 }
 
 type questionView struct {

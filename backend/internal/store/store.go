@@ -18,17 +18,33 @@ const (
 	RoleLead   = "lead"
 )
 
+// Request — заявка в имитации корпоративного сервиса (в стиле Jira): номер, статус, согласующий, история.
+// Статусы: pending → approved (отгул) | granted (доступ) | rejected с кодом причины.
 type Request struct {
-	ID         string `json:"id"`
-	Kind       string `json:"kind"` // absence | access
-	Type       string `json:"type,omitempty"`
-	Date       string `json:"date,omitempty"`
-	System     string `json:"system,omitempty"`
-	Comment    string `json:"comment,omitempty"`
-	EmployeeID string `json:"employee_id"`
-	ApproverID string `json:"approver_id"`
-	Status     string `json:"status"`
-	CreatedAt  string `json:"created_at"`
+	ID         string  `json:"id"`
+	Kind       string  `json:"kind"` // absence | access
+	Type       string  `json:"type,omitempty"`
+	Date       string  `json:"date,omitempty"`
+	System     string  `json:"system,omitempty"`
+	Title      string  `json:"title,omitempty"` // название системы — для ленты руководителя
+	Comment    string  `json:"comment,omitempty"`
+	EmployeeID string  `json:"employee_id"`
+	ApproverID string  `json:"approver_id"`
+	Status     string  `json:"status"`
+	CreatedAt  string  `json:"created_at"`
+	Source     string  `json:"source"`                // agent — «сделаю за тебя», self — «сделай сам» (BR-42)
+	StepID     string  `json:"step_id,omitempty"`     // шаг плана, ради которого заявка (SC-27)
+	ReasonCode string  `json:"reason_code,omitempty"` // код причины отказа
+	Decision   string  `json:"decision,omitempty"`    // комментарий согласующего
+	DecidedAt  string  `json:"decided_at,omitempty"`
+	History    []Event `json:"history"`
+}
+
+// Event — строка в истории заявки, как журнал активности в трекере.
+type Event struct {
+	At   string `json:"at"`
+	By   string `json:"by"`
+	Text string `json:"text"`
 }
 
 type Question struct {
@@ -175,13 +191,28 @@ func (s *Store) AddRequest(r *Request) {
 	s.requests = append(s.requests, r)
 }
 
+// UpdateRequest применяет изменение к заявке под блокировкой.
+func (s *Store) UpdateRequest(id string, fn func(*Request)) (Request, bool) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for _, r := range s.requests {
+		if r.ID == id {
+			fn(r)
+			return *r, true
+		}
+	}
+	return Request{}, false
+}
+
 func (s *Store) Requests(employeeID string) []Request {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	var out []Request
 	for _, r := range s.requests {
 		if employeeID == "" || r.EmployeeID == employeeID {
-			out = append(out, *r)
+			c := *r
+			c.History = slices.Clone(r.History)
+			out = append(out, c)
 		}
 	}
 	return out

@@ -25,6 +25,8 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version-file: backend/go.mod
+      - name: gofmt (docs/CODESTYLE.md)
+        run: test -z "$(gofmt -l .)" || (gofmt -l . && exit 1)
       - run: go vet ./...
       - name: Тесты и покрытие
         run: |

@@ -77,7 +77,7 @@
 				
 				<option value="file10">github.com/worker4556/naparnik/backend/internal/mockdata/mockdata.go (100.0%)</option>
 				
-				<option value="file11">github.com/worker4556/naparnik/backend/internal/store/store.go (97.9%)</option>
+				<option value="file11">github.com/worker4556/naparnik/backend/internal/store/store.go (97.1%)</option>
 				
 				<option value="file12">github.com/worker4556/naparnik/backend/internal/tools/answers.go (96.3%)</option>
 				
@@ -85,9 +85,11 @@
 				
 				<option value="file14">github.com/worker4556/naparnik/backend/internal/tools/plan.go (98.4%)</option>
 				
-				<option value="file15">github.com/worker4556/naparnik/backend/internal/tools/requests.go (97.5%)</option>
+				<option value="file15">github.com/worker4556/naparnik/backend/internal/tools/requests.go (97.6%)</option>
 				
-				<option value="file16">github.com/worker4556/naparnik/backend/internal/tools/tools.go (100.0%)</option>
+				<option value="file16">github.com/worker4556/naparnik/backend/internal/tools/service.go (98.2%)</option>
+				
+				<option value="file17">github.com/worker4556/naparnik/backend/internal/tools/tools.go (100.0%)</option>
 				
 				</select>
 			</div>
@@ -553,6 +555,7 @@ package httpapi
 import (
         "encoding/json"
         "net/http"
+        "strings"
 
         "github.com/worker4556/naparnik/backend/internal/agent"
         "github.com/worker4556/naparnik/backend/internal/mockdata"
@@ -578,6 +581,10 @@ func (s *Server) Handler() http.Handler {
         mux.HandleFunc("GET /api/plans/{internId}", s.auth(s.plan))
         mux.HandleFunc("PATCH /api/plan-steps/{id}", s.auth(s.markStep))
         mux.HandleFunc("GET /api/requests", s.auth(s.requests))
+        mux.HandleFunc("POST /api/requests", s.auth(s.createRequest))            // BR-42: «сделай сам» — форма сервиса
+        mux.HandleFunc("POST /api/requests/{id}/decision", s.auth(s.decide))     // согласование руководителем
+        mux.HandleFunc("GET /api/services", s.auth(s.services))                  // справочник сервиса заявок
+        mux.HandleFunc("GET /api/services/absence/precheck", s.auth(s.precheck)) // предупреждения формы отгула
         mux.HandleFunc("GET /api/questions", s.auth(s.questions))
         mux.HandleFunc("GET /api/today", s.auth(s.today))
         mux.HandleFunc("GET /api/users", s.users)
@@ -751,6 +758,42 @@ func (s *Server) requests(w http.ResponseWriter, _ *http.Request, u *mockdata.Us
         }
         <span class="cov8" title="1">writeJSON(w, 200, map[string]any{"requests": nonNil(out)})</span>
 }
+
+// createRequest — стажёр сам заполнил форму сервиса: kind = absence (type, date, comment) или access (system, reason).
+func (s *Server) createRequest(w http.ResponseWriter, r *http.Request, u *mockdata.User) {
+        <span class="cov8" title="1">var body map[string]any
+        if err := json.NewDecoder(r.Body).Decode(&amp;body); err != nil </span>{
+                <span class="cov8" title="1">writeJSON(w, 422, errBody("validation", "Пустая заявка"))
+                return
+</span>        }
+        <span class="cov8" title="1">kind, _ := body["kind"].(string)
+        writeResult(w, tools.CreateSelf(tools.Ctx{Store: s.Store, User: u}, kind, body))</span>
+}
+
+// decide — согласующий одобряет или отклоняет заявку с кодом причины.
+func (s *Server) decide(w http.ResponseWriter, r *http.Request, u *mockdata.User) {
+        <span class="cov8" title="1">var body struct {
+                Decision string `json:"decision"`
+                Reason   string `json:"reason"`
+                Comment  string `json:"comment"`
+</span>        }
+        <span class="cov8" title="1">_ = json.NewDecoder(r.Body).Decode(&amp;body)
+        req, e := tools.Decide(tools.Ctx{Store: s.Store, User: u}, r.PathValue("id"), body.Decision, body.Reason, strings.TrimSpace(body.Comment))
+        if e != nil </span>{
+                <span class="cov8" title="1">writeResult(w, tools.Result{Error: e})
+                return
+</span>        }
+        <span class="cov8" title="1">writeJSON(w, 200, map[string]any{"ok": true, "request": req})</span>
+}
+
+func (s *Server) services(w http.ResponseWriter, _ *http.Request, u *mockdata.User) {
+        <span class="cov8" title="1">writeJSON(w, 200, tools.Catalog(tools.Ctx{Store: s.Store, User: u}))
+</span>}
+
+func (s *Server) precheck(w http.ResponseWriter, r *http.Request, u *mockdata.User) {
+        <span class="cov8" title="1">q := r.URL.Query()
+        writeResult(w, tools.Run(tools.Ctx{Store: s.Store, User: u}, "precheck_absence", map[string]any{"type": q.Get("type"), "date": q.Get("date")}))
+</span>}
 
 type questionView struct {
         ID          string `json:"id"`
@@ -1398,7 +1441,7 @@ func (s *stubSession) describe(tool string, raw json.RawMessage) (string, *ToolC
                         Source struct{ Title, Label string } `json:"source"`
 </span>                }
                 <span class="cov8" title="1">_ = json.Unmarshal(raw, &amp;d)
-                return fmt.Sprintf("%s\nИсточник: «%s» · %s. Можешь оформить сам по ссылке или я сделаю за тебя.", d.Rules, d.Source.Title, d.Source.Label), nil</span>
+                return fmt.Sprintf("%s\nИсточник: «%s» · %s. Можешь оформить сам — раздел «Заявки» → «Оформить самому» — или я сделаю за тебя.", d.Rules, d.Source.Title, d.Source.Label), nil</span>
         case "team_directory":
                 <span class="cov8" title="1">var d struct {
                         People []struct{ Name, Responsibility string } `json:"people"`
@@ -1572,10 +1615,17 @@ type SelfService struct {
         SourcePage string   `json:"source_page"`
 }
 
+// ReasonCode — код причины отказа согласующего (absence-service.json, access-service.json).
+type ReasonCode struct {
+        Code string `json:"code"`
+        Text string `json:"text"`
+}
+
 type AbsenceService struct {
         RequestTypes    []RequestType `json:"request_types"`
         ForbiddenFields []string      `json:"forbidden_fields"`
         SelfService     SelfService   `json:"self_service"`
+        ReasonCodes     []ReasonCode  `json:"reason_codes"`
 }
 
 type System struct {
@@ -1587,14 +1637,16 @@ type System struct {
 }
 
 type AccessState struct {
-        System    string `json:"system"`
-        Status    string `json:"status"`
-        ReceiptID string `json:"receipt_id"`
+        System      string `json:"system"`
+        Status      string `json:"status"`
+        ReceiptID   string `json:"receipt_id"`
+        RelatedStep string `json:"related_step"`
 }
 
 type AccessService struct {
         Systems      []System                 `json:"systems"`
         CurrentState map[string][]AccessState `json:"current_state"`
+        ReasonCodes  []ReasonCode             `json:"reason_codes"`
 }
 
 type Data struct {
@@ -1670,17 +1722,33 @@ const (
         RoleLead   = "lead"
 )
 
+// Request — заявка в имитации корпоративного сервиса (в стиле Jira): номер, статус, согласующий, история.
+// Статусы: pending → approved (отгул) | granted (доступ) | rejected с кодом причины.
 type Request struct {
-        ID         string `json:"id"`
-        Kind       string `json:"kind"` // absence | access
-        Type       string `json:"type,omitempty"`
-        Date       string `json:"date,omitempty"`
-        System     string `json:"system,omitempty"`
-        Comment    string `json:"comment,omitempty"`
-        EmployeeID string `json:"employee_id"`
-        ApproverID string `json:"approver_id"`
-        Status     string `json:"status"`
-        CreatedAt  string `json:"created_at"`
+        ID         string  `json:"id"`
+        Kind       string  `json:"kind"` // absence | access
+        Type       string  `json:"type,omitempty"`
+        Date       string  `json:"date,omitempty"`
+        System     string  `json:"system,omitempty"`
+        Title      string  `json:"title,omitempty"` // название системы — для ленты руководителя
+        Comment    string  `json:"comment,omitempty"`
+        EmployeeID string  `json:"employee_id"`
+        ApproverID string  `json:"approver_id"`
+        Status     string  `json:"status"`
+        CreatedAt  string  `json:"created_at"`
+        Source     string  `json:"source"`                // agent — «сделаю за тебя», self — «сделай сам» (BR-42)
+        StepID     string  `json:"step_id,omitempty"`     // шаг плана, ради которого заявка (SC-27)
+        ReasonCode string  `json:"reason_code,omitempty"` // код причины отказа
+        Decision   string  `json:"decision,omitempty"`    // комментарий согласующего
+        DecidedAt  string  `json:"decided_at,omitempty"`
+        History    []Event `json:"history"`
+}
+
+// Event — строка в истории заявки, как журнал активности в трекере.
+type Event struct {
+        At   string `json:"at"`
+        By   string `json:"by"`
+        Text string `json:"text"`
 }
 
 type Question struct {
@@ -1827,13 +1895,28 @@ func (s *Store) AddRequest(r *Request) {
         s.requests = append(s.requests, r)
 </span>}
 
+// UpdateRequest применяет изменение к заявке под блокировкой.
+func (s *Store) UpdateRequest(id string, fn func(*Request)) (Request, bool) {
+        <span class="cov8" title="1">s.mu.Lock()
+        defer s.mu.Unlock()
+        for _, r := range s.requests </span>{
+                <span class="cov8" title="1">if r.ID == id </span>{
+                        <span class="cov8" title="1">fn(r)
+                        return *r, true
+</span>                }
+        }
+        <span class="cov0" title="0">return Request{}, false</span>
+}
+
 func (s *Store) Requests(employeeID string) []Request {
         <span class="cov8" title="1">s.mu.Lock()
         defer s.mu.Unlock()
         var out []Request
         for _, r := range s.requests </span>{
                 <span class="cov8" title="1">if employeeID == "" || r.EmployeeID == employeeID </span>{
-                        <span class="cov8" title="1">out = append(out, *r)
+                        <span class="cov8" title="1">c := *r
+                        c.History = slices.Clone(r.History)
+                        out = append(out, c)
 </span>                }
         }
         <span class="cov8" title="1">return out</span>
@@ -2462,6 +2545,9 @@ import (
         "github.com/worker4556/naparnik/backend/internal/store"
 )
 
+// SelfServiceHint — где в прототипе путь «сделай сам»: форма имитации сервиса (BR-42).
+const SelfServiceHint = "раздел «Заявки» → кнопка «Оформить самому»"
+
 func requestType(c Ctx, t string) (mockdata.RequestType, bool) {
         <span class="cov8" title="1">for _, rt := range c.Store.Data.Absence.RequestTypes </span>{
                 <span class="cov8" title="1">if rt.Type == t </span>{
@@ -2487,7 +2573,8 @@ func getAbsenceRules(c Ctx, args map[string]any) Result {
                 <span class="cov8" title="1">return fail("validation", "Неизвестный тип отсутствия.")
 </span>        }
         <span class="cov8" title="1">ss := c.Store.Data.Absence.SelfService
-        data := map[string]any{"type": rt.Type, "title": rt.Title, "self_service": ss, "approver": c.Store.Name(c.User.LeadID)}
+        data := map[string]any{"type": rt.Type, "title": rt.Title, "self_service": ss, "approver": c.Store.Name(c.User.LeadID),
+                "self_service_in_app": SelfServiceHint}
         if p, found := pageBody(c, ss.SourcePage); found </span>{
                 <span class="cov8" title="1">data["rules"] = p.Body
                 data["source"] = map[string]any{"page_id": p.ID, "title": p.Title, "author": c.Store.Name(p.AuthorID),
@@ -2542,7 +2629,7 @@ func createAbsenceRequest(c Ctx, args map[string]any) Result {
         <span class="cov8" title="1">r := &amp;store.Request{ID: c.Store.NextID("ABS"), Kind: "absence", Type: rt.Type, Date: day.Format(time.DateOnly),
                 Comment: str(args, "comment"), EmployeeID: c.User.ID, ApproverID: c.User.LeadID, Status: "pending",
                 CreatedAt: time.Now().Format(time.RFC3339)}
-        c.Store.AddRequest(r)
+        created(c, r)
         return Result{OK: true, Data: r, Receipt: map[string]string{"id": r.ID, "status": "pending", "approver": c.Store.Name(r.ApproverID)}}</span>
 }
 
@@ -2573,7 +2660,7 @@ func getRequiredAccesses(c Ctx, _ map[string]any) Result {
 </span>                }
                 <span class="cov8" title="1">out = append(out, map[string]string{"system": s.ID, "title": s.Title, "status": st})</span>
         }
-        <span class="cov8" title="1">return ok(map[string]any{"week": week, "systems": out})</span>
+        <span class="cov8" title="1">return ok(map[string]any{"week": week, "systems": out, "self_service_in_app": SelfServiceHint})</span>
 }
 
 func findSystem(c Ctx, id string) *mockdata.System {
@@ -2605,14 +2692,151 @@ func requestAccess(c Ctx, args map[string]any) Result {
         if mockFail("access") </span>{
                 <span class="cov8" title="1">return fail("unavailable", "Сервис доступов временно недоступен. Черновик сохранён — можно повторить.")
 </span>        }
-        <span class="cov8" title="1">r := &amp;store.Request{ID: c.Store.NextID("ACC"), Kind: "access", System: sys.ID, Comment: str(args, "reason"),
+        <span class="cov8" title="1">r := &amp;store.Request{ID: c.Store.NextID("ACC"), Kind: "access", System: sys.ID, Title: sys.Title, Comment: str(args, "reason"),
                 EmployeeID: c.User.ID, ApproverID: c.User.LeadID, Status: "pending", CreatedAt: time.Now().Format(time.RFC3339)}
-        c.Store.AddRequest(r)
+        for _, st := range c.Store.Data.Access.CurrentState[c.User.ID] </span>{
+                <span class="cov8" title="1">if st.System == sys.ID </span>{
+                        <span class="cov8" title="1">r.StepID = st.RelatedStep // SC-27: после выдачи доступа шаг предлагается отметить
+</span>                }
+        }
+        <span class="cov8" title="1">created(c, r)
         return Result{OK: true, Data: r, Receipt: map[string]string{"id": r.ID, "status": "pending", "approver": c.Store.Name(r.ApproverID)}}</span>
 }
 </pre>
 		
-		<pre class="file" id="file16" style="display: none">// Package tools — инструменты агента AI-buddy.
+		<pre class="file" id="file16" style="display: none">package tools
+
+import (
+        "time"
+
+        "github.com/worker4556/naparnik/backend/internal/mockdata"
+        "github.com/worker4556/naparnik/backend/internal/store"
+)
+
+// Имитация корпоративного сервиса заявок в стиле Jira (absence-service.json, access-service.json):
+// заявка с номером, согласующим, статусом и историей; согласует руководитель с кодом причины отказа.
+// Сюда же — путь «сделай сам» (BR-42): стажёр заполняет форму сервиса без Напарника.
+
+const (
+        SourceAgent = "agent" // «сделаю за тебя»: черновик Напарника → подтверждение стажёра
+        SourceSelf  = "self"  // «сделай сам»: стажёр заполнил форму сервиса
+)
+
+// created — заявка принята сервисом: первая запись истории и сохранение.
+// По умолчанию заявку готовил Напарник; CreateSelf переписывает источник.
+func created(c Ctx, r *store.Request) {
+        <span class="cov8" title="1">r.Source = SourceAgent
+        r.History = []store.Event{
+                {At: r.CreatedAt, By: c.User.ID, Text: "Черновик подготовил Напарник, " + c.Store.Name(c.User.ID) + " подтвердил(а)"},
+                {At: r.CreatedAt, By: r.ApproverID, Text: "Заявка на согласовании: " + c.Store.Name(r.ApproverID)},
+</span>        }
+        <span class="cov8" title="1">c.Store.AddRequest(r)
+</span>}
+
+// CreateSelf — стажёр сам оформляет заявку в форме сервиса (BR-42, «сделай сам»).
+// Нажатие «Отправить» в форме — и есть подтверждение человека, черновик не нужен.
+// Проверки те же, что у агента: права, даты, системы своего отдела (BR-40, BR-44).
+func CreateSelf(c Ctx, kind string, args map[string]any) Result {
+        <span class="cov8" title="1">tool := map[string]string{"absence": "create_absence_request", "access": "request_access"}[kind]
+        if tool == "" </span>{
+                <span class="cov8" title="1">return fail("validation", "Неизвестный тип заявки.")
+</span>        }
+        <span class="cov8" title="1">res := Run(c, tool, args)
+        if !res.OK </span>{
+                <span class="cov8" title="1">return res
+</span>        }
+        <span class="cov8" title="1">r := res.Data.(*store.Request)
+        upd, _ := c.Store.UpdateRequest(r.ID, func(x *store.Request) </span>{
+                <span class="cov8" title="1">x.Source = SourceSelf
+                x.History[0].Text = c.Store.Name(c.User.ID) + " оформил(а) заявку сам(а) в сервисе"
+</span>        })
+        <span class="cov8" title="1">res.Data = upd
+        return res</span>
+}
+
+// reasonCodes — коды причин отказа для сервиса заявки.
+func reasonCodes(c Ctx, kind string) []mockdata.ReasonCode {
+        <span class="cov8" title="1">if kind == "access" </span>{
+                <span class="cov0" title="0">return c.Store.Data.Access.ReasonCodes
+</span>        }
+        <span class="cov8" title="1">return c.Store.Data.Absence.ReasonCodes</span>
+}
+
+// Decide — согласующий одобряет или отклоняет заявку (status_flow в мок-данных сервисов).
+// Решает только согласующий этой заявки; отказ — с кодом причины, «Другое» — с комментарием.
+func Decide(c Ctx, id, decision, reason, comment string) (store.Request, *Error) {
+        <span class="cov8" title="1">var req *store.Request
+        for _, r := range c.Store.Requests("") </span>{
+                <span class="cov8" title="1">if r.ID == id </span>{
+                        <span class="cov8" title="1">req = &amp;r
+</span>                }
+        }
+        <span class="cov8" title="1">switch </span>{
+        case req == nil:
+                <span class="cov8" title="1">return store.Request{}, &amp;Error{Code: "not_found", Message: "Заявка не найдена."}</span>
+        case req.ApproverID != c.User.ID:
+                <span class="cov8" title="1">return store.Request{}, &amp;Error{Code: "forbidden", Message: "Решение принимает согласующий заявки."}</span>
+        case req.Status != "pending":
+                <span class="cov8" title="1">return store.Request{}, &amp;Error{Code: "validation", Message: "По заявке уже есть решение."}</span>
+        }
+        <span class="cov8" title="1">status, text := "", ""
+        switch decision </span>{
+        case "approve":
+                <span class="cov8" title="1">status, text = "approved", "Согласовано"
+                if req.Kind == "access" </span>{
+                        <span class="cov8" title="1">status, text = "granted", "Доступ выдан"
+</span>                }
+        case "reject":
+                <span class="cov8" title="1">var rc *mockdata.ReasonCode
+                for _, x := range reasonCodes(c, req.Kind) </span>{
+                        <span class="cov8" title="1">if x.Code == reason </span>{
+                                <span class="cov8" title="1">rc = &amp;x
+</span>                        }
+                }
+                <span class="cov8" title="1">if rc == nil </span>{
+                        <span class="cov8" title="1">return store.Request{}, &amp;Error{Code: "validation", Message: "Выбери причину отказа."}
+</span>                }
+                <span class="cov8" title="1">if rc.Code == "OTHER" &amp;&amp; comment == "" </span>{
+                        <span class="cov8" title="1">return store.Request{}, &amp;Error{Code: "validation", Message: "Для «Другое» нужен комментарий."}
+</span>                }
+                <span class="cov8" title="1">status, text = "rejected", "Отклонено: "+rc.Text</span>
+        default:
+                <span class="cov8" title="1">return store.Request{}, &amp;Error{Code: "validation", Message: "Решение: approve или reject."}</span>
+        }
+        <span class="cov8" title="1">now := time.Now().Format(time.RFC3339)
+        if comment != "" </span>{
+                <span class="cov8" title="1">text += ". Комментарий: " + comment
+</span>        }
+        <span class="cov8" title="1">out, _ := c.Store.UpdateRequest(id, func(r *store.Request) </span>{
+                <span class="cov8" title="1">r.Status, r.DecidedAt, r.Decision = status, now, comment
+                if decision == "reject" </span>{
+                        <span class="cov8" title="1">r.ReasonCode = reason
+</span>                }
+                <span class="cov8" title="1">r.History = append(r.History, store.Event{At: now, By: c.User.ID, Text: text + " — " + c.Store.Name(c.User.ID)})
+                if status == "granted" &amp;&amp; r.StepID != "" </span>{
+                        <span class="cov8" title="1">r.History = append(r.History, store.Event{At: now, By: r.EmployeeID, Text: "Шаг плана можно отметить выполненным — стажёр подтверждает"})
+</span>                }
+        })
+        <span class="cov8" title="1">return out, nil</span>
+}
+
+// Catalog — что можно оформить в сервисе: типы отсутствий, доступные системы, порядок «сделай сам» и коды причин.
+// Стажёру — только системы своего отдела и недели (BR-40); остальным — только справочник кодов.
+func Catalog(c Ctx) map[string]any {
+        <span class="cov8" title="1">abs := c.Store.Data.Absence
+        out := map[string]any{
+                "absence": map[string]any{"types": abs.RequestTypes, "self_service": abs.SelfService, "reason_codes": abs.ReasonCodes,
+                        "approver": c.Store.Name(c.User.LeadID)},
+                "access": map[string]any{"systems": []map[string]string{}, "reason_codes": c.Store.Data.Access.ReasonCodes},
+</span>        }
+        <span class="cov8" title="1">if res := Run(c, "get_required_accesses", nil); res.OK </span>{
+                <span class="cov8" title="1">out["access"].(map[string]any)["systems"] = res.Data.(map[string]any)["systems"]
+</span>        }
+        <span class="cov8" title="1">return out</span>
+}
+</pre>
+		
+		<pre class="file" id="file17" style="display: none">// Package tools — инструменты агента AI-buddy.
 //
 // Правила из docs/03-requirements, которые проверяет код (а не промпт):
 //   - BR-40: права проверяются до вызова; недоступное не показывается и не упоминается;

@@ -146,10 +146,17 @@ type SelfService struct {
 	SourcePage string   `json:"source_page"`
 }
 
+// ReasonCode — код причины отказа согласующего (absence-service.json, access-service.json).
+type ReasonCode struct {
+	Code string `json:"code"`
+	Text string `json:"text"`
+}
+
 type AbsenceService struct {
 	RequestTypes    []RequestType `json:"request_types"`
 	ForbiddenFields []string      `json:"forbidden_fields"`
 	SelfService     SelfService   `json:"self_service"`
+	ReasonCodes     []ReasonCode  `json:"reason_codes"`
 }
 
 type System struct {
@@ -161,14 +168,16 @@ type System struct {
 }
 
 type AccessState struct {
-	System    string `json:"system"`
-	Status    string `json:"status"`
-	ReceiptID string `json:"receipt_id"`
+	System      string `json:"system"`
+	Status      string `json:"status"`
+	ReceiptID   string `json:"receipt_id"`
+	RelatedStep string `json:"related_step"`
 }
 
 type AccessService struct {
 	Systems      []System                 `json:"systems"`
 	CurrentState map[string][]AccessState `json:"current_state"`
+	ReasonCodes  []ReasonCode             `json:"reason_codes"`
 }
 
 type Data struct {

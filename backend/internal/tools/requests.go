@@ -8,6 +8,9 @@ import (
 	"github.com/worker4556/naparnik/backend/internal/store"
 )
 
+// SelfServiceHint — где в прототипе путь «сделай сам»: форма имитации сервиса (BR-42).
+const SelfServiceHint = "раздел «Заявки» → кнопка «Оформить самому»"
+
 func requestType(c Ctx, t string) (mockdata.RequestType, bool) {
 	for _, rt := range c.Store.Data.Absence.RequestTypes {
 		if rt.Type == t {
@@ -33,7 +36,8 @@ func getAbsenceRules(c Ctx, args map[string]any) Result {
 		return fail("validation", "Неизвестный тип отсутствия.")
 	}
 	ss := c.Store.Data.Absence.SelfService
-	data := map[string]any{"type": rt.Type, "title": rt.Title, "self_service": ss, "approver": c.Store.Name(c.User.LeadID)}
+	data := map[string]any{"type": rt.Type, "title": rt.Title, "self_service": ss, "approver": c.Store.Name(c.User.LeadID),
+		"self_service_in_app": SelfServiceHint}
 	if p, found := pageBody(c, ss.SourcePage); found {
 		data["rules"] = p.Body
 		data["source"] = map[string]any{"page_id": p.ID, "title": p.Title, "author": c.Store.Name(p.AuthorID),
@@ -88,7 +92,7 @@ func createAbsenceRequest(c Ctx, args map[string]any) Result {
 	r := &store.Request{ID: c.Store.NextID("ABS"), Kind: "absence", Type: rt.Type, Date: day.Format(time.DateOnly),
 		Comment: str(args, "comment"), EmployeeID: c.User.ID, ApproverID: c.User.LeadID, Status: "pending",
 		CreatedAt: time.Now().Format(time.RFC3339)}
-	c.Store.AddRequest(r)
+	created(c, r)
 	return Result{OK: true, Data: r, Receipt: map[string]string{"id": r.ID, "status": "pending", "approver": c.Store.Name(r.ApproverID)}}
 }
 
@@ -119,7 +123,7 @@ func getRequiredAccesses(c Ctx, _ map[string]any) Result {
 		}
 		out = append(out, map[string]string{"system": s.ID, "title": s.Title, "status": st})
 	}
-	return ok(map[string]any{"week": week, "systems": out})
+	return ok(map[string]any{"week": week, "systems": out, "self_service_in_app": SelfServiceHint})
 }
 
 func findSystem(c Ctx, id string) *mockdata.System {
@@ -151,8 +155,13 @@ func requestAccess(c Ctx, args map[string]any) Result {
 	if mockFail("access") {
 		return fail("unavailable", "Сервис доступов временно недоступен. Черновик сохранён — можно повторить.")
 	}
-	r := &store.Request{ID: c.Store.NextID("ACC"), Kind: "access", System: sys.ID, Comment: str(args, "reason"),
+	r := &store.Request{ID: c.Store.NextID("ACC"), Kind: "access", System: sys.ID, Title: sys.Title, Comment: str(args, "reason"),
 		EmployeeID: c.User.ID, ApproverID: c.User.LeadID, Status: "pending", CreatedAt: time.Now().Format(time.RFC3339)}
-	c.Store.AddRequest(r)
+	for _, st := range c.Store.Data.Access.CurrentState[c.User.ID] {
+		if st.System == sys.ID {
+			r.StepID = st.RelatedStep // SC-27: после выдачи доступа шаг предлагается отметить
+		}
+	}
+	created(c, r)
 	return Result{OK: true, Data: r, Receipt: map[string]string{"id": r.ID, "status": "pending", "approver": c.Store.Name(r.ApproverID)}}
 }

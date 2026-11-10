@@ -148,8 +148,11 @@ function notifications() {
     plan.steps.filter((s) => s.owner === 'intern' && s.status === 'Overdue')
       .forEach((s) => out.push(['!', `Просрочен шаг: ${s.title}`, 'Нужна помощь? Напарник подскажет', true]));
   }
-  (state.requests || []).filter((r) => r.status === 'pending')
-    .forEach((r) => out.push(['☂', `${requestTitle(r)} — на согласовании`, `${r.id} · ${nameById(r.approver_id)}`, false]));
+  (state.requests || []).forEach((r) => {
+    if (r.status === 'pending' && r.approver_id === state.me.id) out.push(['☂', `Ждёт решения: ${requestTitle(r)}`, `${r.id} · ${nameById(r.employee_id)}`, true]);
+    else if (r.status === 'pending') out.push(['☂', `${requestTitle(r)} — на согласовании`, `${r.id} · ${nameById(r.approver_id)}`, false]);
+    else if (r.employee_id === state.me.id) out.push(['✓', `Статус заявки ${r.id} изменился: ${STATUS[r.status][1].toLowerCase()}`, requestTitle(r), true]);
+  });
   (state.questions || []).forEach((q) => {
     if (q.addressee_id === state.me.id && q.status === 'Sent') out.push(['✉', `Вам вопрос: ${questionTitle(q)}`, `от ${nameById(q.asked_by)}`, true]);
     else if (q.asked_by === state.me.id && q.status === 'Answered') out.push(['✓', `${q.addressee} ответил(а) на твой вопрос`, questionTitle(q), true]);
@@ -430,39 +433,195 @@ function renderKB() {
 
 // ---------- Заявки ----------
 
-const requestTitle = (r) => (r.kind === 'absence' ? `Отгул · ${ruDate(r.date, { day: 'numeric', month: 'long' })}` : `Доступ: ${r.system}`);
+const SYSTEMS = {};
+const requestTitle = (r) => (r.kind === 'absence'
+  ? `${(ABSENCE_TYPES[r.type] || 'Отгул')} · ${ruDate(r.date, { day: 'numeric', month: 'long' })}`
+  : `Доступ: ${r.title || SYSTEMS[r.system] || r.system}`);
+const ABSENCE_TYPES = { day_off: 'Отгул', vacation: 'Отпуск', sick_leave: 'Больничный' };
+const COLUMNS = [
+  ['pending', 'На согласовании'],
+  ['done', 'Согласовано · выдан'],
+  ['rejected', 'Отклонено'],
+];
+const column = (r) => (r.status === 'approved' || r.status === 'granted' ? 'done' : r.status);
+const isApprover = (r) => r.approver_id === state.me.id;
+const timeRu = (iso) => new Date(iso).toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+
+async function loadServices() {
+  const { data } = await api('GET', '/api/services');
+  state.services = data;
+  ((data.access && data.access.systems) || []).forEach((x) => { SYSTEMS[x.system] = x.title; });
+}
 
 async function renderRequests() {
-  const { data } = await api('GET', '/api/requests');
-  const rs = data.requests || [];
-  state.requests = rs;
-  $('reqCount').textContent = rs.length;
-  const list = $('reqList');
-  list.replaceChildren();
-  if (!rs.length) list.appendChild(el('div', 'empty', 'Заявок пока нет. Нажми «Новая заявка» — Напарник подготовит черновик.'));
-  for (const r of rs) {
-    const card = el('div', 'request-card');
-    const body = el('div');
-    body.append(el('div', 'table-title', requestTitle(r)), el('div', 'meta', `${r.id} · ${nameById(r.employee_id)} · согласует ${nameById(r.approver_id)}`));
-    card.append(el('div', 'request-icon', r.kind === 'absence' ? '☂' : '⌘'), body, badge(r.status));
-    card.onclick = () => openRequest(r);
-    list.appendChild(card);
+  const [{ data }] = await Promise.all([api('GET', '/api/requests'), loadServices()]);
+  const all = data.requests || [];
+  state.requests = all;
+  const rs = all.filter((r) => !state.reqKind || r.kind === state.reqKind);
+  $('reqCount').textContent = all.length;
+  // руководитель не подаёт заявки — он согласует
+  $('reqActions').hidden = !isIntern();
+  const waiting = all.filter((r) => isApprover(r) && r.status === 'pending').length;
+  $('reqLead').textContent = isIntern()
+    ? 'Отгулы и доступы: оформи сам или попроси Напарника. Согласует руководитель.'
+    : 'Заявки стажёров, где ты согласующий. Решение сразу видно стажёру.';
+  $('reqHint').textContent = waiting ? `Ждут твоего решения: ${waiting}` : '';
+  const board = $('board');
+  board.replaceChildren();
+  for (const [key, title] of COLUMNS) {
+    const items = rs.filter((r) => column(r) === key);
+    const col = el('div', 'column');
+    const head = el('div', 'column-head');
+    head.append(el('span', '', title), el('span', 'count', String(items.length)));
+    col.appendChild(head);
+    items.forEach((r) => col.appendChild(ticketCard(r)));
+    if (!items.length) col.appendChild(el('div', 'empty', key === 'pending' && isIntern() ? 'Пусто. «Оформить самому» или «Через Напарника»' : 'Пусто'));
+    board.appendChild(col);
   }
-  const last = rs[rs.length - 1];
-  const box = $('lastReceipt');
-  box.replaceChildren(el('div', 'eyebrow', 'Последняя квитанция'));
-  if (!last) { box.appendChild(el('p', 'meta', 'Квитанций пока нет')); return; }
-  box.append(el('div', 'receipt-code', last.id), el('b', '', requestTitle(last)),
-    el('p', 'meta', `Заявка сохранена и отправлена: ${nameById(last.approver_id)}. Статус обновится здесь.`), badge(last.status));
+}
+
+function ticketCard(r) {
+  const t = el('div', 'ticket');
+  t.tabIndex = 0;
+  const top = el('div', 'ticket-foot');
+  top.append(el('span', 'ticket-key', r.id), el('span', 'source-tag' + (r.source === 'self' ? ' self' : ''), r.source === 'self' ? 'сам' : 'Напарник'));
+  const foot = el('div', 'ticket-foot');
+  const who = el('span', 'meta');
+  who.append(el('span', 'avatar sm', initials(nameById(r.employee_id))), document.createTextNode(nameById(r.employee_id)));
+  foot.append(who, badge(r.status));
+  t.append(top, el('div', 'ticket-title', requestTitle(r)), foot);
+  if (isApprover(r) && r.status === 'pending') {
+    const acts = el('div', 'ticket-actions');
+    const yes = el('button', 'primary', r.kind === 'access' ? 'Выдать' : 'Согласовать');
+    const no = el('button', 'secondary', 'Отклонить');
+    yes.onclick = (e) => { e.stopPropagation(); decide(r, 'approve'); };
+    no.onclick = (e) => { e.stopPropagation(); openReject(r); };
+    acts.append(yes, no);
+    t.appendChild(acts);
+  }
+  t.onclick = () => openRequest(r);
+  t.onkeydown = (e) => { if (e.key === 'Enter') openRequest(r); };
+  return t;
+}
+
+function stepTitle(id) {
+  const s = state.plan && state.plan.steps ? state.plan.steps.find((x) => x.id === id) : null;
+  return s ? s.title : id;
 }
 
 function openRequest(r) {
-  const box = el('div', 'receipt');
-  box.append(el('b', '', 'История заявки'),
-    el('p', '', `Черновик подготовлен Напарником → ${nameById(r.employee_id)} подтвердил → отправлено: ${nameById(r.approver_id)}.`),
-    badge(r.status));
-  if (r.comment) box.appendChild(el('p', 'meta', `Причина: ${r.comment}`));
-  openModal(requestTitle(r), `${r.id} · создана ${new Date(r.created_at).toLocaleString('ru-RU')}`, box);
+  const fields = el('dl', 'fields');
+  const add = (k, v) => { if (v) fields.append(el('dt', '', k), el('dd', '', v)); };
+  add('Статус', (STATUS[r.status] || [, r.status])[1]);
+  add('Автор', nameById(r.employee_id));
+  add('Согласующий', nameById(r.approver_id));
+  add('Как оформлена', r.source === 'self' ? 'Сам — в форме сервиса' : 'Напарник — черновик и подтверждение');
+  add('Шаг плана', r.step_id ? stepTitle(r.step_id) : '');
+  add(r.kind === 'access' ? 'Зачем' : 'Комментарий', r.comment);
+  if (r.reason_code) {
+    const codes = (state.services && state.services[r.kind] && state.services[r.kind].reason_codes) || [];
+    add('Причина отказа', (codes.find((c) => c.code === r.reason_code) || {}).text || r.reason_code);
+  }
+  const hist = el('div', 'history');
+  (r.history || []).forEach((h) => {
+    const row = el('div');
+    row.append(el('small', '', timeRu(h.at)), document.createTextNode(h.text));
+    hist.appendChild(row);
+  });
+  const actions = [{ label: 'Закрыть' }];
+  if (isApprover(r) && r.status === 'pending') {
+    actions.push({ label: 'Отклонить', onClick: () => openReject(r) },
+      { label: r.kind === 'access' ? 'Выдать доступ' : 'Согласовать', primary: true, onClick: () => decide(r, 'approve') });
+  }
+  // SC-27: доступ выдан → шаг плана предлагается отметить, стажёр подтверждает сам
+  const step = r.step_id && state.plan && state.plan.steps ? state.plan.steps.find((x) => x.id === r.step_id) : null;
+  if (r.employee_id === state.me.id && r.status === 'granted' && step && step.status !== 'Done') {
+    actions.push({ label: 'Отметить шаг выполненным', primary: true, onClick: () => markDone(r.step_id) });
+  }
+  openModal(requestTitle(r), `${r.id} · создана ${timeRu(r.created_at)}`, [fields, el('b', '', 'История'), hist], actions);
+}
+
+async function decide(r, decision, reason, comment) {
+  const { status, data } = await api('POST', `/api/requests/${r.id}/decision`, { decision, reason, comment });
+  if (status !== 200) { toast((data.error && data.error.message) || 'Не получилось'); return; }
+  toast(`${r.id}: ${STATUS[data.request.status][1].toLowerCase()} — ${nameById(r.employee_id)} увидит статус`);
+  await renderRequests();
+}
+
+// Отказ — только с кодом причины из сервиса (reason_codes), «Другое» — с комментарием.
+function openReject(r) {
+  const codes = (state.services && state.services[r.kind] && state.services[r.kind].reason_codes) || [];
+  const sel = el('select', 'field');
+  codes.forEach((c) => { const o = el('option', '', c.text); o.value = c.code; sel.appendChild(o); });
+  const note = el('textarea', 'field');
+  note.placeholder = 'Комментарий стажёру (для «Другое» — обязательно)';
+  openModal(`Отклонить ${r.id}`, requestTitle(r), [el('div', 'field-label', 'Причина'), sel, el('div', 'field-label', 'Комментарий'), note], [
+    { label: 'Отмена' },
+    { label: 'Отклонить', primary: true, onClick: () => decide(r, 'reject', sel.value, note.value) },
+  ]);
+}
+
+// BR-42, «сделай сам»: форма сервиса без Напарника. Отправка формы — и есть подтверждение.
+function openSelfService(kind = 'absence') {
+  const svc = state.services || {};
+  const seg = el('div', 'seg');
+  [['absence', 'Отсутствие'], ['access', 'Доступ']].forEach(([k, label]) => {
+    const b = el('button', 'filter' + (k === kind ? ' active' : ''), label);
+    b.onclick = () => { closeModal(); openSelfService(k); };
+    seg.appendChild(b);
+  });
+  const body = [seg];
+  let submit;
+  if (kind === 'absence') {
+    const abs = svc.absence || {};
+    const type = el('select', 'field');
+    (abs.types || []).forEach((t) => { const o = el('option', '', t.title); o.value = t.type; type.appendChild(o); });
+    const date = el('input', 'field');
+    date.type = 'date';
+    date.min = state.me.today;
+    const warn = el('div');
+    const comment = el('input', 'field');
+    comment.placeholder = 'Необязательно';
+    const check = async () => {
+      warn.replaceChildren();
+      if (!date.value) return;
+      const { data } = await api('GET', `/api/services/absence/precheck?type=${encodeURIComponent(type.value)}&date=${encodeURIComponent(date.value)}`);
+      ((data.data && data.data.warnings) || []).forEach((w) => warn.appendChild(el('div', 'warn', '⚠ ' + w.message)));
+    };
+    date.onchange = check;
+    type.onchange = check;
+    const steps = el('ol', 'meta');
+    ((abs.self_service && abs.self_service.steps) || []).forEach((x) => steps.appendChild(el('li', '', x)));
+    body.push(el('div', 'field-label', 'Тип'), type, el('div', 'field-label', 'Дата'), date, warn,
+      el('div', 'field-label', 'Комментарий'), comment,
+      el('p', 'meta', `Согласующий подставится сам: ${abs.approver || 'руководитель'}. Порядок — тестовая инструкция, не регламент Авито.`));
+    submit = () => ({ kind, type: type.value, date: date.value, comment: comment.value });
+  } else {
+    const systems = ((svc.access && svc.access.systems) || []).filter((x) => x.status === 'not_requested' || x.status === 'rejected');
+    if (!systems.length) {
+      body.push(el('div', 'empty', 'Все доступы этой недели уже запрошены или выданы.'));
+    } else {
+      const sys = el('select', 'field');
+      systems.forEach((x) => { const o = el('option', '', x.title); o.value = x.system; sys.appendChild(o); });
+      const reason = el('input', 'field');
+      reason.placeholder = 'Например: шаг плана — доступ к дашбордам отдела';
+      body.push(el('div', 'field-label', 'Система'), sys, el('div', 'field-label', 'Зачем'), reason,
+        el('p', 'meta', 'Показаны только системы твоего отдела и текущей недели.'));
+      submit = () => ({ kind, system: sys.value, reason: reason.value || 'Шаг плана адаптации' });
+    }
+  }
+  const actions = [{ label: 'Отмена' }];
+  if (submit) actions.push({ label: 'Отправить в сервис', primary: true, onClick: () => sendSelf(submit()) });
+  openModal('Оформить самому', 'Имитация корпоративного сервиса · демо', body, actions);
+}
+
+async function sendSelf(body) {
+  if (body.kind === 'absence' && !body.date) { toast('Выбери дату'); openSelfService('absence'); return; }
+  const { status, data } = await api('POST', '/api/requests', body);
+  if (status !== 200) { toast((data.error && data.error.message) || 'Не получилось'); return; }
+  toast(`Заявка ${data.data.id} отправлена: ${nameById(data.data.approver_id)}`);
+  openPage('requests');
+  await renderRequests();
 }
 
 function openQuestion(q) {
@@ -714,6 +873,14 @@ document.querySelectorAll('#quick button').forEach((b) => { b.onclick = () => as
 document.querySelectorAll('.nav button').forEach((b) => { b.onclick = () => openPage(b.dataset.page); });
 document.querySelectorAll('[data-open]').forEach((b) => { b.onclick = () => openPage(b.dataset.open); });
 document.querySelectorAll('[data-ask]').forEach((b) => { b.onclick = () => openChat(b.dataset.ask); });
+$('selfService').onclick = () => openSelfService();
+document.querySelectorAll('[data-rkind]').forEach((b) => {
+  b.onclick = () => {
+    state.reqKind = b.dataset.rkind;
+    document.querySelectorAll('[data-rkind]').forEach((x) => x.classList.toggle('active', x === b));
+    renderRequests();
+  };
+});
 document.querySelectorAll('[data-qfilter]').forEach((b) => {
   b.onclick = () => {
     document.querySelectorAll('[data-qfilter]').forEach((x) => x.classList.toggle('active', x === b));

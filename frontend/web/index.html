@@ -238,6 +238,28 @@
     .bubble.md ul { margin: 0 0 8px; padding-left: 18px; } .bubble.md li { margin: 3px 0; }
     .bubble.md code { font: 12px ui-monospace, monospace; background: color-mix(in srgb, var(--blue) 10%, transparent); padding: 1px 5px; border-radius: 6px; }
     .bubble.md blockquote { margin: 0 0 8px; padding: 8px 10px; border-left: 3px solid var(--blue); background: var(--surface); border-radius: 8px; }
+    /* Доска заявок в стиле Jira */
+    .intro-actions { display: flex; gap: 9px; flex-wrap: wrap; }
+    .board { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; align-items: start; }
+    .column { background: var(--surface-2); border-radius: 18px; padding: 12px; min-height: 160px; }
+    .column-head { display: flex; justify-content: space-between; align-items: center; font-size: 12px; font-weight: 750; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); padding: 4px 6px 10px; }
+    .ticket { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 13px; margin-bottom: 10px; cursor: pointer; transition: transform .18s ease, border-color .18s ease; }
+    .ticket:hover { transform: translateY(-2px); border-color: color-mix(in srgb, var(--blue) 40%, var(--line)); }
+    .ticket-key { font: 700 12px ui-monospace, monospace; color: var(--blue); }
+    .ticket-title { font-weight: 680; margin: 5px 0 9px; }
+    .ticket-foot { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+    .ticket-actions { display: flex; gap: 7px; margin-top: 10px; }
+    .ticket-actions button { flex: 1; padding: 8px 10px; }
+    .avatar.sm { width: 26px; height: 26px; font-size: 11px; }
+    .source-tag { font-size: 11px; font-weight: 650; padding: 2px 7px; border-radius: 7px; background: var(--blue-soft); color: var(--blue); }
+    .source-tag.self { background: var(--green-soft); color: var(--green); }
+    .fields { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; font-size: 14px; margin: 4px 0 14px; }
+    .fields dt { color: var(--muted); } .fields dd { margin: 0; }
+    .history { border-left: 2px solid var(--line); margin: 6px 0 4px 6px; padding-left: 14px; }
+    .history div { margin-bottom: 10px; font-size: 13px; } .history small { color: var(--muted); display: block; }
+    .seg { display: flex; gap: 8px; margin-bottom: 12px; }
+    .warn { background: var(--amber-soft); color: var(--amber); border-radius: 10px; padding: 8px 10px; font-size: 13px; margin: -4px 0 10px; }
+    @media (max-width: 760px) { .board { grid-template-columns: 1fr; } .intro-actions { width: 100%; } }
     /* backdrop-filter у шапки делает её контейнером для position: fixed — мобильная навигация «прилипала» к шапке, а не к низу экрана */
     @media (max-width: 760px) { .topbar { backdrop-filter: none; background: var(--bg); } }
 
@@ -322,13 +344,12 @@
         </div>
       </section>
 
-      <!-- Заявки -->
+      <!-- Заявки: имитация сервиса заявок в стиле Jira -->
       <section class="page-view" data-view="requests">
-        <div class="page-intro"><div><div class="eyebrow">Корпоративные сервисы · демо</div><h1>Заявки</h1><p>Черновик → подтверждение → результат с квитанцией.</p></div><button class="primary" data-ask="Мне нужен отгул в пятницу">Новая заявка</button></div>
-        <div class="page-grid">
-          <section class="card"><div class="card-head"><h2>Заявки <span class="count" id="reqCount">0</span></h2></div><div id="reqList"></div></section>
-          <aside class="stack"><section class="receipt" id="lastReceipt"></section><section class="tip"><div class="tip-icon">!</div><p><b>Перед отправкой</b>Напарник проверит встречи и дедлайны, затем покажет черновик. Без твоего подтверждения ничего не уйдёт.</p></section></aside>
-        </div>
+        <div class="page-intro"><div><div class="eyebrow">Сервис заявок · имитация Jira · демо</div><h1>Заявки</h1><p id="reqLead">Отгулы и доступы: оформи сам или попроси Напарника. Согласует руководитель.</p></div>
+          <div class="intro-actions" id="reqActions"><button class="secondary" id="selfService">Оформить самому</button><button class="primary" data-ask="Мне нужен отгул в пятницу">Через Напарника</button></div></div>
+        <div class="toolbar"><button class="filter active" data-rkind="">Все <span class="count" id="reqCount">0</span></button><button class="filter" data-rkind="absence">Отгулы</button><button class="filter" data-rkind="access">Доступы</button><span class="meta" id="reqHint"></span></div>
+        <section class="board" id="board" aria-label="Доска заявок"></section>
       </section>
     </main>
 
