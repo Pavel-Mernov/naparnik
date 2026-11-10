@@ -20,6 +20,10 @@ const ExpertThreshold = 0.6
 // MinExpertEvidence — сколько «очков» сигнала нужно для полной уверенности (страница по теме ≈ 1–4, зона ответственности ≈ 1.5).
 const MinExpertEvidence = 3.0
 
+// secondWeight — насколько близкий второй кандидат снижает уверенность. 1 — слишком строго: при двух
+// авторах по теме уверенность падала ниже порога даже у очевидного лидера (Q2 → бадди вместо Орлова).
+const secondWeight = 0.5
+
 var wordRe = regexp.MustCompile(`[\p{L}\p{N}_]+`)
 
 var stopWords = map[string]bool{
@@ -81,7 +85,7 @@ type Hit struct {
 func readablePages(c Ctx) []mockdata.Page {
 	spaces := c.Store.ReadableSpaces()
 	var out []mockdata.Page
-	for _, p := range c.Store.Data.KB.Pages {
+	for _, p := range c.Store.Pages() {
 		if spaces[p.Space] && p.Status == "Published" {
 			out = append(out, p)
 		}
@@ -185,7 +189,7 @@ func FindExpert(c Ctx, question string) (id string, confidence float64, reason s
 	}
 	// Уверенность: насколько лидер отрывается от второго, с поправкой на силу сигнала
 	// (одно случайное совпадение слова — ещё не экспертиза).
-	confidence = best / (best + second) * min(1, best/MinExpertEvidence)
+	confidence = best / (best + secondWeight*second) * min(1, best/MinExpertEvidence)
 	cd := cands[id]
 	pages := len(cd.pageScores)
 	switch {
@@ -218,7 +222,7 @@ func sendQuestion(c Ctx, args map[string]any) Result {
 	if text == "" {
 		return fail("validation", "Пустой вопрос.")
 	}
-	q := &store.Question{ID: c.Store.NextID("Q"), AskedBy: c.User.ID, AddresseeID: to.ID, Text: text,
+	q := &store.Question{ID: c.Store.NextID("Q"), AskedBy: c.User.ID, AddresseeID: to.ID, Title: QuestionTitle(str(args, "title"), text), Text: text,
 		Reason: str(args, "reason"), Urgent: boolean(args, "urgent"), Status: "Sent"}
 	c.Store.AddQuestion(q)
 	delivery := "в сводке"
@@ -275,4 +279,36 @@ func KBPages(c Ctx) (folders []mockdata.Folder, pages []PageCard) {
 		pages = append(pages, PageCard{p.ID, p.Folder, p.Type, p.Title, string(ex), c.Store.Name(p.AuthorID), p.UpdatedAt, p.TestInstruction})
 	}
 	return folders, pages
+}
+
+// QuestionTitle — суть вопроса одной строкой. Если модель не передала title, берём строку «Суть: …»
+// или первую содержательную строку без приветствия, не длиннее 120 символов.
+func QuestionTitle(title, text string) string {
+	if t := strings.TrimSpace(title); t != "" {
+		return clip(t)
+	}
+	lines := strings.Split(text, "\n")
+	for _, l := range lines {
+		l = strings.TrimSpace(l)
+		if rest, ok := strings.CutPrefix(l, "Суть:"); ok && strings.TrimSpace(rest) != "" {
+			return clip(strings.TrimSpace(rest))
+		}
+	}
+	for _, l := range lines {
+		l = strings.TrimSpace(l)
+		low := strings.ToLower(l)
+		if l == "" || strings.HasPrefix(low, "привет") || strings.HasPrefix(low, "здравствуй") || strings.HasPrefix(low, "добрый") {
+			continue
+		}
+		return clip(l)
+	}
+	return clip(strings.TrimSpace(text))
+}
+
+func clip(s string) string {
+	r := []rune(s)
+	if len(r) > 120 {
+		return string(r[:120]) + "…"
+	}
+	return s
 }

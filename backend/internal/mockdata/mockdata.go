@@ -61,6 +61,8 @@ type Page struct {
 	UpdatedAt       string `json:"updated_at"`
 	TestInstruction bool   `json:"test_instruction"`
 	Body            string `json:"body"`
+	SourceQuestion  string `json:"source_question,omitempty"` // для страниц «Вопрос-ответ» из ответа человека (P2)
+	SimilarPageID   string `json:"similar_page_id,omitempty"` // BR-32: похожая страница, которую можно дополнить
 }
 
 type Folder struct {

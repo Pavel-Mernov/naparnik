@@ -214,3 +214,46 @@ func TestChatReset(t *testing.T) {
 		t.Fatal(code)
 	}
 }
+
+// P2 через API: вопрос → ответ адресата → черновик у автора → «Ок» → страница в базе; видимость ответа (BR-86).
+func TestAnswerFlowAPI(t *testing.T) {
+	srv, h := newServer(t)
+	for _, login := range []string{"intern.sokolov", "intern.egorova"} {
+		u, _ := srv.Store.UserByLogin(login)
+		tools.Run(tools.Ctx{Store: srv.Store, User: u}, "send_question", map[string]any{"text": "Вопрос " + login, "addressee_id": "u-orlov"})
+	}
+	qs := srv.Store.Questions()
+	if code, _ := call(t, h, "POST", "/api/questions/"+qs[0].ID+"/answer", "expert.smirnova", `{"text":"x"}`); code != 403 {
+		t.Fatal("отвечает только адресат")
+	}
+	code, r := call(t, h, "POST", "/api/questions/"+qs[0].ID+"/answer", "expert.orlov", `{"text":"Ответ Михаила"}`)
+	if code != 200 || r["draft"].(map[string]any)["status"] != "Draft" {
+		t.Fatalf("ответ: %d %v", code, r)
+	}
+	call(t, h, "POST", "/api/questions/"+qs[1].ID+"/answer", "expert.orlov", `{"text":"Ответ Полине"}`)
+	if _, d := call(t, h, "GET", "/api/kb/drafts", "expert.orlov", ""); len(d["drafts"].([]any)) != 2 {
+		t.Fatalf("черновики: %v", d)
+	}
+	_, mine := call(t, h, "GET", "/api/questions", "intern.sokolov", "")
+	if mine["questions"].([]any)[0].(map[string]any)["answer"] != "Ответ Михаила" {
+		t.Fatal("стажёр видит ответ сразу")
+	}
+	_, buddy := call(t, h, "GET", "/api/questions", "buddy.belova", "")
+	for _, q := range buddy["questions"].([]any) {
+		q := q.(map[string]any)
+		if q["asked_by"] == "u-egorova" && q["answer"] != nil {
+			t.Fatal("BR-86: ответ скрыт вместе с текстом")
+		}
+	}
+	pageID := r["draft"].(map[string]any)["id"].(string)
+	if code, _ := call(t, h, "POST", "/api/kb/pages/"+pageID+"/approve", "buddy.belova", `{}`); code != 403 {
+		t.Fatal("публикует только автор")
+	}
+	if code, p := call(t, h, "POST", "/api/kb/pages/"+pageID+"/approve", "expert.orlov", `{"title":"Заголовок"}`); code != 200 || p["page"].(map[string]any)["status"] != "Published" {
+		t.Fatalf("публикация: %d %v", code, p)
+	}
+	_, kb := call(t, h, "GET", "/api/kb/pages", "intern.egorova", "")
+	if len(kb["pages"].([]any)) != 20 {
+		t.Fatal("опубликованная страница в базе, черновик — нет")
+	}
+}

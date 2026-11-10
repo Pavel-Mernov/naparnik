@@ -77,15 +77,17 @@
 				
 				<option value="file10">github.com/worker4556/naparnik/backend/internal/mockdata/mockdata.go (100.0%)</option>
 				
-				<option value="file11">github.com/worker4556/naparnik/backend/internal/store/store.go (100.0%)</option>
+				<option value="file11">github.com/worker4556/naparnik/backend/internal/store/store.go (97.9%)</option>
 				
-				<option value="file12">github.com/worker4556/naparnik/backend/internal/tools/kb.go (98.4%)</option>
+				<option value="file12">github.com/worker4556/naparnik/backend/internal/tools/answers.go (96.3%)</option>
 				
-				<option value="file13">github.com/worker4556/naparnik/backend/internal/tools/plan.go (98.4%)</option>
+				<option value="file13">github.com/worker4556/naparnik/backend/internal/tools/kb.go (98.6%)</option>
 				
-				<option value="file14">github.com/worker4556/naparnik/backend/internal/tools/requests.go (97.5%)</option>
+				<option value="file14">github.com/worker4556/naparnik/backend/internal/tools/plan.go (98.4%)</option>
 				
-				<option value="file15">github.com/worker4556/naparnik/backend/internal/tools/tools.go (100.0%)</option>
+				<option value="file15">github.com/worker4556/naparnik/backend/internal/tools/requests.go (97.5%)</option>
+				
+				<option value="file16">github.com/worker4556/naparnik/backend/internal/tools/tools.go (100.0%)</option>
 				
 				</select>
 			</div>
@@ -580,6 +582,9 @@ func (s *Server) Handler() http.Handler {
         mux.HandleFunc("GET /api/today", s.auth(s.today))
         mux.HandleFunc("GET /api/users", s.users)
         mux.HandleFunc("GET /api/kb/pages", s.auth(s.kbPages))
+        mux.HandleFunc("GET /api/kb/drafts", s.auth(s.kbDrafts))
+        mux.HandleFunc("POST /api/kb/pages/{id}/approve", s.auth(s.kbApprove))
+        mux.HandleFunc("POST /api/questions/{id}/answer", s.auth(s.answer))
         if s.StaticDir != "" </span>{
                 <span class="cov8" title="1">files := http.FileServer(http.Dir(s.StaticDir))
                 mux.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) </span>{
@@ -654,6 +659,40 @@ func (s *Server) kbPages(w http.ResponseWriter, _ *http.Request, u *mockdata.Use
         writeJSON(w, 200, map[string]any{"folders": nonNil(folders), "pages": nonNil(pages), "department": s.Store.Data.Team.Department.Name})
 </span>}
 
+// answer — P2, US-10: адресат отвечает текстом; стажёр получает ответ сразу, автору — черновик страницы.
+func (s *Server) answer(w http.ResponseWriter, r *http.Request, u *mockdata.User) {
+        <span class="cov8" title="1">var body struct {
+                Text string `json:"text"`
+</span>        }
+        <span class="cov8" title="1">_ = json.NewDecoder(r.Body).Decode(&amp;body)
+        q, page, e := tools.AnswerQuestion(tools.Ctx{Store: s.Store, User: u}, r.PathValue("id"), body.Text)
+        if e != nil </span>{
+                <span class="cov8" title="1">writeResult(w, tools.Result{Error: e})
+                return
+</span>        }
+        <span class="cov8" title="1">writeJSON(w, 200, map[string]any{"ok": true, "question": q, "draft": page,
+                "message": "Ответ отправлен. Проверь, я занёс твой ответ в базу — опубликую после твоего «Ок»."})</span>
+}
+
+func (s *Server) kbDrafts(w http.ResponseWriter, _ *http.Request, u *mockdata.User) {
+        <span class="cov8" title="1">writeJSON(w, 200, map[string]any{"drafts": nonNil(tools.DraftsFor(tools.Ctx{Store: s.Store, User: u}))})
+</span>}
+
+// kbApprove — BR-30: публикация только после «Ок» автора; правки — по желанию.
+func (s *Server) kbApprove(w http.ResponseWriter, r *http.Request, u *mockdata.User) {
+        <span class="cov8" title="1">var body struct {
+                Title string `json:"title"`
+                Body  string `json:"body"`
+</span>        }
+        <span class="cov8" title="1">_ = json.NewDecoder(r.Body).Decode(&amp;body)
+        page, e := tools.ApprovePage(tools.Ctx{Store: s.Store, User: u}, r.PathValue("id"), body.Title, body.Body)
+        if e != nil </span>{
+                <span class="cov8" title="1">writeResult(w, tools.Result{Error: e})
+                return
+</span>        }
+        <span class="cov8" title="1">writeJSON(w, 200, map[string]any{"ok": true, "page": page})</span>
+}
+
 func (s *Server) today(w http.ResponseWriter, _ *http.Request, u *mockdata.User) {
         <span class="cov8" title="1">writeResult(w, tools.Run(tools.Ctx{Store: s.Store, User: u}, "get_today", nil))
 </span>}
@@ -718,10 +757,14 @@ type questionView struct {
         AskedBy     string `json:"asked_by"`
         AddresseeID string `json:"addressee_id"`
         Addressee   string `json:"addressee"`
+        Title       string `json:"title,omitempty"`
         Text        string `json:"text,omitempty"`
         TextHidden  bool   `json:"text_hidden,omitempty"`
+        Reason      string `json:"reason,omitempty"`
         Urgent      bool   `json:"urgent"`
         Status      string `json:"status"`
+        Answer      string `json:"answer,omitempty"`
+        PageID      string `json:"page_id,omitempty"`
 }
 
 // questions — видимость по 02-ROLES:
@@ -732,13 +775,13 @@ func (s *Server) questions(w http.ResponseWriter, _ *http.Request, u *mockdata.U
         count := 0
         for _, q := range s.Store.Questions() </span>{
                 <span class="cov8" title="1">asker, _ := s.Store.User(q.AskedBy)
-                v := questionView{q.ID, q.AskedBy, q.AddresseeID, s.Store.Name(q.AddresseeID), q.Text, false, q.Urgent, q.Status}
+                v := questionView{q.ID, q.AskedBy, q.AddresseeID, s.Store.Name(q.AddresseeID), q.Title, q.Text, false, q.Reason, q.Urgent, q.Status, q.Answer, q.PageID}
                 switch </span>{
                 case q.AskedBy == u.ID || q.AddresseeID == u.ID:
                         <span class="cov8" title="1">out = append(out, v)</span>
                 case asker != nil &amp;&amp; asker.BuddyID == u.ID:
                         <span class="cov8" title="1">if asker.Settings != nil &amp;&amp; !asker.Settings.QuestionTextVisibleBuddy </span>{
-                                <span class="cov8" title="1">v.Text, v.TextHidden = "", true
+                                <span class="cov8" title="1">v.Title, v.Text, v.Answer, v.Reason, v.TextHidden = "", "", "", "", true // BR-86: скрыт и текст, и ответ
 </span>                        }
                         <span class="cov8" title="1">out = append(out, v)</span>
                 case asker != nil &amp;&amp; asker.LeadID == u.ID:
@@ -1444,6 +1487,8 @@ type Page struct {
         UpdatedAt       string `json:"updated_at"`
         TestInstruction bool   `json:"test_instruction"`
         Body            string `json:"body"`
+        SourceQuestion  string `json:"source_question,omitempty"` // для страниц «Вопрос-ответ» из ответа человека (P2)
+        SimilarPageID   string `json:"similar_page_id,omitempty"` // BR-32: похожая страница, которую можно дополнить
 }
 
 type Folder struct {
@@ -1642,10 +1687,15 @@ type Question struct {
         ID          string `json:"id"`
         AskedBy     string `json:"asked_by"`
         AddresseeID string `json:"addressee_id"`
-        Text        string `json:"text"`
+        Title       string `json:"title"` // суть одной строкой: заголовок страницы базы и строка в списках
+        Text        string `json:"text"`  // полный сформулированный вопрос (BR-14)
         Reason      string `json:"reason"`
         Urgent      bool   `json:"urgent"`
         Status      string `json:"status"` // Sent | Answered
+        Answer      string `json:"answer,omitempty"`
+        AnsweredBy  string `json:"answered_by,omitempty"`
+        AnsweredAt  string `json:"answered_at,omitempty"`
+        PageID      string `json:"page_id,omitempty"` // черновик или страница базы из ответа (P2)
 }
 
 type Store struct {
@@ -1660,7 +1710,7 @@ type Store struct {
 
 func New(d *mockdata.Data, today time.Time) *Store {
         <span class="cov8" title="1">s := &amp;Store{Data: d, Today: today, steps: map[string]map[string]*mockdata.TrackerStep{},
-                seq: map[string]int{"ABS": 1041, "ACC": 2001, "Q": 100, "DRAFT": 0}}
+                seq: map[string]int{"ABS": 1041, "ACC": 2001, "Q": 100, "DRAFT": 0, "kb": 19}}
         for _, p := range d.Tracker.Plans </span>{
                 <span class="cov8" title="1">m := map[string]*mockdata.TrackerStep{}
                 for i := range p.Steps </span>{
@@ -1795,6 +1845,45 @@ func (s *Store) AddQuestion(q *Question) {
         s.questions = append(s.questions, q)
 </span>}
 
+// UpdateQuestion применяет изменение к вопросу под блокировкой.
+func (s *Store) UpdateQuestion(id string, fn func(*Question)) (Question, bool) {
+        <span class="cov8" title="1">s.mu.Lock()
+        defer s.mu.Unlock()
+        for _, q := range s.questions </span>{
+                <span class="cov8" title="1">if q.ID == id </span>{
+                        <span class="cov8" title="1">fn(q)
+                        return *q, true
+</span>                }
+        }
+        <span class="cov0" title="0">return Question{}, false</span>
+}
+
+// Pages — копия списка страниц базы (опубликованные и черновики).
+func (s *Store) Pages() []mockdata.Page {
+        <span class="cov8" title="1">s.mu.Lock()
+        defer s.mu.Unlock()
+        return append([]mockdata.Page(nil), s.Data.KB.Pages...)
+</span>}
+
+func (s *Store) AddPage(p mockdata.Page) {
+        <span class="cov8" title="1">s.mu.Lock()
+        defer s.mu.Unlock()
+        s.Data.KB.Pages = append(s.Data.KB.Pages, p)
+</span>}
+
+// UpdatePage применяет изменение к странице под блокировкой.
+func (s *Store) UpdatePage(id string, fn func(*mockdata.Page)) (mockdata.Page, bool) {
+        <span class="cov8" title="1">s.mu.Lock()
+        defer s.mu.Unlock()
+        for i := range s.Data.KB.Pages </span>{
+                <span class="cov8" title="1">if s.Data.KB.Pages[i].ID == id </span>{
+                        <span class="cov8" title="1">fn(&amp;s.Data.KB.Pages[i])
+                        return s.Data.KB.Pages[i], true
+</span>                }
+        }
+        <span class="cov0" title="0">return mockdata.Page{}, false</span>
+}
+
 func (s *Store) Questions() []Question {
         <span class="cov8" title="1">s.mu.Lock()
         defer s.mu.Unlock()
@@ -1807,6 +1896,121 @@ func (s *Store) Questions() []Question {
 </pre>
 		
 		<pre class="file" id="file12" style="display: none">package tools
+
+import (
+        "strings"
+        "time"
+
+        "github.com/worker4556/naparnik/backend/internal/mockdata"
+        "github.com/worker4556/naparnik/backend/internal/store"
+)
+
+// P2 «Ответ текстом → страница в базе» (docs/03-requirements/03-PROCESSES.md).
+// Это действия людей, а не инструменты модели: отвечает и публикует только человек.
+
+const defaultFolder = "f-start"
+
+// AnswerQuestion — адресат отвечает текстом (US-10). Ответ сразу уходит стажёру,
+// а Напарник готовит черновик страницы «Вопрос-ответ» (BR-31): папка — по похожим страницам,
+// похожая страница — предложение дополнить её (BR-32). Черновик не виден в поиске до «Ок» автора (BR-02, BR-30).
+func AnswerQuestion(c Ctx, questionID, text string) (store.Question, mockdata.Page, *Error) {
+        <span class="cov8" title="1">text = strings.TrimSpace(text)
+        if text == "" </span>{
+                <span class="cov8" title="1">return store.Question{}, mockdata.Page{}, &amp;Error{Code: "validation", Message: "Пустой ответ."}
+</span>        }
+        <span class="cov8" title="1">var q store.Question
+        for _, x := range c.Store.Questions() </span>{
+                <span class="cov8" title="1">if x.ID == questionID </span>{
+                        <span class="cov8" title="1">q = x
+</span>                }
+        }
+        <span class="cov8" title="1">if q.ID == "" </span>{
+                <span class="cov8" title="1">return store.Question{}, mockdata.Page{}, &amp;Error{Code: "not_found", Message: "Вопрос не найден."}
+</span>        }
+        <span class="cov8" title="1">if q.AddresseeID != c.User.ID </span>{
+                <span class="cov8" title="1">return store.Question{}, mockdata.Page{}, &amp;Error{Code: "forbidden", Message: "Ответить может только адресат вопроса."}
+</span>        }
+        <span class="cov8" title="1">if q.Status != "Sent" </span>{
+                <span class="cov8" title="1">return store.Question{}, mockdata.Page{}, &amp;Error{Code: "validation", Message: "На вопрос уже ответили."}
+</span>        }
+        <span class="cov8" title="1">title := q.Title
+        if title == "" </span>{
+                <span class="cov0" title="0">title = QuestionTitle("", q.Text)
+</span>        }
+        <span class="cov8" title="1">folder, similar := placePage(c, title)
+        page := mockdata.Page{
+                ID: c.Store.NextID("kb"), Space: c.Store.Data.Team.Department.KBSpaceID, Folder: folder, Type: "qa", Status: "Draft",
+                Title: title, AuthorID: c.User.ID,
+                UpdatedAt: c.Store.Today.Format(time.DateOnly), Body: text, SourceQuestion: q.ID, SimilarPageID: similar,
+</span>        }
+        <span class="cov8" title="1">c.Store.AddPage(page)
+        q, _ = c.Store.UpdateQuestion(q.ID, func(x *store.Question) </span>{
+                <span class="cov8" title="1">x.Status, x.Answer, x.AnsweredBy, x.AnsweredAt, x.PageID = "Answered", text, c.User.ID, time.Now().Format(time.RFC3339), page.ID
+</span>        })
+        <span class="cov8" title="1">return q, page, nil</span>
+}
+
+// placePage — папка по самой похожей опубликованной странице и похожая страница для BR-32.
+func placePage(c Ctx, question string) (folder, similar string) {
+        <span class="cov8" title="1">q := Stems(question)
+        best := 0.0
+        folder = defaultFolder
+        for _, p := range readablePages(c) </span>{
+                <span class="cov8" title="1">if len(q) == 0 </span>{
+                        <span class="cov0" title="0">break</span>
+                }
+                <span class="cov8" title="1">cov := float64(overlap(q, Stems(p.Title+" "+p.Body))) / float64(len(q))
+                if cov &gt; best </span>{
+                        <span class="cov8" title="1">best, folder = cov, p.Folder
+                        if cov &gt;= MinCoverage </span>{
+                                <span class="cov8" title="1">similar = p.ID
+</span>                        }
+                }
+        }
+        <span class="cov8" title="1">return folder, similar</span>
+}
+
+// DraftsFor — черновики страниц, ожидающие проверки автора («Проверь, я занёс твой ответ в базу»).
+func DraftsFor(c Ctx) []mockdata.Page {
+        <span class="cov8" title="1">var out []mockdata.Page
+        for _, p := range c.Store.Pages() </span>{
+                <span class="cov8" title="1">if p.Status == "Draft" &amp;&amp; p.AuthorID == c.User.ID </span>{
+                        <span class="cov8" title="1">out = append(out, p)
+</span>                }
+        }
+        <span class="cov8" title="1">return out</span>
+}
+
+// ApprovePage — автор подтверждает черновик (можно с правками) → страница опубликована под его именем (BR-30).
+func ApprovePage(c Ctx, pageID, title, body string) (mockdata.Page, *Error) {
+        <span class="cov8" title="1">var found *mockdata.Page
+        for _, p := range c.Store.Pages() </span>{
+                <span class="cov8" title="1">if p.ID == pageID </span>{
+                        <span class="cov8" title="1">found = &amp;p
+</span>                }
+        }
+        <span class="cov8" title="1">switch </span>{
+        case found == nil:
+                <span class="cov8" title="1">return mockdata.Page{}, &amp;Error{Code: "not_found", Message: "Черновик не найден."}</span>
+        case found.AuthorID != c.User.ID:
+                <span class="cov8" title="1">return mockdata.Page{}, &amp;Error{Code: "forbidden", Message: "Опубликовать может только автор ответа."}</span>
+        case found.Status != "Draft":
+                <span class="cov8" title="1">return mockdata.Page{}, &amp;Error{Code: "validation", Message: "Страница уже опубликована."}</span>
+        }
+        <span class="cov8" title="1">page, _ := c.Store.UpdatePage(pageID, func(p *mockdata.Page) </span>{
+                <span class="cov8" title="1">if t := strings.TrimSpace(title); t != "" </span>{
+                        <span class="cov8" title="1">p.Title = t
+</span>                }
+                <span class="cov8" title="1">if b := strings.TrimSpace(body); b != "" </span>{
+                        <span class="cov8" title="1">p.Body = b
+</span>                }
+                <span class="cov8" title="1">p.Status, p.UpdatedAt = "Published", c.Store.Today.Format(time.DateOnly)</span>
+        })
+        <span class="cov8" title="1">return page, nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file13" style="display: none">package tools
 
 import (
         "fmt"
@@ -1827,6 +2031,10 @@ const ExpertThreshold = 0.6
 
 // MinExpertEvidence — сколько «очков» сигнала нужно для полной уверенности (страница по теме ≈ 1–4, зона ответственности ≈ 1.5).
 const MinExpertEvidence = 3.0
+
+// secondWeight — насколько близкий второй кандидат снижает уверенность. 1 — слишком строго: при двух
+// авторах по теме уверенность падала ниже порога даже у очевидного лидера (Q2 → бадди вместо Орлова).
+const secondWeight = 0.5
 
 var wordRe = regexp.MustCompile(`[\p{L}\p{N}_]+`)
 
@@ -1889,7 +2097,7 @@ type Hit struct {
 func readablePages(c Ctx) []mockdata.Page {
         <span class="cov8" title="1">spaces := c.Store.ReadableSpaces()
         var out []mockdata.Page
-        for _, p := range c.Store.Data.KB.Pages </span>{
+        for _, p := range c.Store.Pages() </span>{
                 <span class="cov8" title="1">if spaces[p.Space] &amp;&amp; p.Status == "Published" </span>{
                         <span class="cov8" title="1">out = append(out, p)
 </span>                }
@@ -1993,7 +2201,7 @@ func FindExpert(c Ctx, question string) (id string, confidence float64, reason s
 </span>        }
         // Уверенность: насколько лидер отрывается от второго, с поправкой на силу сигнала
         // (одно случайное совпадение слова — ещё не экспертиза).
-        <span class="cov8" title="1">confidence = best / (best + second) * min(1, best/MinExpertEvidence)
+        <span class="cov8" title="1">confidence = best / (best + secondWeight*second) * min(1, best/MinExpertEvidence)
         cd := cands[id]
         pages := len(cd.pageScores)
         switch </span>{
@@ -2026,7 +2234,7 @@ func sendQuestion(c Ctx, args map[string]any) Result {
         if text == "" </span>{
                 <span class="cov8" title="1">return fail("validation", "Пустой вопрос.")
 </span>        }
-        <span class="cov8" title="1">q := &amp;store.Question{ID: c.Store.NextID("Q"), AskedBy: c.User.ID, AddresseeID: to.ID, Text: text,
+        <span class="cov8" title="1">q := &amp;store.Question{ID: c.Store.NextID("Q"), AskedBy: c.User.ID, AddresseeID: to.ID, Title: QuestionTitle(str(args, "title"), text), Text: text,
                 Reason: str(args, "reason"), Urgent: boolean(args, "urgent"), Status: "Sent"}
         c.Store.AddQuestion(q)
         delivery := "в сводке"
@@ -2084,9 +2292,41 @@ func KBPages(c Ctx) (folders []mockdata.Folder, pages []PageCard) {
         }
         <span class="cov8" title="1">return folders, pages</span>
 }
+
+// QuestionTitle — суть вопроса одной строкой. Если модель не передала title, берём строку «Суть: …»
+// или первую содержательную строку без приветствия, не длиннее 120 символов.
+func QuestionTitle(title, text string) string {
+        <span class="cov8" title="1">if t := strings.TrimSpace(title); t != "" </span>{
+                <span class="cov8" title="1">return clip(t)
+</span>        }
+        <span class="cov8" title="1">lines := strings.Split(text, "\n")
+        for _, l := range lines </span>{
+                <span class="cov8" title="1">l = strings.TrimSpace(l)
+                if rest, ok := strings.CutPrefix(l, "Суть:"); ok &amp;&amp; strings.TrimSpace(rest) != "" </span>{
+                        <span class="cov8" title="1">return clip(strings.TrimSpace(rest))
+</span>                }
+        }
+        <span class="cov8" title="1">for _, l := range lines </span>{
+                <span class="cov8" title="1">l = strings.TrimSpace(l)
+                low := strings.ToLower(l)
+                if l == "" || strings.HasPrefix(low, "привет") || strings.HasPrefix(low, "здравствуй") || strings.HasPrefix(low, "добрый") </span>{
+                        <span class="cov8" title="1">continue</span>
+                }
+                <span class="cov8" title="1">return clip(l)</span>
+        }
+        <span class="cov8" title="1">return clip(strings.TrimSpace(text))</span>
+}
+
+func clip(s string) string {
+        <span class="cov8" title="1">r := []rune(s)
+        if len(r) &gt; 120 </span>{
+                <span class="cov8" title="1">return string(r[:120]) + "…"
+</span>        }
+        <span class="cov8" title="1">return s</span>
+}
 </pre>
 		
-		<pre class="file" id="file13" style="display: none">package tools
+		<pre class="file" id="file14" style="display: none">package tools
 
 import (
         "strings"
@@ -2212,7 +2452,7 @@ func containsStr(xs []string, x string) bool {
 }
 </pre>
 		
-		<pre class="file" id="file14" style="display: none">package tools
+		<pre class="file" id="file15" style="display: none">package tools
 
 import (
         "strings"
@@ -2372,7 +2612,7 @@ func requestAccess(c Ctx, args map[string]any) Result {
 }
 </pre>
 		
-		<pre class="file" id="file15" style="display: none">// Package tools — инструменты агента AI-buddy.
+		<pre class="file" id="file16" style="display: none">// Package tools — инструменты агента AI-buddy.
 //
 // Правила из docs/03-requirements, которые проверяет код (а не промпт):
 //   - BR-40: права проверяются до вызова; недоступное не показывается и не упоминается;
@@ -2467,7 +2707,8 @@ func All() []Tool {
                 {"find_expert", "Подобрать человека для вопроса, которого нет в базе: по авторству страниц и зоне ответственности. Если уверенности нет — бадди.",
                         schema(map[string]any{"question": prop("string", "текст вопроса")}, "question"), []string{store.RoleIntern}, false, findExpert},
                 {"send_question", "Отправить сформулированный вопрос человеку (только после подтверждения стажёра).",
-                        schema(map[string]any{"text": prop("string", "суть, контекст, что уже пробовал"), "addressee_id": prop("string", "id адресата"),
+                        schema(map[string]any{"title": prop("string", "суть вопроса одной строкой, без приветствия — станет заголовком страницы базы"),
+                                "text": prop("string", "полный вопрос: суть, контекст, что уже пробовал"), "addressee_id": prop("string", "id адресата"),
                                 "reason": prop("string", "почему выбран адресат"), "urgent": prop("boolean", "блокирует работу")}, "text", "addressee_id"),
                         []string{store.RoleIntern}, true, sendQuestion},
                 {"get_absence_rules", "Порядок оформления отсутствия и путь «сделай сам».",

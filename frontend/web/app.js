@@ -150,7 +150,12 @@ function notifications() {
   }
   (state.requests || []).filter((r) => r.status === 'pending')
     .forEach((r) => out.push(['☂', `${requestTitle(r)} — на согласовании`, `${r.id} · ${nameById(r.approver_id)}`, false]));
-  (state.questions || []).forEach((q) => out.push(['✉', q.addressee_id === state.me.id ? `Вам вопрос: ${questionText(q)}` : `Вопрос ${q.addressee}`, STATUS[q.status] ? STATUS[q.status][1] : q.status, q.addressee_id === state.me.id]));
+  (state.questions || []).forEach((q) => {
+    if (q.addressee_id === state.me.id && q.status === 'Sent') out.push(['✉', `Вам вопрос: ${questionTitle(q)}`, `от ${nameById(q.asked_by)}`, true]);
+    else if (q.asked_by === state.me.id && q.status === 'Answered') out.push(['✓', `${q.addressee} ответил(а) на твой вопрос`, questionTitle(q), true]);
+    else out.push(['✉', `Вопрос: ${q.addressee}`, STATUS[q.status] ? STATUS[q.status][1] : q.status, false]);
+  });
+  (state.drafts || []).forEach((p) => out.push(['✎', 'Проверь, я занёс твой ответ в базу', p.title, true]));
   (state.events || []).forEach((e) => out.push(['◷', `${e.start} · ${e.title}`, 'Сегодня', false]));
   return out;
 }
@@ -331,9 +336,12 @@ async function loadQuestions() {
   state.questions = data.questions || [];
   state.teamCount = data.team_questions_count || 0;
   renderQuestions();
+  await loadDrafts();
 }
 
 function questionText(q) { return q.text_hidden ? 'Текст скрыт настройками стажёра' : q.text; }
+// Короткая суть для списков; полный вопрос — в карточке.
+function questionTitle(q) { return q.text_hidden ? 'Текст скрыт настройками стажёра' : (q.title || q.text); }
 
 function renderQuestions() {
   const qs = state.questions;
@@ -347,7 +355,7 @@ function renderQuestions() {
   for (const q of qs.slice(0, 3)) {
     const row = el('div', 'question');
     const body = el('div');
-    const short = questionText(q).length > 90 ? questionText(q).slice(0, 90) + '…' : questionText(q);
+    const short = questionTitle(q).length > 90 ? questionTitle(q).slice(0, 90) + '…' : questionTitle(q);
     body.append(el('p', '', short), el('small', '', `${q.addressee}${q.urgent ? ' · срочно' : ''}`));
     row.append(body, badge(q.status));
     row.onclick = () => openQuestion(q);
@@ -355,13 +363,13 @@ function renderQuestions() {
   }
   // таблица на странице «Вопросы»
   const search = $('qSearch').value.trim().toLowerCase();
-  const rows = qs.filter((q) => (!state.qFilter || q.status === state.qFilter) && (!search || questionText(q).toLowerCase().includes(search)));
+  const rows = qs.filter((q) => (!state.qFilter || q.status === state.qFilter) && (!search || (questionTitle(q) + ' ' + questionText(q)).toLowerCase().includes(search)));
   const tbody = $('qTable');
   tbody.replaceChildren();
   for (const q of rows) {
     const tr = el('tr');
     const c1 = el('td');
-    c1.append(el('div', 'table-title', questionText(q)), el('div', 'meta', q.urgent ? 'Срочно' : 'В сводке'));
+    c1.append(el('div', 'table-title', questionTitle(q)), el('div', 'meta', q.urgent ? 'Срочно' : 'В сводке'));
     const person = (name) => { const td = el('td'); const p = el('div', 'person'); p.append(el('span', 'avatar', initials(name)), document.createTextNode(name)); td.appendChild(p); return td; };
     const c4 = el('td');
     c4.appendChild(badge(q.status));
@@ -462,7 +470,81 @@ function openQuestion(q) {
   const p = el('p');
   p.append(el('b', '', 'Маршрут прозрачен'), document.createTextNode(`Вопрос направлен: ${q.addressee}. ${q.urgent ? 'Срочный — уходит сразу.' : 'Обычный — придёт адресату в сводке.'}`));
   tip.append(el('div', 'tip-icon', '↗'), p);
-  openModal(questionText(q), `${nameById(q.asked_by)} → ${q.addressee}`, [badge(q.status), tip]);
+  const body = [badge(q.status)];
+  if (!q.text_hidden && q.text && q.text !== q.title) body.push(renderMarkdown(q.text));
+  if (q.reason) body.push(el('p', 'meta', `Почему выбран адресат: ${q.reason}`));
+  if (q.answer) {
+    const box = el('div', 'answer-box');
+    box.append(el('b', '', `Ответ: ${q.addressee}`), el('p', '', q.answer));
+    body.push(box);
+  }
+  body.push(tip);
+  // P2, US-10: адресат отвечает текстом прямо в карточке
+  if (q.addressee_id === state.me.id && q.status === 'Sent') {
+    const area = el('textarea', 'field');
+    area.placeholder = 'Ответ стажёру — я сразу передам его и оформлю страницу в базе знаний';
+    body.push(el('div', 'field-label', 'Твой ответ'), area);
+    openModal(questionTitle(q), `${nameById(q.asked_by)} → ${q.addressee}`, body, [
+      { label: 'Закрыть' },
+      { label: 'Ответить', primary: true, onClick: () => sendAnswer(q, area.value) },
+    ]);
+    setTimeout(() => area.focus(), 50);
+    return;
+  }
+  openModal(questionTitle(q), `${nameById(q.asked_by)} → ${q.addressee}`, body);
+}
+
+async function sendAnswer(q, text) {
+  if (!text.trim()) { toast('Напиши ответ'); return; }
+  const { status, data } = await api('POST', `/api/questions/${q.id}/answer`, { text });
+  toast(status === 200 ? 'Ответ отправлен. Черновик страницы ждёт проверки' : (data.error && data.error.message) || 'Не получилось');
+  await loadQuestions();
+}
+
+// BR-30: страница публикуется только после «Ок» автора ответа; можно поправить заголовок и текст.
+function openDraft(p) {
+  const title = el('input', 'field');
+  title.value = p.title;
+  const text = el('textarea', 'field');
+  text.value = p.body;
+  const folder = ((state.kb && state.kb.folders) || []).find((f) => f.id === p.folder);
+  const body = [
+    el('p', '', 'Я оформил твой ответ страницей «Вопрос-ответ». Автор — ты. Опубликую после «Ок».'),
+    el('div', 'field-label', 'Заголовок'), title,
+    el('div', 'field-label', 'Текст'), text,
+    el('p', 'meta', `Папка: ${folder ? folder.title : p.folder}`),
+  ];
+  if (p.similar_page_id) {
+    const sim = ((state.kb && state.kb.pages) || []).find((x) => x.id === p.similar_page_id);
+    const tip = el('div', 'tip');
+    tip.append(el('div', 'tip-icon', '≈'), el('p', '', `Похожая страница: «${sim ? sim.title : p.similar_page_id}». Возможно, стоит дополнить её (BR-32).`));
+    body.push(tip);
+  }
+  openModal('Проверь, я занёс твой ответ в базу', p.title, body, [
+    { label: 'Позже' },
+    { label: 'Ок, опубликовать', primary: true, onClick: async () => {
+      const { status, data } = await api('POST', `/api/kb/pages/${p.id}/approve`, { title: title.value, body: text.value });
+      toast(status === 200 ? 'Страница опубликована в базе знаний' : (data.error && data.error.message) || 'Не получилось');
+      await Promise.all([loadQuestions(), loadKB()]);
+    } },
+  ]);
+}
+
+async function loadDrafts() {
+  const { data } = await api('GET', '/api/kb/drafts');
+  state.drafts = data.drafts || [];
+  $('draftsCard').hidden = !state.drafts.length;
+  $('draftCount').textContent = state.drafts.length;
+  const list = $('draftList');
+  list.replaceChildren();
+  for (const p of state.drafts) {
+    const row = el('div', 'request-card');
+    const body = el('div');
+    body.append(el('div', 'table-title', p.title), el('div', 'meta', 'Черновик страницы «Вопрос-ответ» из твоего ответа'));
+    row.append(el('div', 'request-icon', '✎'), body, el('span', 'badge amber', 'Ждёт «Ок»'));
+    row.onclick = () => openDraft(p);
+    list.appendChild(row);
+  }
 }
 
 // ---------- Чат ----------

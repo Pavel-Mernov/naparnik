@@ -35,10 +35,15 @@ type Question struct {
 	ID          string `json:"id"`
 	AskedBy     string `json:"asked_by"`
 	AddresseeID string `json:"addressee_id"`
-	Text        string `json:"text"`
+	Title       string `json:"title"` // суть одной строкой: заголовок страницы базы и строка в списках
+	Text        string `json:"text"`  // полный сформулированный вопрос (BR-14)
 	Reason      string `json:"reason"`
 	Urgent      bool   `json:"urgent"`
 	Status      string `json:"status"` // Sent | Answered
+	Answer      string `json:"answer,omitempty"`
+	AnsweredBy  string `json:"answered_by,omitempty"`
+	AnsweredAt  string `json:"answered_at,omitempty"`
+	PageID      string `json:"page_id,omitempty"` // черновик или страница базы из ответа (P2)
 }
 
 type Store struct {
@@ -53,7 +58,7 @@ type Store struct {
 
 func New(d *mockdata.Data, today time.Time) *Store {
 	s := &Store{Data: d, Today: today, steps: map[string]map[string]*mockdata.TrackerStep{},
-		seq: map[string]int{"ABS": 1041, "ACC": 2001, "Q": 100, "DRAFT": 0}}
+		seq: map[string]int{"ABS": 1041, "ACC": 2001, "Q": 100, "DRAFT": 0, "kb": 19}}
 	for _, p := range d.Tracker.Plans {
 		m := map[string]*mockdata.TrackerStep{}
 		for i := range p.Steps {
@@ -186,6 +191,45 @@ func (s *Store) AddQuestion(q *Question) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.questions = append(s.questions, q)
+}
+
+// UpdateQuestion применяет изменение к вопросу под блокировкой.
+func (s *Store) UpdateQuestion(id string, fn func(*Question)) (Question, bool) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for _, q := range s.questions {
+		if q.ID == id {
+			fn(q)
+			return *q, true
+		}
+	}
+	return Question{}, false
+}
+
+// Pages — копия списка страниц базы (опубликованные и черновики).
+func (s *Store) Pages() []mockdata.Page {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return append([]mockdata.Page(nil), s.Data.KB.Pages...)
+}
+
+func (s *Store) AddPage(p mockdata.Page) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.Data.KB.Pages = append(s.Data.KB.Pages, p)
+}
+
+// UpdatePage применяет изменение к странице под блокировкой.
+func (s *Store) UpdatePage(id string, fn func(*mockdata.Page)) (mockdata.Page, bool) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for i := range s.Data.KB.Pages {
+		if s.Data.KB.Pages[i].ID == id {
+			fn(&s.Data.KB.Pages[i])
+			return s.Data.KB.Pages[i], true
+		}
+	}
+	return mockdata.Page{}, false
 }
 
 func (s *Store) Questions() []Question {

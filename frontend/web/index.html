@@ -229,6 +229,10 @@
     .kb-card.open .kb-body { display: block; }
     .kb-card.open p.kb-excerpt { display: none; }
     [hidden] { display: none !important; }
+    .field { width: 100%; border: 1px solid var(--line); background: var(--surface-2); color: var(--text); border-radius: 12px; padding: 10px 12px; margin: 6px 0 12px; font: inherit; }
+    textarea.field { min-height: 120px; resize: vertical; }
+    .field-label { font-size: 12px; color: var(--muted); font-weight: 650; }
+    .answer-box { background: var(--green-soft); border-radius: 14px; padding: 12px 14px; margin: 10px 0; }
     .bubble.md { white-space: normal; }
     .bubble.md p { margin: 0 0 8px; } .bubble.md p:last-child { margin-bottom: 0; }
     .bubble.md ul { margin: 0 0 8px; padding-left: 18px; } .bubble.md li { margin: 3px 0; }
@@ -304,6 +308,7 @@
       <section class="page-view" data-view="questions">
         <div class="page-intro"><div><div class="eyebrow" id="qEyebrow"></div><h1>Вопросы</h1><p>Вопросы людям — с адресатом и статусом. Ответы из базы приходят сразу в чат.</p></div><button class="primary" data-ask="">Задать вопрос</button></div>
         <div class="toolbar"><input class="search" id="qSearch" placeholder="Найти вопрос…" aria-label="Поиск вопросов"><button class="filter active" data-qfilter="">Все</button><button class="filter" data-qfilter="Sent">Ждут ответа</button><button class="filter" data-qfilter="Answered">Готово</button></div>
+        <section class="card" id="draftsCard" hidden style="margin-bottom:18px"><div class="card-head"><h2>Проверь, я занёс твой ответ в базу <span class="count" id="draftCount">0</span></h2></div><div id="draftList"></div></section>
         <section class="card"><table class="table"><thead><tr><th>Вопрос</th><th>Кто спросил</th><th>Адресат</th><th>Статус</th></tr></thead><tbody id="qTable"></tbody></table><div id="qEmpty"></div></section>
       </section>
 

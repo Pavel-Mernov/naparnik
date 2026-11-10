@@ -36,6 +36,9 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/today", s.auth(s.today))
 	mux.HandleFunc("GET /api/users", s.users)
 	mux.HandleFunc("GET /api/kb/pages", s.auth(s.kbPages))
+	mux.HandleFunc("GET /api/kb/drafts", s.auth(s.kbDrafts))
+	mux.HandleFunc("POST /api/kb/pages/{id}/approve", s.auth(s.kbApprove))
+	mux.HandleFunc("POST /api/questions/{id}/answer", s.auth(s.answer))
 	if s.StaticDir != "" {
 		files := http.FileServer(http.Dir(s.StaticDir))
 		mux.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) {
@@ -110,6 +113,40 @@ func (s *Server) kbPages(w http.ResponseWriter, _ *http.Request, u *mockdata.Use
 	writeJSON(w, 200, map[string]any{"folders": nonNil(folders), "pages": nonNil(pages), "department": s.Store.Data.Team.Department.Name})
 }
 
+// answer — P2, US-10: адресат отвечает текстом; стажёр получает ответ сразу, автору — черновик страницы.
+func (s *Server) answer(w http.ResponseWriter, r *http.Request, u *mockdata.User) {
+	var body struct {
+		Text string `json:"text"`
+	}
+	_ = json.NewDecoder(r.Body).Decode(&body)
+	q, page, e := tools.AnswerQuestion(tools.Ctx{Store: s.Store, User: u}, r.PathValue("id"), body.Text)
+	if e != nil {
+		writeResult(w, tools.Result{Error: e})
+		return
+	}
+	writeJSON(w, 200, map[string]any{"ok": true, "question": q, "draft": page,
+		"message": "Ответ отправлен. Проверь, я занёс твой ответ в базу — опубликую после твоего «Ок»."})
+}
+
+func (s *Server) kbDrafts(w http.ResponseWriter, _ *http.Request, u *mockdata.User) {
+	writeJSON(w, 200, map[string]any{"drafts": nonNil(tools.DraftsFor(tools.Ctx{Store: s.Store, User: u}))})
+}
+
+// kbApprove — BR-30: публикация только после «Ок» автора; правки — по желанию.
+func (s *Server) kbApprove(w http.ResponseWriter, r *http.Request, u *mockdata.User) {
+	var body struct {
+		Title string `json:"title"`
+		Body  string `json:"body"`
+	}
+	_ = json.NewDecoder(r.Body).Decode(&body)
+	page, e := tools.ApprovePage(tools.Ctx{Store: s.Store, User: u}, r.PathValue("id"), body.Title, body.Body)
+	if e != nil {
+		writeResult(w, tools.Result{Error: e})
+		return
+	}
+	writeJSON(w, 200, map[string]any{"ok": true, "page": page})
+}
+
 func (s *Server) today(w http.ResponseWriter, _ *http.Request, u *mockdata.User) {
 	writeResult(w, tools.Run(tools.Ctx{Store: s.Store, User: u}, "get_today", nil))
 }
@@ -174,10 +211,14 @@ type questionView struct {
 	AskedBy     string `json:"asked_by"`
 	AddresseeID string `json:"addressee_id"`
 	Addressee   string `json:"addressee"`
+	Title       string `json:"title,omitempty"`
 	Text        string `json:"text,omitempty"`
 	TextHidden  bool   `json:"text_hidden,omitempty"`
+	Reason      string `json:"reason,omitempty"`
 	Urgent      bool   `json:"urgent"`
 	Status      string `json:"status"`
+	Answer      string `json:"answer,omitempty"`
+	PageID      string `json:"page_id,omitempty"`
 }
 
 // questions — видимость по 02-ROLES:
@@ -188,13 +229,13 @@ func (s *Server) questions(w http.ResponseWriter, _ *http.Request, u *mockdata.U
 	count := 0
 	for _, q := range s.Store.Questions() {
 		asker, _ := s.Store.User(q.AskedBy)
-		v := questionView{q.ID, q.AskedBy, q.AddresseeID, s.Store.Name(q.AddresseeID), q.Text, false, q.Urgent, q.Status}
+		v := questionView{q.ID, q.AskedBy, q.AddresseeID, s.Store.Name(q.AddresseeID), q.Title, q.Text, false, q.Reason, q.Urgent, q.Status, q.Answer, q.PageID}
 		switch {
 		case q.AskedBy == u.ID || q.AddresseeID == u.ID:
 			out = append(out, v)
 		case asker != nil && asker.BuddyID == u.ID:
 			if asker.Settings != nil && !asker.Settings.QuestionTextVisibleBuddy {
-				v.Text, v.TextHidden = "", true
+				v.Title, v.Text, v.Answer, v.Reason, v.TextHidden = "", "", "", "", true // BR-86: скрыт и текст, и ответ
 			}
 			out = append(out, v)
 		case asker != nil && asker.LeadID == u.ID:

@@ -102,6 +102,16 @@ func TestFindExpertToolThresholdAndBuddy(t *testing.T) {
 	if r["addressee_id"] != "u-belova" || r["is_buddy"] != true {
 		t.Fatalf("SC-07: ожидался бадди: %v", r)
 	}
+	// SC-04, SC-08: уверенный эксперт, а не бадди (questions.json: Q2 → Орлов, Q5 → Лебедева)
+	for q, want := range map[string]string{
+		"Почему конверсия в дашборде отличается от выгрузки из DWH?": "u-orlov",
+		"Как посчитать retention по когортам в нашем дашборде?":      "u-lebedeva",
+	} {
+		r = data(t, Run(c, "find_expert", map[string]any{"question": q}))
+		if r["addressee_id"] != want || r["is_buddy"] != false {
+			t.Errorf("%q: %v, ожидался %s", q, r, want)
+		}
+	}
 }
 
 // SC-01, SC-18: шаги на сегодня — просроченный первым, не больше 3, только шаги стажёра; событие дня.
