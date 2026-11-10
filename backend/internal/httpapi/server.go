@@ -34,6 +34,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/questions", s.auth(s.questions))
 	mux.HandleFunc("GET /api/today", s.auth(s.today))
 	mux.HandleFunc("GET /api/users", s.users)
+	mux.HandleFunc("GET /api/kb/pages", s.auth(s.kbPages))
 	if s.StaticDir != "" {
 		mux.Handle("GET /", http.FileServer(http.Dir(s.StaticDir)))
 	}
@@ -96,6 +97,11 @@ func (s *Server) users(w http.ResponseWriter, _ *http.Request) {
 		out = append(out, map[string]any{"id": u.ID, "login": u.Login, "name": u.Name, "position": u.Position, "roles": u.Roles})
 	}
 	writeJSON(w, 200, map[string]any{"users": out})
+}
+
+func (s *Server) kbPages(w http.ResponseWriter, _ *http.Request, u *mockdata.User) {
+	folders, pages := tools.KBPages(tools.Ctx{Store: s.Store, User: u})
+	writeJSON(w, 200, map[string]any{"folders": nonNil(folders), "pages": nonNil(pages), "department": s.Store.Data.Team.Department.Name})
 }
 
 func (s *Server) today(w http.ResponseWriter, _ *http.Request, u *mockdata.User) {

@@ -1,9 +1,9 @@
-// Живая версия прототипа design1.html: данные и чат — из Go-бэкенда (docs/spec/05-tools-api.md).
+// Живая версия прототипа design1.html: 5 страниц, данные и чат — из Go-бэкенда (docs/spec/05-tools-api.md).
 // Явный API-клиент (FE-03): все запросы идут через api(). Учётка — заголовок X-User (демо-переключатель ролей).
 'use strict';
 
 const $ = (id) => document.getElementById(id);
-const state = { login: 'intern.sokolov', me: null, users: [], lastQuestion: '' };
+const state = { login: 'intern.sokolov', me: null, users: [], plan: null, questions: [], qFilter: '', kb: null, kbType: '', kbFolder: '', lastQuestion: '' };
 
 try { state.login = localStorage.getItem('buddy.login') || state.login; } catch { /* приватный режим — не страшно */ }
 
@@ -18,10 +18,11 @@ async function api(method, path, body) {
   return { status: res.status, data };
 }
 
+// Только textContent — никаких HTML-вставок из данных.
 function el(tag, cls, text) {
   const e = document.createElement(tag);
   if (cls) e.className = cls;
-  if (text !== undefined) e.textContent = text; // только textContent — никаких HTML-вставок из данных
+  if (text !== undefined) e.textContent = text;
   return e;
 }
 
@@ -32,18 +33,34 @@ function toast(text) {
   setTimeout(() => t.classList.remove('show'), 2200);
 }
 
-const ruDate = (iso) => new Date(iso + 'T12:00:00').toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' });
-const statusBadge = {
+const ruDate = (iso, opts = { weekday: 'long', day: 'numeric', month: 'long' }) => new Date(iso + 'T12:00:00').toLocaleDateString('ru-RU', opts);
+const STATUS = {
   Overdue: ['red', 'Просрочен'], Today: ['blue', 'На сегодня'], Done: ['green', 'Готово'], Planned: ['', 'Запланирован'],
   pending: ['amber', 'На согласовании'], approved: ['green', 'Согласовано'], rejected: ['red', 'Отклонено'],
-  granted: ['green', 'Выдан'], Sent: ['blue', 'Отправлен'], Answered: ['green', 'Ответ готов'],
+  granted: ['green', 'Выдан'], Sent: ['blue', 'Ждёт ответа'], Answered: ['green', 'Ответ готов'],
 };
 function badge(status) {
-  const [color, text] = statusBadge[status] || ['', status];
+  const [color, text] = STATUS[status] || ['', status];
   return el('span', 'badge ' + color, text);
 }
+const initials = (name) => name.split(' ').slice(0, 2).map((w) => w[0]).join('');
+const nameById = (id) => (state.users.find((u) => u.id === id) || {}).name || id;
+const isIntern = () => state.me && state.me.roles.includes('intern');
+const planOwner = () => (isIntern() ? state.me.id : (state.me.interns[0] || {}).id);
 
-// ---------- загрузка экрана ----------
+// ---------- навигация ----------
+
+const PAGES = { day: 'мой день', plan: 'мой план', questions: 'вопросы', knowledge: 'база знаний', requests: 'заявки' };
+function openPage(name) {
+  if (!PAGES[name]) name = 'day';
+  document.querySelectorAll('.page-view').forEach((v) => v.classList.toggle('active', v.dataset.view === name));
+  document.querySelectorAll('.nav button').forEach((b) => b.classList.toggle('active', b.dataset.page === name));
+  document.title = 'Напарник — ' + PAGES[name];
+  history.replaceState(null, '', '#' + name);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ---------- загрузка ----------
 
 async function loadUsers() {
   const { data } = await api('GET', '/api/users');
@@ -53,13 +70,10 @@ async function loadUsers() {
   for (const u of state.users) {
     const o = el('option', '', `${u.name} · ${u.position}`);
     o.value = u.login;
-    if (u.login === state.login) o.selected = true;
+    o.selected = u.login === state.login;
     who.appendChild(o);
   }
 }
-
-const nameById = (id) => (state.users.find((u) => u.id === id) || {}).name || id;
-const isIntern = () => state.me && state.me.roles.includes('intern');
 
 async function loadAll() {
   const me = await api('GET', '/api/me');
@@ -68,15 +82,23 @@ async function loadAll() {
   $('date').textContent = ruDate(state.me.today);
   $('hello').textContent = `Доброе утро, ${state.me.name.split(' ')[0]}`;
   $('weekPill').replaceChildren(el('b', '', isIntern() ? `Неделя ${state.me.week}` : state.me.position), document.createTextNode(` · ${state.me.department}`));
-  await Promise.all([renderToday(), renderPlan(), renderQuestions(), renderRequests()]);
+  $('kbEyebrow').textContent = state.me.department;
+  await Promise.all([renderToday(), loadPlan(), loadQuestions(), loadKB(), renderRequests()]);
 }
+
+// ---------- Мой день ----------
 
 async function renderToday() {
   const list = $('todayList');
+  const box = $('events');
   list.replaceChildren();
+  box.replaceChildren();
   $('todayCard').hidden = !isIntern();
-  $('events').replaceChildren(el('div', 'empty', 'Событий на сегодня нет'));
-  if (!isIntern()) { $('subtitle').textContent = 'Здесь видно прогресс стажёров и вопросы, адресованные тебе.'; return; }
+  if (!isIntern()) {
+    $('subtitle').textContent = 'Здесь видно прогресс стажёров и вопросы, адресованные тебе.';
+    box.appendChild(el('div', 'empty', 'Событий на сегодня нет'));
+    return;
+  }
   const { data } = await api('GET', '/api/today');
   const steps = (data.data && data.data.steps) || [];
   const events = (data.data && data.data.events) || [];
@@ -91,15 +113,14 @@ async function renderToday() {
     const body = el('div');
     body.appendChild(el('div', 'task-title', s.title));
     const meta = el('div', 'meta');
-    meta.append(el('span', '', `до ${s.due_date}`), badge(s.status));
+    meta.append(el('span', '', `до ${ruDate(s.due_date, { day: 'numeric', month: 'long' })}`), badge(s.status));
     body.appendChild(meta);
-    const action = el('button', 'task-action', s.title.toLowerCase().includes('доступ') ? 'Оформить' : 'Нужна помощь');
-    action.onclick = () => openChat(s.title.toLowerCase().includes('доступ') ? `Нужен доступ: ${s.title}` : `Помоги с шагом: ${s.title}`);
+    const access = s.title.toLowerCase().includes('доступ');
+    const action = el('button', 'task-action', access ? 'Оформить' : 'Нужна помощь');
+    action.onclick = () => openChat(access ? `Нужен доступ: ${s.title}` : `Помоги с шагом: ${s.title}`);
     row.append(check, body, action);
     list.appendChild(row);
   }
-  const box = $('events');
-  box.replaceChildren();
   if (!events.length) box.appendChild(el('div', 'empty', 'Событий на сегодня нет'));
   for (const e of events) {
     const ev = el('div', 'event');
@@ -113,37 +134,53 @@ async function renderToday() {
 async function markDone(stepId) {
   const { status, data } = await api('PATCH', `/api/plan-steps/${stepId}`, {});
   toast(status === 200 ? 'Шаг отмечен выполненным' : (data.error && data.error.message) || 'Не получилось');
-  await Promise.all([renderToday(), renderPlan()]);
+  await Promise.all([renderToday(), loadPlan()]);
 }
 
-async function renderPlan() {
-  const internId = isIntern() ? state.me.id : (state.me.interns[0] || {}).id;
-  const progress = $('progress');
+// ---------- План ----------
+
+async function loadPlan() {
+  const id = planOwner();
+  state.plan = null;
+  if (id) {
+    const { status, data } = await api('GET', `/api/plans/${id}`);
+    state.plan = status === 200 ? data.data : { error: (data.error && data.error.message) || 'План недоступен' };
+  }
+  renderProgressCard();
+  renderPlanPage();
+}
+
+function stageStats(p) {
+  const mine = p.steps.filter((s) => s.owner === 'intern');
+  return p.stages.map((st) => {
+    const steps = mine.filter((s) => s.stage === st.id);
+    return { st, steps, done: steps.filter((s) => s.status === 'Done').length };
+  });
+}
+
+function renderProgressCard() {
+  const p = state.plan;
+  $('progressCard').hidden = !p;
   $('stages').replaceChildren();
   $('stageLabels').replaceChildren();
-  if (!internId) { $('plan').hidden = true; return; }
-  $('plan').hidden = false;
-  $('planTitle').textContent = isIntern() ? 'Путь адаптации' : `Путь адаптации: ${nameById(internId)}`;
-  const { status, data } = await api('GET', `/api/plans/${internId}`);
-  if (status !== 200) {
-    progress.textContent = '—';
-    $('progressMeta').textContent = (data.error && data.error.message) || 'План недоступен';
+  if (!p) return;
+  $('progressTitle').textContent = isIntern() ? 'Путь адаптации' : `Путь адаптации: ${nameById(planOwner())}`;
+  if (p.error) {
+    $('progress').textContent = '—';
+    $('progressMeta').textContent = p.error;
     $('nextStep').textContent = '';
     $('planBadge').textContent = '';
     return;
   }
-  const p = data.data;
   const mine = p.steps.filter((s) => s.owner === 'intern');
-  progress.textContent = `${p.progress_pct}%`;
+  const overdue = mine.some((s) => s.status === 'Overdue');
+  $('progress').textContent = `${p.progress_pct}%`;
   $('progressMeta').textContent = `${mine.filter((s) => s.status === 'Done').length} из ${mine.length} шагов готовы`;
   $('nextStep').textContent = p.next_step ? `Следующий шаг: ${p.next_step.title}` : 'Все шаги пройдены';
-  const overdue = mine.some((s) => s.status === 'Overdue');
   $('planBadge').className = 'badge ' + (overdue ? 'amber' : 'green');
   $('planBadge').textContent = overdue ? 'Есть просрочка' : 'В темпе';
   $('stages').style.gridTemplateColumns = `repeat(${p.stages.length}, 1fr)`;
-  for (const st of p.stages) {
-    const steps = mine.filter((s) => s.stage === st.id);
-    const done = steps.filter((s) => s.status === 'Done').length;
+  for (const { st, steps, done } of stageStats(p)) {
     const bar = el('div', 'stage' + (steps.length && done === steps.length ? ' complete' : ''));
     const fill = el('span');
     fill.style.width = steps.length ? `${Math.round((100 * done) / steps.length)}%` : '0%';
@@ -153,39 +190,160 @@ async function renderPlan() {
   }
 }
 
-async function renderQuestions() {
+function renderPlanPage() {
+  const p = state.plan;
+  const box = $('planStages');
+  box.replaceChildren();
+  $('planH1').textContent = isIntern() ? 'Мой план' : `План: ${nameById(planOwner()) || '—'}`;
+  $('planEyebrow').textContent = isIntern() ? `Неделя ${state.me.week}` : 'План стажёра';
+  if (!p || p.error) {
+    box.appendChild(el('div', 'empty', p ? p.error : 'Стажёров с планом нет'));
+    $('planStatus').textContent = '';
+    return;
+  }
+  $('planStatus').textContent = 'Утверждён';
+  let currentFound = false;
+  stageStats(p).forEach(({ st, steps, done }, i) => {
+    const complete = steps.length && done === steps.length;
+    const current = !complete && !currentFound;
+    if (current) currentFound = true;
+    const stage = el('div', 'plan-stage' + (complete ? ' complete' : current ? ' current' : ''));
+    stage.append(el('span', 'plan-node', complete ? '✓' : String(i + 1)), el('h3', '', st.title),
+      el('p', '', `${done} из ${steps.length} шагов`));
+    const list = el('div', 'plan-steps');
+    for (const s of steps) {
+      const row = el('div', 'plan-step' + (s.status === 'Done' ? ' done-step' : ''));
+      row.append(document.createTextNode(`${s.status === 'Done' ? '✓' : '○'} ${s.title}${s.source === 'demo-analytics' ? ' (демо)' : ''}`), badge(s.status));
+      list.appendChild(row);
+    }
+    stage.appendChild(list);
+    box.appendChild(stage);
+  });
+  const mine = p.steps.filter((s) => s.owner === 'intern');
+  const done = mine.filter((s) => s.status === 'Done').length;
+  $('planProgress').textContent = `${p.progress_pct}%`;
+  $('statDone').textContent = done;
+  $('statLeft').textContent = mine.length - done;
+  $('planNext').textContent = p.next_step ? p.next_step.title : 'Все шаги пройдены';
+}
+
+// ---------- Вопросы ----------
+
+async function loadQuestions() {
   const { data } = await api('GET', '/api/questions');
-  const list = $('questionList');
-  list.replaceChildren();
-  const qs = data.questions || [];
-  if (data.team_questions_count) list.appendChild(el('div', 'empty', `Вопросов стажёров людям: ${data.team_questions_count}. Тексты руководителю не показываются.`));
-  if (!qs.length && !data.team_questions_count) list.appendChild(el('div', 'empty', 'Вопросов пока нет'));
-  for (const q of qs) {
+  state.questions = data.questions || [];
+  state.teamCount = data.team_questions_count || 0;
+  renderQuestions();
+}
+
+function questionText(q) { return q.text_hidden ? 'Текст скрыт настройками стажёра' : q.text; }
+
+function renderQuestions() {
+  const qs = state.questions;
+  const waiting = qs.filter((q) => q.status === 'Sent').length;
+  $('qEyebrow').textContent = state.teamCount ? `Вопросов стажёров людям: ${state.teamCount}` : `${qs.length} всего · ${waiting} ждут ответа`;
+  // карточка на «Мой день»
+  const day = $('dayQuestions');
+  day.replaceChildren();
+  if (state.teamCount) day.appendChild(el('div', 'empty', `Вопросов стажёров людям: ${state.teamCount}. Тексты руководителю не показываются.`));
+  else if (!qs.length) day.appendChild(el('div', 'empty', 'Вопросов людям пока нет'));
+  for (const q of qs.slice(0, 3)) {
     const row = el('div', 'question');
     const body = el('div');
-    body.append(el('p', '', q.text_hidden ? 'Текст скрыт настройками стажёра' : q.text),
-      el('small', '', `${nameById(q.asked_by)} → ${q.addressee}${q.urgent ? ' · срочно' : ''}`));
+    body.append(el('p', '', questionText(q)), el('small', '', `${q.addressee}${q.urgent ? ' · срочно' : ''}`));
     row.append(body, badge(q.status));
-    list.appendChild(row);
+    day.appendChild(row);
+  }
+  // таблица на странице «Вопросы»
+  const search = $('qSearch').value.trim().toLowerCase();
+  const rows = qs.filter((q) => (!state.qFilter || q.status === state.qFilter) && (!search || questionText(q).toLowerCase().includes(search)));
+  const tbody = $('qTable');
+  tbody.replaceChildren();
+  for (const q of rows) {
+    const tr = el('tr');
+    const c1 = el('td');
+    c1.append(el('div', 'table-title', questionText(q)), el('div', 'meta', q.urgent ? 'Срочно' : 'В сводке'));
+    const person = (name) => { const td = el('td'); const p = el('div', 'person'); p.append(el('span', 'avatar', initials(name)), document.createTextNode(name)); td.appendChild(p); return td; };
+    const c4 = el('td');
+    c4.appendChild(badge(q.status));
+    tr.append(c1, person(nameById(q.asked_by)), person(q.addressee), c4);
+    tbody.appendChild(tr);
+  }
+  $('qEmpty').replaceChildren(rows.length ? '' : el('div', 'empty', state.teamCount ? 'Тексты вопросов руководителю не показываются.' : 'Вопросов нет. Спроси Напарника — если ответа нет в базе, он поможет написать нужному человеку.'));
+}
+
+// ---------- База знаний ----------
+
+async function loadKB() {
+  const { data } = await api('GET', '/api/kb/pages');
+  state.kb = data;
+  renderFolders();
+  renderKB();
+}
+
+function renderFolders() {
+  const box = $('folders');
+  box.replaceChildren();
+  const pages = state.kb.pages || [];
+  const add = (id, title) => {
+    const f = el('div', 'folder' + (state.kbFolder === id ? ' active' : ''));
+    f.append(el('span', '', title), el('span', '', String(pages.filter((p) => !id || p.folder === id).length)));
+    f.onclick = () => { state.kbFolder = id; renderFolders(); renderKB(); };
+    box.appendChild(f);
+  };
+  add('', 'Все материалы');
+  (state.kb.folders || []).forEach((f) => add(f.id, f.title));
+}
+
+const KB_ICON = { article: 'Doc', qa: 'Q', glossary: 'ABC' };
+
+function renderKB() {
+  const grid = $('kbGrid');
+  grid.replaceChildren();
+  const search = $('kbSearch').value.trim().toLowerCase();
+  const pages = (state.kb.pages || []).filter((p) => (!state.kbType || p.type === state.kbType) && (!state.kbFolder || p.folder === state.kbFolder)
+    && (!search || (p.title + ' ' + p.excerpt).toLowerCase().includes(search)));
+  if (!pages.length) grid.appendChild(el('div', 'empty', 'Ничего не нашлось. Спроси Напарника — он поищет и подскажет, к кому идти.'));
+  for (const p of pages) {
+    const card = el('article', 'kb-card');
+    card.tabIndex = 0;
+    card.append(el('div', 'kb-icon', KB_ICON[p.type] || 'Doc'), el('h3', '', p.title), el('p', 'kb-excerpt', p.excerpt));
+    const meta = el('div', 'meta');
+    meta.appendChild(el('span', '', `${p.author} · ${ruDate(p.updated_at, { day: 'numeric', month: 'long', year: 'numeric' })}`));
+    if (p.test_instruction) meta.appendChild(el('span', 'badge amber', 'Тестовая инструкция'));
+    card.appendChild(meta);
+    card.onclick = () => openChat(`Расскажи подробнее: ${p.title}`);
+    grid.appendChild(card);
   }
 }
 
-const requestTitle = (r) => r.kind === 'absence' ? `Отгул ${r.date}` : `Доступ: ${r.system}`;
+// ---------- Заявки ----------
+
+const requestTitle = (r) => (r.kind === 'absence' ? `Отгул · ${ruDate(r.date, { day: 'numeric', month: 'long' })}` : `Доступ: ${r.system}`);
 
 async function renderRequests() {
   const { data } = await api('GET', '/api/requests');
-  const list = $('requestList');
-  list.replaceChildren();
   const rs = data.requests || [];
-  if (!rs.length) list.appendChild(el('div', 'empty', 'Заявок пока нет'));
+  $('reqCount').textContent = rs.length;
+  const list = $('reqList');
+  list.replaceChildren();
+  if (!rs.length) list.appendChild(el('div', 'empty', 'Заявок пока нет. Нажми «Новая заявка» — Напарник подготовит черновик.'));
   for (const r of rs) {
-    const row = el('div', 'req');
-    row.append(el('span', '', `${r.id} · ${requestTitle(r)} · ${nameById(r.employee_id)}`), badge(r.status));
-    list.appendChild(row);
+    const card = el('div', 'request-card');
+    const body = el('div');
+    body.append(el('div', 'table-title', requestTitle(r)), el('div', 'meta', `${r.id} · ${nameById(r.employee_id)} · согласует ${nameById(r.approver_id)}`));
+    card.append(el('div', 'request-icon', r.kind === 'absence' ? '☂' : '⌘'), body, badge(r.status));
+    list.appendChild(card);
   }
+  const last = rs[rs.length - 1];
+  const box = $('lastReceipt');
+  box.replaceChildren(el('div', 'eyebrow', 'Последняя квитанция'));
+  if (!last) { box.appendChild(el('p', 'meta', 'Квитанций пока нет')); return; }
+  box.append(el('div', 'receipt-code', last.id), el('b', '', requestTitle(last)),
+    el('p', 'meta', `Заявка сохранена и отправлена: ${nameById(last.approver_id)}. Статус обновится здесь.`), badge(last.status));
 }
 
-// ---------- чат ----------
+// ---------- Чат ----------
 
 const chat = $('chat');
 function setChat(open) {
@@ -217,18 +375,20 @@ function renderDraft(d) {
   box.appendChild(el('b', '', '📝 ' + draftTitle(d)));
   if (d.tool === 'send_question') {
     box.appendChild(el('div', '', d.args.text));
-    if (d.args.reason) box.appendChild(el('div', 'model-pill', `Почему: ${d.args.reason}`));
+    if (d.args.reason) box.appendChild(el('div', 'meta', `Почему: ${d.args.reason}`));
   }
-  const row = el('div', 'row');
-  const ok = el('button', 'btn primary', 'Подтвердить');
+  const row = el('div', 'row-btns');
+  const ok = el('button', 'btn primary-sm', 'Подтвердить');
   const cancel = el('button', 'btn ghost', 'Отмена');
   ok.onclick = async () => {
     ok.disabled = true;
     const { status, data } = await api('POST', `/api/drafts/${d.id}/confirm`);
     if (status === 200) {
       const r = data.receipt || {};
-      box.replaceWith(el('div', 'receipt', `✅ Готово: ${r.id || ''} · ${r.status === 'pending' ? 'на согласовании' : r.status || ''}${r.approver ? ' · ' + r.approver : ''}${r.to ? ' · ' + r.to + ', ' + r.delivery : ''}`));
-      await Promise.all([renderRequests(), renderQuestions(), renderPlan()]);
+      const status = (STATUS[r.status] || [])[1] || r.status;
+      const parts = [r.id, status && status.toLowerCase(), r.approver, r.to && `${r.to}, ${r.delivery}`].filter(Boolean);
+      box.replaceWith(el('div', 'receipt', '✅ Готово: ' + parts.join(' · ')));
+      await Promise.all([renderRequests(), loadQuestions(), loadPlan()]);
     } else {
       ok.disabled = false;
       ok.textContent = status === 503 ? 'Повторить' : 'Подтвердить';
@@ -248,36 +408,34 @@ function renderSource(s) {
   return box;
 }
 
+function retryButton(text) {
+  const row = el('div', 'row-btns');
+  const retry = el('button', 'btn ghost', 'Повторить');
+  retry.onclick = () => { row.remove(); ask(text); };
+  row.appendChild(retry);
+  return row;
+}
+
 async function ask(text) {
   state.lastQuestion = text;
   addToChat(el('div', 'bubble user', text));
   const thinking = addToChat(el('div', 'bubble bot thinking', 'Думаю…')); // BR-70: интерфейс не блокируется
   let res;
-  try {
-    res = await api('POST', '/api/chat/messages', { text });
-  } catch {
-    res = { status: 0, data: {} };
-  }
+  try { res = await api('POST', '/api/chat/messages', { text }); } catch { res = { status: 0, data: {} }; }
   thinking.remove();
   if (res.status !== 200) {
-    const err = addToChat(el('div', 'error', 'Сервер не ответил. Вопрос сохранён.'));
-    const retry = el('button', 'btn ghost', 'Повторить');
-    retry.onclick = () => ask(text);
-    err.appendChild(el('div', 'retry-row')).appendChild(retry);
+    addToChat(el('div', 'error', 'Сервер не ответил. Вопрос сохранён.'));
+    addToChat(retryButton(text));
     return;
   }
   const r = res.data;
   addToChat(el('div', 'bubble bot', r.text));
   (r.sources || []).slice(0, 2).forEach((s) => addToChat(renderSource(s)));
   (r.drafts || []).forEach((d) => addToChat(renderDraft(d)));
-  if (r.retry) {
-    const retry = el('button', 'btn ghost', 'Повторить');
-    retry.onclick = () => ask(state.lastQuestion);
-    addToChat(el('div', 'retry-row')).appendChild(retry);
-  }
+  if (r.retry) addToChat(retryButton(text));
 }
 
-// ---------- события интерфейса ----------
+// ---------- события ----------
 
 $('mascot').onclick = () => setChat(!chat.classList.contains('open'));
 $('closeChat').onclick = () => setChat(false);
@@ -289,14 +447,30 @@ $('chatForm').onsubmit = (e) => {
   ask(text);
 };
 document.querySelectorAll('#quick button').forEach((b) => { b.onclick = () => ask(b.textContent); });
+document.querySelectorAll('.nav button').forEach((b) => { b.onclick = () => openPage(b.dataset.page); });
+document.querySelectorAll('[data-open]').forEach((b) => { b.onclick = () => openPage(b.dataset.open); });
+document.querySelectorAll('[data-ask]').forEach((b) => { b.onclick = () => openChat(b.dataset.ask); });
+document.querySelectorAll('[data-qfilter]').forEach((b) => {
+  b.onclick = () => {
+    document.querySelectorAll('[data-qfilter]').forEach((x) => x.classList.toggle('active', x === b));
+    state.qFilter = b.dataset.qfilter;
+    renderQuestions();
+  };
+});
+document.querySelectorAll('[data-kbtype]').forEach((b) => {
+  b.onclick = () => {
+    document.querySelectorAll('[data-kbtype]').forEach((x) => x.classList.toggle('active', x === b));
+    state.kbType = b.dataset.kbtype;
+    renderKB();
+  };
+});
+$('qSearch').oninput = renderQuestions;
+$('kbSearch').oninput = renderKB;
 $('theme').onclick = () => {
   const dark = document.documentElement.dataset.theme !== 'dark';
   document.documentElement.dataset.theme = dark ? 'dark' : 'light';
   $('theme').textContent = dark ? '☾' : '☼';
 };
-document.querySelectorAll('[data-go]').forEach((b) => {
-  b.onclick = () => { const t = $(b.dataset.go); if (t) t.scrollIntoView({ behavior: 'smooth' }); };
-});
 $('who').onchange = async (e) => {
   state.login = e.target.value;
   try { localStorage.setItem('buddy.login', state.login); } catch { /* не критично */ }
@@ -305,4 +479,5 @@ $('who').onchange = async (e) => {
   toast(`Вы вошли как ${state.me ? state.me.name : state.login}`);
 };
 
+openPage(location.hash.slice(1));
 (async () => { await loadUsers(); await loadAll(); })();

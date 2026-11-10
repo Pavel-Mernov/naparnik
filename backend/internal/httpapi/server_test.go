@@ -192,3 +192,18 @@ func TestTodayUsersAndStatic(t *testing.T) {
 		t.Fatalf("фронт не отдаётся: %d", rec.Code)
 	}
 }
+
+// BR-02, BR-40: в списке базы — только своё пространство.
+func TestKBPages(t *testing.T) {
+	_, h := newServer(t)
+	_, r := call(t, h, "GET", "/api/kb/pages", "intern.sokolov", "")
+	pages := r["pages"].([]any)
+	if len(pages) != 19 || len(r["folders"].([]any)) != 6 {
+		t.Fatalf("страниц %d, папок %d", len(pages), len(r["folders"].([]any)))
+	}
+	for _, p := range pages {
+		if p.(map[string]any)["id"] == "kb-R1" {
+			t.Fatal("страница чужого пространства")
+		}
+	}
+}

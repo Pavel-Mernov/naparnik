@@ -246,3 +246,33 @@ func recencyWeight(c Ctx, updatedAt string) float64 {
 		return 0.3
 	}
 }
+
+// PageCard — страница базы для списка в интерфейсе (без полного текста).
+type PageCard struct {
+	ID              string `json:"id"`
+	Folder          string `json:"folder"`
+	Type            string `json:"type"`
+	Title           string `json:"title"`
+	Excerpt         string `json:"excerpt"`
+	Author          string `json:"author"`
+	UpdatedAt       string `json:"updated_at"`
+	TestInstruction bool   `json:"test_instruction"`
+}
+
+// KBPages — папки и опубликованные страницы своего пространства (BR-02, BR-40).
+func KBPages(c Ctx) (folders []mockdata.Folder, pages []PageCard) {
+	spaces := c.Store.ReadableSpaces()
+	for _, f := range c.Store.Data.KB.Folders {
+		if spaces[f.Space] {
+			folders = append(folders, f)
+		}
+	}
+	for _, p := range readablePages(c) {
+		ex := []rune(p.Body)
+		if len(ex) > 140 {
+			ex = append(ex[:140], '…')
+		}
+		pages = append(pages, PageCard{p.ID, p.Folder, p.Type, p.Title, string(ex), c.Store.Name(p.AuthorID), p.UpdatedAt, p.TestInstruction})
+	}
+	return folders, pages
+}

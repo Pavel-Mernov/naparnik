@@ -63,9 +63,16 @@ type Page struct {
 	Body            string `json:"body"`
 }
 
+type Folder struct {
+	ID    string `json:"id"`
+	Space string `json:"space"`
+	Title string `json:"title"`
+}
+
 type KB struct {
-	Spaces []Space `json:"spaces"`
-	Pages  []Page  `json:"pages"`
+	Spaces  []Space  `json:"spaces"`
+	Folders []Folder `json:"folders"`
+	Pages   []Page   `json:"pages"`
 }
 
 type Stage struct {
