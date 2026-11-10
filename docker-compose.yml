@@ -1,10 +1,8 @@
-# AI-buddy: сайт и API на http://localhost:8080
+# Напарник: интерфейс на http://localhost:3000, API на http://localhost:8080
 #
 #   cp .env.example .env      # вписать ключ в LLM_API_KEY (без ключа работает заглушка модели)
 #   docker compose up --build
 #
-# Фронт (frontend/web) отдаёт тот же Go-сервер — отдельный контейнер не нужен.
-
 services:
   backend:
     build:
@@ -14,4 +12,14 @@ services:
     env_file:
       - path: .env
         required: false
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports: ["3000:3000"]
+    depends_on:
+      backend:
+        condition: service_healthy
     restart: unless-stopped
