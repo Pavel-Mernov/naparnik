@@ -1,21 +1,19 @@
-FROM python:3.12.5-slim
+# Сборка из корня репозитория: docker build -f backend/Dockerfile .
+# (нужны мок-данные команды из docs/04-mock-data и страница из frontend/web)
+FROM golang:1.27-alpine AS build
+WORKDIR /src/backend
+COPY backend/go.mod backend/go.sum ./
+RUN go mod download
+COPY backend/ ./
+RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/server ./cmd/server
 
-COPY --from=ghcr.io/astral-sh/uv:0.11.14 /uv /usr/local/bin/uv
-ENV UV_COMPILE_BYTECODE=1 \
-    UV_LINK_MODE=copy \
-    PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1 \
-    PATH="/app/.venv/bin:$PATH"
-WORKDIR /app
-
-COPY pyproject.toml uv.lock .python-version ./
-RUN uv sync --frozen --no-dev
-
-COPY app ./app
-RUN useradd --create-home --uid 10001 app
-USER app
-EXPOSE 8000
-HEALTHCHECK --interval=10s --timeout=3s --start-period=20s --retries=5 \
-  CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"
-# Тот же образ запускает worker: command: python -m app.worker
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]
+FROM alpine:3.20
+RUN apk add --no-cache ca-certificates tzdata
+COPY --from=build /out/server /app/server
+COPY docs/04-mock-data /app/mock-data
+COPY frontend/web /app/web
+ENV MOCK_DATA_DIR=/app/mock-data STATIC_DIR=/app/web PORT=8080 TZ=Europe/Moscow
+EXPOSE 8080
+USER nobody
+HEALTHCHECK --interval=10s --timeout=3s --retries=5 CMD wget -qO- http://localhost:8080/api/health || exit 1
+CMD ["/app/server"]

@@ -1,0 +1,194 @@
+package httpapi
+
+import (
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
+	"os"
+	"path/filepath"
+	"strings"
+	"testing"
+	"time"
+
+	"github.com/worker4556/naparnik/backend/internal/agent"
+	"github.com/worker4556/naparnik/backend/internal/llm"
+	"github.com/worker4556/naparnik/backend/internal/mockdata"
+	"github.com/worker4556/naparnik/backend/internal/store"
+	"github.com/worker4556/naparnik/backend/internal/tools"
+)
+
+func newServer(t *testing.T) (*Server, http.Handler) {
+	t.Helper()
+	d, err := mockdata.Load("../../../docs/04-mock-data")
+	if err != nil {
+		t.Fatal(err)
+	}
+	today, _ := time.Parse(time.DateOnly, d.DemoToday)
+	s := store.New(d, today)
+	srv := &Server{Agent: agent.New(s, llm.NewStub("stub_ok", today), time.Second), Store: s}
+	return srv, srv.Handler()
+}
+
+func call(t *testing.T, h http.Handler, method, path, user, body string) (int, map[string]any) {
+	t.Helper()
+	req := httptest.NewRequest(method, path, strings.NewReader(body))
+	if user != "" {
+		req.Header.Set("X-User", user)
+	}
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+	var out map[string]any
+	_ = json.Unmarshal(rec.Body.Bytes(), &out)
+	return rec.Code, out
+}
+
+func TestHealthAndAuth(t *testing.T) {
+	_, h := newServer(t)
+	if code, _ := call(t, h, "GET", "/api/health", "", ""); code != 200 {
+		t.Fatal(code)
+	}
+	if code, _ := call(t, h, "GET", "/api/me", "", ""); code != 401 {
+		t.Fatal("без учётки — 401")
+	}
+	if code, me := call(t, h, "GET", "/api/me", "intern.sokolov", ""); code != 200 || me["name"] != "Даниил Соколов" {
+		t.Fatal(me)
+	}
+}
+
+// Путь «от запроса до результата»: чат → черновик → подтверждение → квитанция в заявках и в ленте руководителя (SC-14, SC-29).
+func TestChatDraftConfirmReceipt(t *testing.T) {
+	_, h := newServer(t)
+	code, reply := call(t, h, "POST", "/api/chat/messages", "intern.sokolov", `{"text":"Мне нужен отгул в пятницу"}`)
+	drafts, _ := reply["drafts"].([]any)
+	if code != 200 || len(drafts) != 1 {
+		t.Fatalf("чат: %d %v", code, reply)
+	}
+	id := drafts[0].(map[string]any)["id"].(string)
+	code, res := call(t, h, "POST", "/api/requests/"+id+"/confirm", "intern.sokolov", "")
+	if code != 200 || res["receipt"].(map[string]any)["id"] != "ABS-1042" {
+		t.Fatalf("подтверждение: %d %v", code, res)
+	}
+	for _, login := range []string{"intern.sokolov", "lead.kovalev"} {
+		_, list := call(t, h, "GET", "/api/requests", login, "")
+		if len(list["requests"].([]any)) != 1 {
+			t.Fatalf("%s: квитанция не видна: %v", login, list)
+		}
+	}
+	if _, list := call(t, h, "GET", "/api/requests", "buddy.belova", ""); len(list["requests"].([]any)) != 0 {
+		t.Fatal("бадди заявки на отгул не видит")
+	}
+	if code, _ := call(t, h, "POST", "/api/requests/"+id+"/confirm", "intern.sokolov", ""); code != 404 {
+		t.Fatal("повторное подтверждение")
+	}
+}
+
+func TestChatValidation(t *testing.T) {
+	_, h := newServer(t)
+	if code, _ := call(t, h, "POST", "/api/chat/messages", "intern.sokolov", `{}`); code != 422 {
+		t.Fatal(code)
+	}
+}
+
+func TestPlanAndSteps(t *testing.T) {
+	_, h := newServer(t)
+	if code, _ := call(t, h, "GET", "/api/plans/u-sokolov", "buddy.belova", ""); code != 200 {
+		t.Fatal("бадди видит план")
+	}
+	if code, _ := call(t, h, "GET", "/api/plans/u-sokolov", "expert.orlov", ""); code != 403 {
+		t.Fatal("эксперт не видит план")
+	}
+	if code, _ := call(t, h, "PATCH", "/api/plan-steps/s-01", "intern.sokolov", `{}`); code != 200 {
+		t.Fatal("стажёр отмечает шаг")
+	}
+	if code, _ := call(t, h, "PATCH", "/api/plan-steps/s-03", "buddy.belova", `{"intern_id":"u-sokolov"}`); code != 200 {
+		t.Fatal("бадди отмечает шаг")
+	}
+	if code, _ := call(t, h, "PATCH", "/api/plan-steps/s-03", "lead.kovalev", `{"intern_id":"u-sokolov"}`); code != 403 {
+		t.Fatal("руководитель шаги не отмечает")
+	}
+	if code, _ := call(t, h, "PATCH", "/api/plan-steps/s-99", "intern.sokolov", `{}`); code != 404 {
+		t.Fatal("нет шага")
+	}
+}
+
+// 02-ROLES, BR-86, SC-13: видимость вопросов.
+func TestQuestionsVisibility(t *testing.T) {
+	srv, h := newServer(t)
+	ask := func(login, addressee string) {
+		u, _ := srv.Store.UserByLogin(login)
+		if r := tools.Run(tools.Ctx{Store: srv.Store, User: u}, "send_question", map[string]any{"text": "вопрос " + login, "addressee_id": addressee}); !r.OK {
+			t.Fatal(r.Error)
+		}
+	}
+	ask("intern.sokolov", "u-orlov")
+	ask("intern.egorova", "u-orlov")
+	_, b := call(t, h, "GET", "/api/questions", "buddy.belova", "")
+	for _, q := range b["questions"].([]any) {
+		q := q.(map[string]any)
+		if q["asked_by"] == "u-sokolov" && q["text"] == nil {
+			t.Error("у Даниила текст виден бадди")
+		}
+		if q["asked_by"] == "u-egorova" && (q["text"] != nil || q["text_hidden"] != true || q["addressee"] != "Михаил Орлов") {
+			t.Errorf("SC-13: у Полины текст скрыт, адресат виден: %v", q)
+		}
+	}
+	if _, o := call(t, h, "GET", "/api/questions", "expert.orlov", ""); len(o["questions"].([]any)) != 2 {
+		t.Error("входящие эксперта")
+	}
+	_, l := call(t, h, "GET", "/api/questions", "lead.kovalev", "")
+	if len(l["questions"].([]any)) != 0 || l["team_questions_count"].(float64) != 2 {
+		t.Errorf("руководитель видит только количество: %v", l)
+	}
+	if _, s := call(t, h, "GET", "/api/questions", "expert.smirnova", ""); len(s["questions"].([]any)) != 0 {
+		t.Error("чужие входящие не видны")
+	}
+}
+
+func TestWriteResultUnknownCode(t *testing.T) {
+	rec := httptest.NewRecorder()
+	writeResult(rec, tools.Result{Error: &tools.Error{Code: "weird", Message: "x"}})
+	if rec.Code != 400 {
+		t.Fatal(rec.Code)
+	}
+}
+
+func TestChatInternalError(t *testing.T) {
+	srv, h := newServer(t)
+	srv.Store.Data.Team.Users = append(srv.Store.Data.Team.Users, mockdata.User{ID: "u-ghost", Login: "ghost"})
+	// пользователь есть для авторизации, но агент его не найдёт после удаления
+	req := httptest.NewRequest("POST", "/api/chat/messages", strings.NewReader(`{"text":"x"}`))
+	req.Header.Set("X-User", "ghost")
+	rec := httptest.NewRecorder()
+	srv.Agent.Store = store.New(&mockdata.Data{}, time.Now())
+	h.ServeHTTP(rec, req)
+	if rec.Code != 500 {
+		t.Fatal(rec.Code)
+	}
+}
+
+func TestTodayUsersAndStatic(t *testing.T) {
+	srv, _ := newServer(t)
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "index.html"), []byte("<h1>buddy</h1>"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	srv.StaticDir = dir
+	h := srv.Handler()
+	if code, r := call(t, h, "GET", "/api/today", "intern.sokolov", ""); code != 200 || len(r["data"].(map[string]any)["steps"].([]any)) == 0 {
+		t.Fatalf("today: %d %v", code, r)
+	}
+	if code, _ := call(t, h, "GET", "/api/today", "lead.kovalev", ""); code != 403 {
+		t.Fatal("шаги на сегодня — только стажёру")
+	}
+	if _, r := call(t, h, "GET", "/api/users", "", ""); len(r["users"].([]any)) != 7 {
+		t.Fatal("учётки для переключателя")
+	}
+	if _, me := call(t, h, "GET", "/api/me", "buddy.belova", ""); len(me["interns"].([]any)) != 2 {
+		t.Fatalf("бадди видит двух стажёров: %v", me)
+	}
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, httptest.NewRequest("GET", "/", nil))
+	if rec.Code != 200 || !strings.Contains(rec.Body.String(), "buddy") {
+		t.Fatalf("фронт не отдаётся: %d", rec.Code)
+	}
+}

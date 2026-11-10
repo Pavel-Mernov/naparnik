@@ -16,3 +16,4 @@ dist/
 .coverage
 htmlcov/
 .ruff_cache/
+coverage.out
