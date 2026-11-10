@@ -22,20 +22,28 @@ cp .env.example .env          # ключ модели — по желанию, �
 docker compose up --build -d
 ```
 
-Откройте **http://localhost:8080**.
+Откройте **http://localhost:3000** — актуальный интерфейс React. API и прежний HTML-интерфейс доступны на **http://localhost:8080**.
 
 PostgreSQL запускается автоматически; данные сохраняются в томе `pgdata`. Обычная остановка — `docker compose down` (без `-v`). Проверка сохранения: создай заявку, выполни `docker compose restart backend` и обнови страницу. Подробнее: [хранение и повторы](docs/PERSISTENCE.md).
 
 ### Вариант 2. Без Docker
 
-Нужен **Go 1.27+**.
+Нужны **Go 1.27+** и **Node.js 22.12+** для React-интерфейса.
 
 ```bash
 cp .env.example .env
 cd backend && go run ./cmd/server
 ```
 
-Откройте **http://localhost:8080**. Сервер сам читает `../.env`.
+Сервер сам читает `../.env`. Во втором терминале из корня проекта:
+
+```bash
+cd frontend
+npm ci
+npm run dev
+```
+
+Откройте **http://localhost:5173**. Vite перенаправляет `/api` на backend `:8080`; прежний HTML-интерфейс работает на **http://localhost:8080**.
 
 ### Модель (внешний API)
 
@@ -67,11 +75,17 @@ cd backend && go run ./cmd/server
 
 В API учётка передаётся заголовком `X-User: intern.sokolov`.
 
+В React-интерфейсе стартовый экран зависит от роли: стажёр — «Мой день» и «Мой план», бадди — «Мои стажёры» с выбором плана, эксперт — входящие вопросы, руководитель — «Обзор команды» и «Согласование». Руководитель видит прогресс своих стажёров, просрочки, количество открытых вопросов и заявки. Тексты личных вопросов в обзор не входят; отмечать шаги может стажёр или его бадди.
+
+Проверка ролей: откройте план Даниила, переключитесь на Андрея Ковалёва — появится обзор двух стажёров без личных задач и чекбоксов. У Екатерины Беловой можно выбрать план Даниила или Полины; неутверждённый план Полины показан как «План готовится». При смене учётки предыдущие данные и чат очищаются, ответы старых запросов игнорируются.
+
 ---
 
 ## Порядок проверки (основной сценарий, ≈ 5 минут)
 
 Демо-дата — **среда, 11 ноября 2026**, 3-й день стажировки Даниила. Учётка `intern.sokolov`.
+
+Подробный сценарий ниже описывает прежний HTML-интерфейс на `:8080`: часть его возможностей ещё переносится в React. Проверка экранов ролей React описана выше.
 
 1. **Утро стажёра (SC-01, SC-18).** На «Мой день» — 3 шага, просроченный «Доступ к Redash» первым, событие дня (1:1 в 15:00), прогресс по этапам плана.
 2. **Доступ по шагу плана (SC-27).** У шага Redash нажать «Оформить» → Напарник объясняет порядок по тестовой инструкции → черновик заявки → «Подтвердить» → квитанция `ACC-2002`. Заявка видна в разделе «Заявки».
@@ -90,13 +104,16 @@ cd backend && go run ./cmd/server
 ## Тесты и покрытие
 
 ```bash
-cd backend && go test ./...            # PostgreSQL-тесты требуют TEST_DATABASE_URL
+(cd backend && go test ./...)          # PostgreSQL-тесты требуют TEST_DATABASE_URL
 ./scripts/coverage.sh                  # из корня: отчёт о покрытии
+npm --prefix frontend run build        # TypeScript и сборка React
 ```
 
-Отчёт — [docs/coverage/coverage.txt](docs/coverage/coverage.txt) (по функциям и итог) и `docs/coverage/coverage.html`. Покрытие строк прикладного кода — **96.6%**. Считаются `backend/internal` и `backend/cmd/buddy`; не входят зависимости, тесты и точка входа `cmd/server`. Порог 80% проверяется в CI ([.github/workflows/tests.yml](.github/workflows/tests.yml)).
+Отчёт — [docs/coverage/coverage.txt](docs/coverage/coverage.txt) (по функциям и итог) и `docs/coverage/coverage.html`. Покрытие строк прикладного кода — **96.7%**. Считаются `backend/internal` и `backend/cmd/buddy`; не входят зависимости, тесты и точка входа `cmd/server`. Порог 80% проверяется в CI ([.github/workflows/tests.yml](.github/workflows/tests.yml)).
 
 Тесты не обращаются к внешней модели: используется заглушка, для Claude и DeepSeek — локальный тестовый HTTP-сервер.
+
+Проверки React в браузере: при запущенных backend и Vite установите Python Playwright (`python -m pip install playwright`, `python -m playwright install chromium`) и выполните из корня `python scripts/test_role_ui.py`. Для Docker задайте `APP_URL=http://localhost:3000`, для системного Chromium — `CHROMIUM_PATH=/путь/к/chromium`. Тест проверяет четыре роли, согласование и запоздавшие ответы загрузки, чата и действий; изменяющие запросы перехватываются и данные сервера не меняются. В `npm test` пока нет файлов тестов Vitest.
 
 Агент из терминала:
 
@@ -109,7 +126,7 @@ cd backend && go run ./cmd/buddy -user intern.sokolov "Мне нужен отг�
 ## Архитектура и стек
 
 ```
-Браузер ──HTTP──► backend (Go): API + агент + имитации сервисов ──► LLM (DeepSeek / Claude / заглушка)
+Браузер ──► React (Vite / nginx) ──HTTP──► backend (Go): API + агент + имитации сервисов ──► LLM
                     │
                     └── читает тестовые данные из docs/04-mock-data
 ```
@@ -118,7 +135,7 @@ cd backend && go run ./cmd/buddy -user intern.sokolov "Мне нужен отг�
 |---|---|---|
 | Backend и агент | Go, стандартный `net/http` | Go **1.27.3** |
 | LLM | `anthropic-sdk-go`, `openai-go` (DeepSeek и OpenAI-совместимые) | **v2.8.0**, **v3.98.0** |
-| Frontend | HTML + CSS + JavaScript без сборки, явный API-клиент | — |
+| Frontend | React + TypeScript + MUI, Vite; прежний HTML + JS в `frontend/web/` | см. `frontend/package.json` |
 | Запуск | Docker (`golang:1.27-alpine` → `alpine:3.20`), Docker Compose | — |
 | CI | GitHub Actions: vet, тесты, порог покрытия, сборка образа | — |
 

@@ -31,6 +31,7 @@ func (s *Server) Handler() http.Handler {
 		writeJSON(w, 200, map[string]string{"status": "ok"})
 	})
 	mux.HandleFunc("GET /api/me", s.auth(s.me))
+	mux.HandleFunc("GET /api/dashboard/team", s.auth(s.teamDashboard))
 	mux.HandleFunc("POST /api/chat/messages", s.auth(s.chat))
 	mux.HandleFunc("POST /api/chat/reset", s.auth(s.chatReset))
 	mux.HandleFunc("GET /api/drafts", s.auth(s.drafts))
@@ -63,6 +64,10 @@ func (s *Server) Handler() http.Handler {
 }
 
 type handler func(http.ResponseWriter, *http.Request, *mockdata.User)
+
+func (s *Server) teamDashboard(w http.ResponseWriter, _ *http.Request, u *mockdata.User) {
+	writeResult(w, tools.TeamDashboard(tools.Ctx{Store: s.Store, User: u}))
+}
 
 func (s *Server) auth(h handler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {

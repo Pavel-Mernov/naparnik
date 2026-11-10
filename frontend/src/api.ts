@@ -54,10 +54,29 @@ export type RequestItem = {
   type?: string;
   date?: string;
   system?: string;
+  title?: string;
   employee_id: string;
   approver_id: string;
   status: string;
   created_at: string;
+};
+
+export type InternOverview = {
+  id: string; name: string; buddy: string; week: number; plan_status: string;
+  stage: string; progress_pct: number; overdue_steps: number; open_questions: number;
+};
+
+export type TeamOverview = {
+  department: string;
+  interns: InternOverview[];
+  requests: Array<{ id: string; kind: string; title: string; type?: string; date?: string;
+    employee_id: string; employee_name: string; status: string }>;
+  totals: { interns: number; overdue_steps: number; open_questions: number; pending_requests: number };
+};
+
+export type Services = {
+  absence: { reason_codes: Array<{ code: string; text: string }> };
+  access: { reason_codes: Array<{ code: string; text: string }> };
 };
 
 export type KbPage = {
