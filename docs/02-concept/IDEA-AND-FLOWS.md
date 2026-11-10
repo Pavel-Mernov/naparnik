@@ -1,7 +1,6 @@
 # AI-buddy: идеи, выбранная концепция и флоу
 
-![Uploading 9a77c9dc-a5ae-481a-a0b2-1f7bfe1a1b42.png…]()
-
+<img width="1076" height="486" alt="image" src="https://github.com/user-attachments/assets/392a85a8-7240-44a7-bf33-64053046ce3d" />
 
 > Кратко о том, к чему мы пришли. Подробности и источники: [BRAINSTORM.md](../01-discovery/BRAINSTORM.md), [HYPOTHESES.md](./HYPOTHESES.md).
 > Документ отражает концепцию до интервью с бадди. Актуальные требования для разработки — в [03-requirements](../03-requirements/README.md); где они расходятся с этим документом, действуют требования.
