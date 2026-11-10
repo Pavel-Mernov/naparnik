@@ -1,0 +1,2609 @@
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>buddy: Go Coverage Report</title>
+		<style>
+			body {
+				background: black;
+				color: rgb(80, 80, 80);
+			}
+			body, pre, #legend span {
+				font-family: Menlo, monospace;
+				font-weight: bold;
+			}
+			#topbar {
+				background: black;
+				position: fixed;
+				top: 0; left: 0; right: 0;
+				height: 42px;
+				border-bottom: 1px solid rgb(80, 80, 80);
+			}
+			#content {
+				margin-top: 50px;
+			}
+			#nav, #legend {
+				float: left;
+				margin-left: 10px;
+			}
+			#legend {
+				margin-top: 12px;
+			}
+			#nav {
+				margin-top: 10px;
+			}
+			#legend span {
+				margin: 0 5px;
+			}
+			.cov0 { color: rgb(192, 0, 0) }
+.cov1 { color: rgb(128, 128, 128) }
+.cov2 { color: rgb(116, 140, 131) }
+.cov3 { color: rgb(104, 152, 134) }
+.cov4 { color: rgb(92, 164, 137) }
+.cov5 { color: rgb(80, 176, 140) }
+.cov6 { color: rgb(68, 188, 143) }
+.cov7 { color: rgb(56, 200, 146) }
+.cov8 { color: rgb(44, 212, 149) }
+.cov9 { color: rgb(32, 224, 152) }
+.cov10 { color: rgb(20, 236, 155) }
+
+		</style>
+	</head>
+	<body>
+		<div id="topbar">
+			<div id="nav">
+				<select id="files">
+				
+				<option value="file0">github.com/worker4556/naparnik/backend/cmd/buddy/main.go (89.7%)</option>
+				
+				<option value="file1">github.com/worker4556/naparnik/backend/internal/agent/agent.go (100.0%)</option>
+				
+				<option value="file2">github.com/worker4556/naparnik/backend/internal/agent/guard.go (100.0%)</option>
+				
+				<option value="file3">github.com/worker4556/naparnik/backend/internal/app/app.go (100.0%)</option>
+				
+				<option value="file4">github.com/worker4556/naparnik/backend/internal/app/dotenv.go (100.0%)</option>
+				
+				<option value="file5">github.com/worker4556/naparnik/backend/internal/httpapi/server.go (100.0%)</option>
+				
+				<option value="file6">github.com/worker4556/naparnik/backend/internal/llm/anthropic.go (100.0%)</option>
+				
+				<option value="file7">github.com/worker4556/naparnik/backend/internal/llm/llm.go (100.0%)</option>
+				
+				<option value="file8">github.com/worker4556/naparnik/backend/internal/llm/openai.go (100.0%)</option>
+				
+				<option value="file9">github.com/worker4556/naparnik/backend/internal/llm/stub.go (99.3%)</option>
+				
+				<option value="file10">github.com/worker4556/naparnik/backend/internal/mockdata/mockdata.go (100.0%)</option>
+				
+				<option value="file11">github.com/worker4556/naparnik/backend/internal/store/store.go (100.0%)</option>
+				
+				<option value="file12">github.com/worker4556/naparnik/backend/internal/tools/kb.go (98.4%)</option>
+				
+				<option value="file13">github.com/worker4556/naparnik/backend/internal/tools/plan.go (98.4%)</option>
+				
+				<option value="file14">github.com/worker4556/naparnik/backend/internal/tools/requests.go (97.5%)</option>
+				
+				<option value="file15">github.com/worker4556/naparnik/backend/internal/tools/tools.go (100.0%)</option>
+				
+				</select>
+			</div>
+			<div id="legend">
+				<span>not tracked</span>
+			
+				<span class="cov0">not covered</span>
+				<span class="cov8">covered</span>
+			
+			</div>
+		</div>
+		<div id="content">
+		
+		<pre class="file" id="file0" style="display: none">// Поговорить с агентом из терминала:
+//
+//        go run ./cmd/buddy -user intern.sokolov "Что такое витрина и где лежит витрина объявлений?"
+//        go run ./cmd/buddy -user intern.sokolov            # диалог, выход — пустая строка
+//
+// Модель — из окружения (LLM_PROVIDER не задан → заглушка stub_ok, работает без ключа).
+package main
+
+import (
+        "bufio"
+        "context"
+        "flag"
+        "fmt"
+        "io"
+        "os"
+        "strings"
+
+        "github.com/worker4556/naparnik/backend/internal/agent"
+        "github.com/worker4556/naparnik/backend/internal/app"
+)
+
+func main() {
+        <span class="cov0" title="0">app.LoadDotEnv(".env", "../.env")
+        if err := run(os.Args[1:], os.Stdin, os.Stdout); err != nil </span>{
+                <span class="cov0" title="0">fmt.Fprintln(os.Stderr, err)
+                os.Exit(1)
+</span>        }
+}
+
+func run(args []string, in io.Reader, out io.Writer) error {
+        <span class="cov8" title="1">fs := flag.NewFlagSet("buddy", flag.ContinueOnError)
+        user := fs.String("user", "intern.sokolov", "логин тестовой учётки")
+        if err := fs.Parse(args); err != nil </span>{
+                <span class="cov8" title="1">return err
+</span>        }
+        <span class="cov8" title="1">a, err := app.New()
+        if err != nil </span>{
+                <span class="cov8" title="1">return err
+</span>        }
+        <span class="cov8" title="1">fmt.Fprintf(out, "Модель: %s/%s (%s), пользователь: %s\n", a.LLM.Provider, a.LLM.Model, a.LLM.Mode, *user)
+        reader := bufio.NewReader(in)
+        ask := func(text string) error </span>{
+                <span class="cov8" title="1">reply, err := a.Agent.Ask(context.Background(), *user, text)
+                if err != nil </span>{
+                        <span class="cov8" title="1">return err
+</span>                }
+                <span class="cov8" title="1">show(out, reader, a.Agent, *user, reply)
+                return nil</span>
+        }
+        <span class="cov8" title="1">if fs.NArg() &gt; 0 </span>{
+                <span class="cov8" title="1">return ask(strings.Join(fs.Args(), " "))
+</span>        }
+        <span class="cov8" title="1">for </span>{
+                <span class="cov8" title="1">fmt.Fprint(out, "\nТы: ")
+                line, _ := reader.ReadString('\n')
+                if line = strings.TrimSpace(line); line == "" </span>{
+                        <span class="cov8" title="1">return nil
+</span>                }
+                <span class="cov8" title="1">if err := ask(line); err != nil </span>{
+                        <span class="cov8" title="1">return err
+</span>                }
+        }
+}
+
+func show(out io.Writer, in *bufio.Reader, a *agent.Agent, user string, r agent.Reply) {
+        <span class="cov8" title="1">fmt.Fprintf(out, "\n🐾 %s\n", r.Text)
+        for _, s := range r.Sources </span>{
+                <span class="cov8" title="1">fmt.Fprintf(out, "   📎 %s — %s, %s %s\n", s.Title, s.Author, s.UpdatedAt, s.Label)
+</span>        }
+        <span class="cov8" title="1">for _, d := range r.Drafts </span>{
+                <span class="cov8" title="1">fmt.Fprintf(out, "   📝 Черновик %s: %s %v\n   Подтвердить? [y/N] ", d.ID, d.Tool, d.Args)
+                line, _ := in.ReadString('\n')
+                if strings.TrimSpace(strings.ToLower(line)) == "y" </span>{
+                        <span class="cov8" title="1">res := a.Confirm(user, d.ID)
+                        if res.Error != nil </span>{
+                                <span class="cov8" title="1">fmt.Fprintf(out, "   ❌ %s\n", res.Error.Message)
+</span>                        } else {
+                                <span class="cov8" title="1">fmt.Fprintf(out, "   ✅ %v\n", res.Receipt)
+</span>                        }
+                }
+        }
+}
+</pre>
+		
+		<pre class="file" id="file1" style="display: none">// Package agent — цикл AI-buddy: вопрос → модель выбирает инструменты → код проверяет права и выполняет
+// (или готовит черновик) → модель отвечает. Источники и черновики отдаются интерфейсу отдельно от текста.
+package agent
+
+import (
+        "context"
+        _ "embed"
+        "encoding/json"
+        "fmt"
+        "strings"
+        "sync"
+        "time"
+
+        "github.com/worker4556/naparnik/backend/internal/llm"
+        "github.com/worker4556/naparnik/backend/internal/mockdata"
+        "github.com/worker4556/naparnik/backend/internal/store"
+        "github.com/worker4556/naparnik/backend/internal/tools"
+)
+
+//go:embed system.md
+var SystemPrompt string
+
+const maxToolRounds = 5
+
+type Draft struct {
+        ID     string         `json:"id"`
+        UserID string         `json:"-"`
+        Tool   string         `json:"tool"`
+        Args   map[string]any `json:"args"`
+}
+
+type Source struct {
+        PageID    string `json:"page_id"`
+        Title     string `json:"title"`
+        Author    string `json:"author"`
+        UpdatedAt string `json:"updated_at"`
+        Label     string `json:"label,omitempty"`
+}
+
+type Reply struct {
+        Text     string   `json:"text"`
+        Drafts   []Draft  `json:"drafts"`
+        Sources  []Source `json:"sources"`
+        Degraded bool     `json:"degraded"` // модель не ответила — показан запасной ответ (BR-70)
+        Retry    bool     `json:"retry"`    // показать кнопку «Повторить», вопрос сохранён
+        ToolLog  []string `json:"-"`        // для журнала событий (BR-73)
+}
+
+type Agent struct {
+        Store    *store.Store
+        Provider llm.Provider
+        Timeout  time.Duration
+
+        mu       sync.Mutex
+        drafts   map[string]Draft
+        sessions map[string]*chat // история разговора по логину: «сделай за меня» помнит, о чём шла речь
+}
+
+// chat — разговор пользователя с моделью. Ограничен по числу реплик, чтобы контекст не рос бесконечно.
+type chat struct {
+        session llm.Session
+        turns   int
+}
+
+const maxTurns = 20
+
+func New(s *store.Store, p llm.Provider, timeout time.Duration) *Agent {
+        <span class="cov8" title="1">return &amp;Agent{Store: s, Provider: p, Timeout: timeout, drafts: map[string]Draft{}, sessions: map[string]*chat{}}
+</span>}
+
+func (a *Agent) contextFor(u *mockdata.User) string {
+        <span class="cov8" title="1">s := a.Store
+        lines := []string{
+                "## Контекст",
+                fmt.Sprintf("Сегодня: %s (%s).", s.Today.Format(time.DateOnly), weekdayRU[s.Today.Weekday()]),
+                fmt.Sprintf("Пользователь: %s (id %s), %s, роли: %s.", u.Name, u.ID, u.Position, strings.Join(u.Roles, ", ")),
+                "Отдел: " + s.Data.Team.Department.Name + ".",
+</span>        }
+        <span class="cov8" title="1">if store.HasRole(u, store.RoleIntern) </span>{
+                <span class="cov8" title="1">lines = append(lines, fmt.Sprintf("Неделя стажировки: %d.", s.Week(u)))
+                lines = append(lines, fmt.Sprintf("Бадди: %s (id %s). Руководитель: %s (id %s).", s.Name(u.BuddyID), u.BuddyID, s.Name(u.LeadID), u.LeadID))
+</span>        }
+        <span class="cov8" title="1">return strings.Join(lines, "\n")</span>
+}
+
+var weekdayRU = map[time.Weekday]string{time.Monday: "понедельник", time.Tuesday: "вторник", time.Wednesday: "среда",
+        time.Thursday: "четверг", time.Friday: "пятница", time.Saturday: "суббота", time.Sunday: "воскресенье"}
+
+// Ask обрабатывает сообщение пользователя.
+func (a *Agent) Ask(ctx context.Context, login, text string) (Reply, error) {
+        <span class="cov8" title="1">u, found := a.Store.UserByLogin(login)
+        if !found </span>{
+                <span class="cov8" title="1">return Reply{}, fmt.Errorf("нет пользователя %q", login)
+</span>        }
+        <span class="cov8" title="1">if answer, blocked := guard(text); blocked </span>{
+                <span class="cov8" title="1">return Reply{Text: answer, Drafts: []Draft{}, Sources: []Source{}}, nil
+</span>        }
+        <span class="cov8" title="1">tc := tools.Ctx{Store: a.Store, User: u}
+        var specs []llm.ToolSpec
+        for _, t := range tools.For(u) </span>{
+                <span class="cov8" title="1">specs = append(specs, llm.ToolSpec{Name: t.Name, Description: t.Description, Schema: t.Schema})
+</span>        }
+        <span class="cov8" title="1">ctx, cancel := context.WithTimeout(ctx, a.Timeout)
+        defer cancel()
+</span>
+        <span class="cov8" title="1">reply := Reply{Drafts: []Draft{}, Sources: []Source{}}
+        a.mu.Lock()
+        c := a.sessions[login]
+        if c == nil || c.turns &gt;= maxTurns </span>{
+                <span class="cov8" title="1">c = &amp;chat{session: a.Provider.Start(SystemPrompt, a.contextFor(u), specs)}
+                a.sessions[login] = c
+</span>        }
+        <span class="cov8" title="1">c.turns++
+        a.mu.Unlock()
+        session := c.session
+        step, err := session.SendUser(ctx, text)
+        for round := 0; err == nil &amp;&amp; len(step.ToolCalls) &gt; 0; round++ </span>{
+                <span class="cov8" title="1">if round == maxToolRounds </span>{
+                        <span class="cov8" title="1">step = llm.Step{Text: "Не получилось довести запрос до конца. Попробуй сформулировать иначе."}
+                        break</span>
+                }
+                <span class="cov8" title="1">results := make([]llm.ToolResult, 0, len(step.ToolCalls))
+                for _, call := range step.ToolCalls </span>{
+                        <span class="cov8" title="1">results = append(results, llm.ToolResult{Call: call, Content: a.handle(tc, call, &amp;reply)})
+</span>                }
+                <span class="cov8" title="1">step, err = session.SendToolResults(ctx, results)</span>
+        }
+        <span class="cov8" title="1">if err != nil </span>{
+                // История могла оборваться посреди вызова инструментов — начинаем разговор заново.
+                <span class="cov8" title="1">a.Reset(login)
+                return a.fallback(tc, text, err), nil
+</span>        }
+        <span class="cov8" title="1">reply.Text = step.Text
+        if step.Refused </span>{
+                <span class="cov8" title="1">reply.Text = "С этим запросом помочь не могу."
+</span>        }
+        <span class="cov8" title="1">return reply, nil</span>
+}
+
+func (a *Agent) handle(tc tools.Ctx, call llm.ToolCall, reply *Reply) string {
+        <span class="cov8" title="1">reply.ToolLog = append(reply.ToolLog, call.Name)
+        t, known := tools.ByName(call.Name)
+        var res any
+        if known &amp;&amp; t.Confirm &amp;&amp; tools.Allowed(t, tc.User) </span>{
+                <span class="cov8" title="1">if e := tools.Check(tc, call.Name, call.Input); e != nil </span>{
+                        <span class="cov8" title="1">raw, _ := json.Marshal(tools.Result{Error: e})
+                        return string(raw)
+</span>                }
+                <span class="cov8" title="1">d := Draft{ID: a.Store.NextID("DRAFT"), UserID: tc.User.ID, Tool: call.Name, Args: call.Input}
+                a.mu.Lock()
+                a.drafts[d.ID] = d
+                a.mu.Unlock()
+                reply.Drafts = append(reply.Drafts, d)
+                res = map[string]any{"ok": true, "status": "needs_confirmation", "draft_id": d.ID, "draft": call.Input}</span>
+        } else {
+                <span class="cov8" title="1">r := tools.Run(tc, call.Name, call.Input)
+                res = r
+                if call.Name == "search_kb" &amp;&amp; r.OK </span>{
+                        <span class="cov8" title="1">for _, h := range r.Data.(map[string]any)["hits"].([]tools.Hit) </span>{
+                                <span class="cov8" title="1">reply.Sources = append(reply.Sources, Source{h.PageID, h.Title, h.Author, h.UpdatedAt, h.Label})
+</span>                        }
+                }
+        }
+        <span class="cov8" title="1">raw, _ := json.Marshal(res)
+        return string(raw)</span>
+}
+
+// fallback — BR-70 и режим stub_error: модель недоступна → найденные фрагменты базы без пересказа.
+func (a *Agent) fallback(tc tools.Ctx, text string, err error) Reply {
+        <span class="cov8" title="1">reply := Reply{Drafts: []Draft{}, Sources: []Source{}, Degraded: true, Retry: true}
+        reason := "Модель сейчас недоступна."
+        if ctxErr := context.DeadlineExceeded; strings.Contains(err.Error(), ctxErr.Error()) </span>{
+                <span class="cov8" title="1">reason = "Модель не ответила вовремя."
+</span>        }
+        <span class="cov8" title="1">hits := tools.SearchKB(tc, text)
+        if len(hits) == 0 </span>{
+                <span class="cov8" title="1">reply.Text = reason + " Твой вопрос сохранён — нажми «Повторить». План и заявки работают без модели."
+                return reply
+</span>        }
+        <span class="cov8" title="1">reply.Text = reason + " Вот что нашёл в базе без пересказа:\n" + hits[0].Body
+        for _, h := range hits </span>{
+                <span class="cov8" title="1">reply.Sources = append(reply.Sources, Source{h.PageID, h.Title, h.Author, h.UpdatedAt, h.Label})
+</span>        }
+        <span class="cov8" title="1">return reply</span>
+}
+
+// Reset — начать разговор заново (смена учётки, ошибка модели, кнопка «Новый разговор»).
+func (a *Agent) Reset(login string) {
+        <span class="cov8" title="1">a.mu.Lock()
+        defer a.mu.Unlock()
+        delete(a.sessions, login)
+</span>}
+
+// Confirm — человек нажал «Подтвердить»: выполнить черновик и вернуть квитанцию (BR-43).
+// Если сервис недоступен, черновик сохраняется — можно повторить (SC-15).
+func (a *Agent) Confirm(login, draftID string) tools.Result {
+        <span class="cov8" title="1">u, found := a.Store.UserByLogin(login)
+        a.mu.Lock()
+        d, ok := a.drafts[draftID]
+        a.mu.Unlock()
+        if !found || !ok || d.UserID != u.ID </span>{
+                <span class="cov8" title="1">return tools.Result{Error: &amp;tools.Error{Code: "not_found", Message: "Черновик не найден."}}
+</span>        }
+        <span class="cov8" title="1">res := tools.Run(tools.Ctx{Store: a.Store, User: u}, d.Tool, d.Args)
+        if res.Error == nil || res.Error.Code != "unavailable" </span>{
+                <span class="cov8" title="1">a.mu.Lock()
+                delete(a.drafts, draftID)
+                a.mu.Unlock()
+</span>        }
+        <span class="cov8" title="1">return res</span>
+}
+
+// Draft возвращает черновик (для интерфейса).
+func (a *Agent) Draft(id string) (Draft, bool) {
+        <span class="cov8" title="1">a.mu.Lock()
+        defer a.mu.Unlock()
+        d, ok := a.drafts[id]
+        return d, ok
+</span>}
+</pre>
+		
+		<pre class="file" id="file2" style="display: none">package agent
+
+import (
+        "regexp"
+        "strings"
+)
+
+// Проверки ДО модели: такие сообщения вообще не уходят во внешний LLM.
+
+// BR-61, BR-72: чувствительные ПДн и финансы не обрабатываются и не передаются в LLM.
+var piiPatterns = []*regexp.Regexp{
+        regexp.MustCompile(`\b\d{4}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{4}\b`), // номер карты
+        regexp.MustCompile(`\b\d{2}\s?\d{2}\s?\d{6}\b`),                  // серия и номер паспорта
+        regexp.MustCompile(`\b\d{3}-\d{3}-\d{3}\s?\d{2}\b`),              // СНИЛС
+        regexp.MustCompile(`(?i)паспорт|номер карты|реквизит|снилс|диагноз|банковск`),
+}
+
+// BR-60: оценка, выход в штат, зарплата, конфликты — решают люди.
+var boundaryPattern = regexp.MustCompile(`(?i)в штат|оценк[аиуе]|зарплат|уволят|конфликт|повышени`)
+
+const (
+        piiAnswer = "Такие данные я не обрабатываю и никуда не сохраняю. Паспортные и банковские данные вноси только в HR-сервисе — " +
+                "там они защищены. Если нужна помощь с заявкой, напиши, что именно оформить, без самих данных."
+        boundaryAnswer = "Это решают люди, а не я. Лучше обсудить с бадди или руководителем — могу подготовить вопрос, " +
+                "а отправишь его ты."
+)
+
+func containsPII(text string) bool {
+        <span class="cov8" title="1">for _, re := range piiPatterns </span>{
+                <span class="cov8" title="1">if re.MatchString(text) </span>{
+                        <span class="cov8" title="1">return true
+</span>                }
+        }
+        <span class="cov8" title="1">return false</span>
+}
+
+// MaskPII — для логов и журнала событий (BR-72).
+func MaskPII(text string) string {
+        <span class="cov8" title="1">for _, re := range piiPatterns[:3] </span>{
+                <span class="cov8" title="1">text = re.ReplaceAllString(text, "***")
+</span>        }
+        <span class="cov8" title="1">return text</span>
+}
+
+// guard возвращает готовый ответ, если сообщение нельзя отправлять в модель.
+func guard(text string) (string, bool) {
+        <span class="cov8" title="1">switch </span>{
+        case containsPII(text):
+                <span class="cov8" title="1">return piiAnswer, true</span>
+        case boundaryPattern.MatchString(strings.ToLower(text)):
+                <span class="cov8" title="1">return boundaryAnswer, true</span>
+        }
+        <span class="cov8" title="1">return "", false</span>
+}
+</pre>
+		
+		<pre class="file" id="file3" style="display: none">// Package app собирает приложение из переменных окружения: мок-данные, состояние, модель, агент.
+package app
+
+import (
+        "os"
+        "time"
+
+        "github.com/worker4556/naparnik/backend/internal/agent"
+        "github.com/worker4556/naparnik/backend/internal/llm"
+        "github.com/worker4556/naparnik/backend/internal/mockdata"
+        "github.com/worker4556/naparnik/backend/internal/store"
+)
+
+type App struct {
+        Store *store.Store
+        Agent *agent.Agent
+        LLM   llm.Config
+}
+
+// New: MOCK_DATA_DIR (по умолчанию ../docs/04-mock-data), DEMO_TODAY (по умолчанию из мок-данных), LLM_* — см. .env.example.
+func New() (*App, error) {
+        <span class="cov8" title="1">dir := os.Getenv("MOCK_DATA_DIR")
+        if dir == "" </span>{
+                <span class="cov8" title="1">dir = "../docs/04-mock-data"
+</span>        }
+        <span class="cov8" title="1">data, err := mockdata.Load(dir)
+        if err != nil </span>{
+                <span class="cov8" title="1">return nil, err
+</span>        }
+        <span class="cov8" title="1">todayStr := os.Getenv("DEMO_TODAY")
+        if todayStr == "" </span>{
+                <span class="cov8" title="1">todayStr = data.DemoToday
+</span>        }
+        <span class="cov8" title="1">today, err := time.Parse(time.DateOnly, todayStr)
+        if err != nil </span>{
+                <span class="cov8" title="1">today = time.Now()
+</span>        }
+        <span class="cov8" title="1">cfg, err := llm.ConfigFromEnv()
+        if err != nil </span>{
+                <span class="cov8" title="1">return nil, err
+</span>        }
+        <span class="cov8" title="1">s := store.New(data, today)
+        return &amp;App{Store: s, Agent: agent.New(s, llm.New(cfg, today), cfg.Timeout), LLM: cfg}, nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file4" style="display: none">package app
+
+import (
+        "bufio"
+        "os"
+        "strings"
+)
+
+// LoadDotEnv читает KEY=VALUE из первого найденного файла и выставляет переменные,
+// которые ещё не заданы в окружении (окружение важнее файла). Нужно для запуска без Docker:
+// ключ, вписанный в .env в корне репозитория, подхватывается и при `go run`.
+func LoadDotEnv(paths ...string) string {
+        <span class="cov8" title="1">for _, p := range paths </span>{
+                <span class="cov8" title="1">f, err := os.Open(p)
+                if err != nil </span>{
+                        <span class="cov8" title="1">continue</span>
+                }
+                <span class="cov8" title="1">sc := bufio.NewScanner(f)
+                for sc.Scan() </span>{
+                        <span class="cov8" title="1">line := strings.TrimSpace(sc.Text())
+                        if line == "" || strings.HasPrefix(line, "#") </span>{
+                                <span class="cov8" title="1">continue</span>
+                        }
+                        <span class="cov8" title="1">key, val, ok := strings.Cut(line, "=")
+                        key, val = strings.TrimSpace(key), strings.Trim(strings.TrimSpace(val), `"'`)
+                        if _, set := os.LookupEnv(key); ok &amp;&amp; key != "" &amp;&amp; !set </span>{
+                                <span class="cov8" title="1">_ = os.Setenv(key, val)
+</span>                        }
+                }
+                <span class="cov8" title="1">_ = f.Close()
+                return p</span>
+        }
+        <span class="cov8" title="1">return ""</span>
+}
+</pre>
+		
+		<pre class="file" id="file5" style="display: none">// Package httpapi — HTTP API для фронта (пути из docs/03-requirements/07-FRONTEND.md, раздел 9).
+//
+// Авторизация в прототипе — заголовок X-User с логином тестовой учётки (A5: в Авито авторизация уже есть,
+// переключатель учёток в проде выключается feature flag).
+package httpapi
+
+import (
+        "encoding/json"
+        "net/http"
+
+        "github.com/worker4556/naparnik/backend/internal/agent"
+        "github.com/worker4556/naparnik/backend/internal/mockdata"
+        "github.com/worker4556/naparnik/backend/internal/store"
+        "github.com/worker4556/naparnik/backend/internal/tools"
+)
+
+type Server struct {
+        Agent     *agent.Agent
+        Store     *store.Store
+        StaticDir string // каталог фронта; пусто — фронт не отдаётся
+}
+
+func (s *Server) Handler() http.Handler {
+        <span class="cov8" title="1">mux := http.NewServeMux()
+        mux.HandleFunc("GET /api/health", func(w http.ResponseWriter, _ *http.Request) </span>{ <span class="cov8" title="1">writeJSON(w, 200, map[string]string{"status": "ok"}) }</span>)
+        <span class="cov8" title="1">mux.HandleFunc("GET /api/me", s.auth(s.me))
+        mux.HandleFunc("POST /api/chat/messages", s.auth(s.chat))
+        mux.HandleFunc("POST /api/chat/reset", s.auth(s.chatReset))
+        mux.HandleFunc("POST /api/drafts/{id}/confirm", s.auth(s.confirm))
+        mux.HandleFunc("POST /api/requests/{id}/confirm", s.auth(s.confirm))       // заявки (отгул, доступ)
+        mux.HandleFunc("POST /api/questions/{id}/confirm-send", s.auth(s.confirm)) // BR-11: вопрос человеку
+        mux.HandleFunc("GET /api/plans/{internId}", s.auth(s.plan))
+        mux.HandleFunc("PATCH /api/plan-steps/{id}", s.auth(s.markStep))
+        mux.HandleFunc("GET /api/requests", s.auth(s.requests))
+        mux.HandleFunc("GET /api/questions", s.auth(s.questions))
+        mux.HandleFunc("GET /api/today", s.auth(s.today))
+        mux.HandleFunc("GET /api/users", s.users)
+        mux.HandleFunc("GET /api/kb/pages", s.auth(s.kbPages))
+        if s.StaticDir != "" </span>{
+                <span class="cov8" title="1">files := http.FileServer(http.Dir(s.StaticDir))
+                mux.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) </span>{
+                        // no-cache: браузер каждый раз сверяется с сервером — после обновления кода не остаётся старая версия
+                        <span class="cov8" title="1">w.Header().Set("Cache-Control", "no-cache")
+                        files.ServeHTTP(w, r)
+</span>                })
+        }
+        <span class="cov8" title="1">return mux</span>
+}
+
+type handler func(http.ResponseWriter, *http.Request, *mockdata.User)
+
+func (s *Server) auth(h handler) http.HandlerFunc {
+        <span class="cov8" title="1">return func(w http.ResponseWriter, r *http.Request) </span>{
+                <span class="cov8" title="1">u, ok := s.Store.UserByLogin(r.Header.Get("X-User"))
+                if !ok </span>{
+                        <span class="cov8" title="1">writeJSON(w, http.StatusUnauthorized, errBody("unauthorized", "Укажи тестовую учётку в заголовке X-User"))
+                        return
+</span>                }
+                <span class="cov8" title="1">h(w, r, u)</span>
+        }
+}
+
+func writeJSON(w http.ResponseWriter, status int, v any) {
+        <span class="cov8" title="1">w.Header().Set("Content-Type", "application/json; charset=utf-8")
+        w.WriteHeader(status)
+        _ = json.NewEncoder(w).Encode(v)
+</span>}
+
+func errBody(code, msg string) map[string]any {
+        <span class="cov8" title="1">return map[string]any{"ok": false, "error": map[string]string{"code": code, "message": msg}}
+</span>}
+
+var statusByCode = map[string]int{"forbidden": 403, "not_found": 404, "validation": 422, "unavailable": 503}
+
+func writeResult(w http.ResponseWriter, res tools.Result) {
+        <span class="cov8" title="1">status := http.StatusOK
+        if res.Error != nil </span>{
+                <span class="cov8" title="1">status = statusByCode[res.Error.Code]
+                if status == 0 </span>{
+                        <span class="cov8" title="1">status = http.StatusBadRequest
+</span>                }
+        }
+        <span class="cov8" title="1">writeJSON(w, status, res)</span>
+}
+
+// me — текущая учётка и стажёры, чей план ей виден (бадди и руководителю).
+func (s *Server) me(w http.ResponseWriter, _ *http.Request, u *mockdata.User) {
+        <span class="cov8" title="1">interns := []map[string]string{}
+        for _, other := range s.Store.Data.Team.Users </span>{
+                <span class="cov8" title="1">if other.ID != u.ID &amp;&amp; store.HasRole(&amp;other, store.RoleIntern) &amp;&amp; s.Store.CanSeeIntern(u, other.ID) </span>{
+                        <span class="cov8" title="1">interns = append(interns, map[string]string{"id": other.ID, "name": other.Name})
+</span>                }
+        }
+        <span class="cov8" title="1">writeJSON(w, 200, map[string]any{"id": u.ID, "login": u.Login, "name": u.Name, "position": u.Position, "roles": u.Roles,
+                "week": s.Store.Week(u), "today": s.Store.Today.Format("2006-01-02"), "department": s.Store.Data.Team.Department.Name,
+                "interns": interns})</span>
+}
+
+// users — тестовые учётки для переключателя в демо (A5: в проде выключается).
+func (s *Server) users(w http.ResponseWriter, _ *http.Request) {
+        <span class="cov8" title="1">out := []map[string]any{}
+        for _, u := range s.Store.Data.Team.Users </span>{
+                <span class="cov8" title="1">out = append(out, map[string]any{"id": u.ID, "login": u.Login, "name": u.Name, "position": u.Position, "roles": u.Roles})
+</span>        }
+        <span class="cov8" title="1">writeJSON(w, 200, map[string]any{"users": out})</span>
+}
+
+func (s *Server) kbPages(w http.ResponseWriter, _ *http.Request, u *mockdata.User) {
+        <span class="cov8" title="1">folders, pages := tools.KBPages(tools.Ctx{Store: s.Store, User: u})
+        writeJSON(w, 200, map[string]any{"folders": nonNil(folders), "pages": nonNil(pages), "department": s.Store.Data.Team.Department.Name})
+</span>}
+
+func (s *Server) today(w http.ResponseWriter, _ *http.Request, u *mockdata.User) {
+        <span class="cov8" title="1">writeResult(w, tools.Run(tools.Ctx{Store: s.Store, User: u}, "get_today", nil))
+</span>}
+
+func (s *Server) chat(w http.ResponseWriter, r *http.Request, u *mockdata.User) {
+        <span class="cov8" title="1">var body struct {
+                Text string `json:"text"`
+</span>        }
+        <span class="cov8" title="1">if err := json.NewDecoder(r.Body).Decode(&amp;body); err != nil || body.Text == "" </span>{
+                <span class="cov8" title="1">writeJSON(w, 422, errBody("validation", "Пустое сообщение"))
+                return
+</span>        }
+        <span class="cov8" title="1">reply, err := s.Agent.Ask(r.Context(), u.Login, body.Text)
+        if err != nil </span>{
+                <span class="cov8" title="1">writeJSON(w, 500, errBody("internal", err.Error()))
+                return
+</span>        }
+        <span class="cov8" title="1">writeJSON(w, 200, reply)</span>
+}
+
+func (s *Server) chatReset(w http.ResponseWriter, _ *http.Request, u *mockdata.User) {
+        <span class="cov8" title="1">s.Agent.Reset(u.Login)
+        writeJSON(w, 200, map[string]bool{"ok": true})
+</span>}
+
+func (s *Server) confirm(w http.ResponseWriter, r *http.Request, u *mockdata.User) {
+        <span class="cov8" title="1">writeResult(w, s.Agent.Confirm(u.Login, r.PathValue("id")))
+</span>}
+
+func (s *Server) plan(w http.ResponseWriter, r *http.Request, u *mockdata.User) {
+        <span class="cov8" title="1">writeResult(w, tools.Run(tools.Ctx{Store: s.Store, User: u}, "get_plan", map[string]any{"intern_id": r.PathValue("internId")}))
+</span>}
+
+// markStep — клик человека в интерфейсе и есть подтверждение, черновик не нужен.
+func (s *Server) markStep(w http.ResponseWriter, r *http.Request, u *mockdata.User) {
+        <span class="cov8" title="1">var body struct {
+                InternID string `json:"intern_id"`
+</span>        }
+        <span class="cov8" title="1">_ = json.NewDecoder(r.Body).Decode(&amp;body)
+        t, _ := tools.ByName("mark_step_done")
+        c := tools.Ctx{Store: s.Store, User: u}
+        if !tools.Allowed(t, u) </span>{
+                <span class="cov8" title="1">writeResult(w, tools.Result{Error: &amp;tools.Error{Code: "forbidden", Message: "Отметить шаг может стажёр или его бадди."}})
+                return
+</span>        }
+        <span class="cov8" title="1">writeResult(w, t.Run(c, map[string]any{"step_id": r.PathValue("id"), "intern_id": body.InternID}))</span>
+}
+
+// requests — свои заявки; руководитель видит заявки своих стажёров (лента, SC-29).
+func (s *Server) requests(w http.ResponseWriter, _ *http.Request, u *mockdata.User) {
+        <span class="cov8" title="1">var out []store.Request
+        for _, req := range s.Store.Requests("") </span>{
+                <span class="cov8" title="1">if req.EmployeeID == u.ID || req.ApproverID == u.ID </span>{
+                        <span class="cov8" title="1">out = append(out, req)
+</span>                }
+        }
+        <span class="cov8" title="1">writeJSON(w, 200, map[string]any{"requests": nonNil(out)})</span>
+}
+
+type questionView struct {
+        ID          string `json:"id"`
+        AskedBy     string `json:"asked_by"`
+        AddresseeID string `json:"addressee_id"`
+        Addressee   string `json:"addressee"`
+        Text        string `json:"text,omitempty"`
+        TextHidden  bool   `json:"text_hidden,omitempty"`
+        Urgent      bool   `json:"urgent"`
+        Status      string `json:"status"`
+}
+
+// questions — видимость по 02-ROLES:
+// стажёр — свои; адресат — входящие; бадди — маршрут вопросов своих стажёров, текст по настройке стажёра (BR-86);
+// руководитель — только количество, без текстов (H8).
+func (s *Server) questions(w http.ResponseWriter, _ *http.Request, u *mockdata.User) {
+        <span class="cov8" title="1">var out []questionView
+        count := 0
+        for _, q := range s.Store.Questions() </span>{
+                <span class="cov8" title="1">asker, _ := s.Store.User(q.AskedBy)
+                v := questionView{q.ID, q.AskedBy, q.AddresseeID, s.Store.Name(q.AddresseeID), q.Text, false, q.Urgent, q.Status}
+                switch </span>{
+                case q.AskedBy == u.ID || q.AddresseeID == u.ID:
+                        <span class="cov8" title="1">out = append(out, v)</span>
+                case asker != nil &amp;&amp; asker.BuddyID == u.ID:
+                        <span class="cov8" title="1">if asker.Settings != nil &amp;&amp; !asker.Settings.QuestionTextVisibleBuddy </span>{
+                                <span class="cov8" title="1">v.Text, v.TextHidden = "", true
+</span>                        }
+                        <span class="cov8" title="1">out = append(out, v)</span>
+                case asker != nil &amp;&amp; asker.LeadID == u.ID:
+                        <span class="cov8" title="1">count++</span>
+                }
+        }
+        <span class="cov8" title="1">writeJSON(w, 200, map[string]any{"questions": nonNil(out), "team_questions_count": count})</span>
+}
+
+func nonNil[T any](xs []T) []T {
+        <span class="cov8" title="1">if xs == nil </span>{
+                <span class="cov8" title="1">return []T{}
+</span>        }
+        <span class="cov8" title="1">return xs</span>
+}
+</pre>
+		
+		<pre class="file" id="file6" style="display: none">package llm
+
+import (
+        "context"
+        "encoding/json"
+
+        "github.com/anthropics/anthropic-sdk-go/v2"
+        "github.com/anthropics/anthropic-sdk-go/v2/option"
+)
+
+// Anthropic — Claude через официальный Go SDK. Ключ: LLM_API_KEY или ANTHROPIC_API_KEY.
+//
+// Стабильная часть (инструкции и инструменты) кэшируется — повторные запросы дешевле.
+// Контекст пользователя — отдельным блоком после кэшируемой части.
+type Anthropic struct {
+        client *anthropic.Client
+        cfg    Config
+}
+
+func NewAnthropic(c Config, opts ...option.RequestOption) *Anthropic {
+        <span class="cov8" title="1">if c.APIKey != "" </span>{
+                <span class="cov8" title="1">opts = append(opts, option.WithAPIKey(c.APIKey))
+</span>        }
+        <span class="cov8" title="1">client := anthropic.NewClient(opts...)
+        return &amp;Anthropic{client: &amp;client, cfg: c}</span>
+}
+
+func (a *Anthropic) Start(system, context string, tools []ToolSpec) Session {
+        <span class="cov8" title="1">var ts []anthropic.ToolUnionParam
+        for _, t := range tools </span>{
+                <span class="cov8" title="1">tp := anthropic.ToolParam{
+                        Name:        t.Name,
+                        Description: anthropic.String(t.Description),
+                        InputSchema: anthropic.ToolInputSchemaParam{Properties: t.Schema["properties"], Required: toStrings(t.Schema["required"])},
+</span>                }
+                <span class="cov8" title="1">ts = append(ts, anthropic.ToolUnionParam{OfTool: &amp;tp})
+</span>        }
+        <span class="cov8" title="1">return &amp;anthropicSession{a: a, tools: ts, system: []anthropic.TextBlockParam{
+                {Text: system, CacheControl: anthropic.NewCacheControlEphemeralParam()},
+                {Text: context},
+</span>        }}
+}
+
+type anthropicSession struct {
+        a        *Anthropic
+        tools    []anthropic.ToolUnionParam
+        system   []anthropic.TextBlockParam
+        messages []anthropic.MessageParam
+}
+
+func (s *anthropicSession) call(ctx context.Context) (Step, error) {
+        <span class="cov8" title="1">resp, err := s.a.client.Messages.New(ctx, anthropic.MessageNewParams{
+                Model:        s.a.cfg.Model,
+                MaxTokens:    16000,
+                System:       s.system,
+                Tools:        s.tools,
+                Messages:     s.messages,
+                OutputConfig: anthropic.OutputConfigParam{Effort: anthropic.OutputConfigEffort(s.a.cfg.Effort)},
+        })
+        if err != nil </span>{
+                <span class="cov8" title="1">return Step{}, err
+</span>        }
+        // Ответ модели (включая блоки размышлений) возвращаем в историю без изменений
+        <span class="cov8" title="1">s.messages = append(s.messages, resp.ToParam())
+        step := Step{Refused: resp.StopReason == anthropic.StopReasonRefusal}
+        for _, block := range resp.Content </span>{
+                <span class="cov8" title="1">switch b := block.AsAny().(type) </span>{
+                case anthropic.TextBlock:
+                        <span class="cov8" title="1">step.Text += b.Text</span>
+                case anthropic.ToolUseBlock:
+                        <span class="cov8" title="1">input := map[string]any{}
+                        _ = json.Unmarshal([]byte(b.JSON.Input.Raw()), &amp;input)
+                        step.ToolCalls = append(step.ToolCalls, ToolCall{ID: b.ID, Name: b.Name, Input: input})</span>
+                }
+        }
+        <span class="cov8" title="1">return step, nil</span>
+}
+
+func (s *anthropicSession) SendUser(ctx context.Context, text string) (Step, error) {
+        <span class="cov8" title="1">s.messages = append(s.messages, anthropic.NewUserMessage(anthropic.NewTextBlock(text)))
+        return s.call(ctx)
+</span>}
+
+func (s *anthropicSession) SendToolResults(ctx context.Context, results []ToolResult) (Step, error) {
+        // Все результаты — одним сообщением, иначе модель перестаёт вызывать инструменты параллельно
+        <span class="cov8" title="1">blocks := make([]anthropic.ContentBlockParamUnion, 0, len(results))
+        for _, r := range results </span>{
+                <span class="cov8" title="1">blocks = append(blocks, anthropic.NewToolResultBlock(r.Call.ID, r.Content, false))
+</span>        }
+        <span class="cov8" title="1">s.messages = append(s.messages, anthropic.NewUserMessage(blocks...))
+        return s.call(ctx)</span>
+}
+
+func toStrings(v any) []string {
+        <span class="cov8" title="1">switch xs := v.(type) </span>{
+        case []string:
+                <span class="cov8" title="1">return xs</span>
+        case []any:
+                <span class="cov8" title="1">out := make([]string, 0, len(xs))
+                for _, x := range xs </span>{
+                        <span class="cov8" title="1">if s, ok := x.(string); ok </span>{
+                                <span class="cov8" title="1">out = append(out, s)
+</span>                        }
+                }
+                <span class="cov8" title="1">return out</span>
+        }
+        <span class="cov8" title="1">return nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file7" style="display: none">// Package llm — общий интерфейс провайдера модели. Агент не знает, что внутри: Claude, DeepSeek или заглушка.
+//
+// Сессия хранит историю в «родном» формате своего API и наружу отдаёт только текст и вызовы инструментов.
+package llm
+
+import (
+        "context"
+        "fmt"
+        "os"
+        "strconv"
+        "strings"
+        "time"
+)
+
+type ToolSpec struct {
+        Name        string
+        Description string
+        Schema      map[string]any // JSON Schema: type, properties, required
+}
+
+type ToolCall struct {
+        ID    string
+        Name  string
+        Input map[string]any
+}
+
+type ToolResult struct {
+        Call    ToolCall
+        Content string // JSON-результат инструмента
+}
+
+type Step struct {
+        Text      string
+        ToolCalls []ToolCall
+        Refused   bool
+}
+
+type Session interface {
+        SendUser(ctx context.Context, text string) (Step, error)
+        SendToolResults(ctx context.Context, results []ToolResult) (Step, error)
+}
+
+type Provider interface {
+        Start(system, context string, tools []ToolSpec) Session
+}
+
+// Config — переменные окружения из docs/04-mock-data/llm-stub.json.
+type Config struct {
+        Provider string        // anthropic | deepseek | stub
+        Model    string        // пусто — по умолчанию для провайдера
+        APIKey   string        // LLM_API_KEY (или ANTHROPIC_API_KEY / DEEPSEEK_API_KEY)
+        BaseURL  string        // для OpenAI-совместимых API
+        Mode     string        // live | stub_ok | stub_slow | stub_timeout | stub_error
+        Timeout  time.Duration // LLM_TIMEOUT_SEC, по умолчанию 30 с (BR-70)
+        Effort   string        // глубина размышлений Claude: low | medium | high
+}
+
+var defaultModels = map[string]string{
+        "anthropic": "claude-opus-5-5", // дешевле: LLM_MODEL=claude-sonnet-5-5
+        "deepseek":  "deepseek-chat",   // проверьте актуальное имя в кабинете DeepSeek
+        "stub":      "stub",
+}
+
+func ConfigFromEnv() (Config, error) {
+        <span class="cov8" title="1">c := Config{
+                Provider: strings.ToLower(strings.TrimSpace(os.Getenv("LLM_PROVIDER"))),
+                Model:    os.Getenv("LLM_MODEL"),
+                APIKey:   os.Getenv("LLM_API_KEY"),
+                BaseURL:  os.Getenv("LLM_BASE_URL"),
+                Mode:     os.Getenv("LLM_MODE"),
+                Effort:   os.Getenv("LLM_EFFORT"),
+                Timeout:  30 * time.Second,
+</span>        }
+        <span class="cov8" title="1">if c.Provider == "claude" </span>{
+                <span class="cov8" title="1">c.Provider = "anthropic"
+</span>        }
+        // «Вставил ключ — заработало»: провайдер не указан, но есть ключ → включаем соответствующую модель.
+        <span class="cov8" title="1">if c.Provider == "" &amp;&amp; !strings.HasPrefix(c.Mode, "stub") </span>{
+                <span class="cov8" title="1">switch </span>{
+                case c.APIKey != "" || os.Getenv("ANTHROPIC_API_KEY") != "":
+                        <span class="cov8" title="1">c.Provider = "anthropic"</span>
+                case os.Getenv("DEEPSEEK_API_KEY") != "":
+                        <span class="cov8" title="1">c.Provider = "deepseek"</span>
+                }
+        }
+        <span class="cov8" title="1">if c.Mode == "" </span>{
+                <span class="cov8" title="1">c.Mode = "live"
+</span>        }
+        <span class="cov8" title="1">if c.Provider == "" || strings.HasPrefix(c.Mode, "stub") </span>{
+                <span class="cov8" title="1">c.Provider = "stub"
+                if c.Mode == "live" </span>{
+                        <span class="cov8" title="1">c.Mode = "stub_ok"
+</span>                }
+        }
+        <span class="cov8" title="1">if _, known := defaultModels[c.Provider]; !known </span>{
+                <span class="cov8" title="1">return c, fmt.Errorf("LLM_PROVIDER=%q: допустимо anthropic, deepseek или stub", c.Provider)
+</span>        }
+        <span class="cov8" title="1">if c.Model == "" </span>{
+                <span class="cov8" title="1">c.Model = defaultModels[c.Provider]
+</span>        }
+        <span class="cov8" title="1">if c.Effort == "" </span>{
+                <span class="cov8" title="1">c.Effort = "medium"
+</span>        }
+        <span class="cov8" title="1">if v, err := strconv.Atoi(os.Getenv("LLM_TIMEOUT_SEC")); err == nil &amp;&amp; v &gt; 0 </span>{
+                <span class="cov8" title="1">c.Timeout = time.Duration(v) * time.Second
+</span>        }
+        <span class="cov8" title="1">if c.APIKey == "" </span>{
+                <span class="cov8" title="1">c.APIKey = map[string]string{"anthropic": os.Getenv("ANTHROPIC_API_KEY"), "deepseek": os.Getenv("DEEPSEEK_API_KEY")}[c.Provider]
+</span>        }
+        <span class="cov8" title="1">return c, nil</span>
+}
+
+// New создаёт провайдера по конфигу. today нужен заглушке для разбора дат («в пятницу»).
+func New(c Config, today time.Time) Provider {
+        <span class="cov8" title="1">switch c.Provider </span>{
+        case "anthropic":
+                <span class="cov8" title="1">return NewAnthropic(c)</span>
+        case "deepseek":
+                <span class="cov8" title="1">return NewOpenAICompatible(c, "https://api.deepseek.com")</span>
+        default:
+                <span class="cov8" title="1">return NewStub(c.Mode, today)</span>
+        }
+}
+</pre>
+		
+		<pre class="file" id="file8" style="display: none">package llm
+
+import (
+        "context"
+        "encoding/json"
+
+        "github.com/openai/openai-go/v3"
+        "github.com/openai/openai-go/v3/option"
+        "github.com/openai/openai-go/v3/shared"
+)
+
+// OpenAICompatible — модели с API в формате OpenAI: DeepSeek (по умолчанию), а также vLLM, llama.cpp и др.
+// Адрес — LLM_BASE_URL, ключ — LLM_API_KEY или DEEPSEEK_API_KEY.
+type OpenAICompatible struct {
+        client *openai.Client
+        cfg    Config
+}
+
+func NewOpenAICompatible(c Config, defaultBaseURL string, opts ...option.RequestOption) *OpenAICompatible {
+        <span class="cov8" title="1">base := c.BaseURL
+        if base == "" </span>{
+                <span class="cov8" title="1">base = defaultBaseURL
+</span>        }
+        <span class="cov8" title="1">opts = append([]option.RequestOption{option.WithBaseURL(base), option.WithAPIKey(c.APIKey)}, opts...)
+        client := openai.NewClient(opts...)
+        return &amp;OpenAICompatible{client: &amp;client, cfg: c}</span>
+}
+
+func (o *OpenAICompatible) Start(system, context string, tools []ToolSpec) Session {
+        <span class="cov8" title="1">var ts []openai.ChatCompletionToolUnionParam
+        for _, t := range tools </span>{
+                <span class="cov8" title="1">ts = append(ts, openai.ChatCompletionFunctionTool(shared.FunctionDefinitionParam{
+                        Name: t.Name, Description: openai.String(t.Description), Parameters: shared.FunctionParameters(t.Schema),
+                }))
+</span>        }
+        <span class="cov8" title="1">return &amp;openaiSession{o: o, tools: ts, messages: []openai.ChatCompletionMessageParamUnion{
+                openai.SystemMessage(system + "\n\n" + context),
+</span>        }}
+}
+
+type openaiSession struct {
+        o        *OpenAICompatible
+        tools    []openai.ChatCompletionToolUnionParam
+        messages []openai.ChatCompletionMessageParamUnion
+}
+
+func (s *openaiSession) call(ctx context.Context) (Step, error) {
+        <span class="cov8" title="1">resp, err := s.o.client.Chat.Completions.New(ctx, openai.ChatCompletionNewParams{
+                Model: s.o.cfg.Model, Messages: s.messages, Tools: s.tools, MaxTokens: openai.Int(8000),
+        })
+        if err != nil </span>{
+                <span class="cov8" title="1">return Step{}, err
+</span>        }
+        <span class="cov8" title="1">if len(resp.Choices) == 0 </span>{
+                <span class="cov8" title="1">return Step{Text: ""}, nil
+</span>        }
+        <span class="cov8" title="1">msg := resp.Choices[0].Message
+        s.messages = append(s.messages, msg.ToParam())
+        step := Step{Text: msg.Content}
+        for _, tc := range msg.ToolCalls </span>{
+                <span class="cov8" title="1">input := map[string]any{}
+                _ = json.Unmarshal([]byte(tc.Function.Arguments), &amp;input) // битый JSON → пустые аргументы, инструмент вернёт ошибку
+                step.ToolCalls = append(step.ToolCalls, ToolCall{ID: tc.ID, Name: tc.Function.Name, Input: input})
+</span>        }
+        <span class="cov8" title="1">return step, nil</span>
+}
+
+func (s *openaiSession) SendUser(ctx context.Context, text string) (Step, error) {
+        <span class="cov8" title="1">s.messages = append(s.messages, openai.UserMessage(text))
+        return s.call(ctx)
+</span>}
+
+func (s *openaiSession) SendToolResults(ctx context.Context, results []ToolResult) (Step, error) {
+        <span class="cov8" title="1">for _, r := range results </span>{
+                <span class="cov8" title="1">s.messages = append(s.messages, openai.ToolMessage(r.Content, r.Call.ID))
+</span>        }
+        <span class="cov8" title="1">return s.call(ctx)</span>
+}
+</pre>
+		
+		<pre class="file" id="file9" style="display: none">package llm
+
+import (
+        "context"
+        "encoding/json"
+        "errors"
+        "fmt"
+        "os"
+        "regexp"
+        "strconv"
+        "strings"
+        "time"
+)
+
+// Stub — заглушка модели без внешнего API (docs/04-mock-data/llm-stub.json):
+//
+//        stub_ok      — простые правила вместо модели: вызывает те же инструменты и собирает ответ;
+//        stub_slow    — то же, но с задержкой (LLM_STUB_SLOW_SEC, по умолчанию 15 с);
+//        stub_timeout — не отвечает, пока не истечёт таймаут запроса;
+//        stub_error   — сразу ошибка провайдера (как HTTP 500).
+//
+// Нужна для тестов и CI без ключа, демо без интернета и проверки экспертами без трат.
+type Stub struct {
+        mode  string
+        today time.Time
+}
+
+var ErrStub = errors.New("stub_error: провайдер вернул HTTP 500")
+
+func NewStub(mode string, today time.Time) *Stub { <span class="cov8" title="1">return &amp;Stub{mode: mode, today: today} }</span>
+
+func (s *Stub) Start(_, _ string, tools []ToolSpec) Session {
+        <span class="cov8" title="1">allowed := map[string]bool{}
+        for _, t := range tools </span>{
+                <span class="cov8" title="1">allowed[t.Name] = true
+</span>        }
+        <span class="cov8" title="1">return &amp;stubSession{stub: s, allowed: allowed}</span>
+}
+
+type stubSession struct {
+        stub     *Stub
+        allowed  map[string]bool
+        question string
+        seq      int
+}
+
+func (s *stubSession) wait(ctx context.Context) error {
+        <span class="cov8" title="1">switch s.stub.mode </span>{
+        case "stub_error":
+                <span class="cov8" title="1">return ErrStub</span>
+        case "stub_timeout":
+                <span class="cov8" title="1">&lt;-ctx.Done()
+                return ctx.Err()</span>
+        case "stub_slow":
+                <span class="cov8" title="1">sec, err := strconv.Atoi(os.Getenv("LLM_STUB_SLOW_SEC"))
+                if err != nil </span>{
+                        <span class="cov0" title="0">sec = 15
+</span>                }
+                <span class="cov8" title="1">select </span>{
+                case &lt;-time.After(time.Duration(sec) * time.Second):<span class="cov8" title="1"></span>
+                case &lt;-ctx.Done():
+                        <span class="cov8" title="1">return ctx.Err()</span>
+                }
+        }
+        <span class="cov8" title="1">return nil</span>
+}
+
+func (s *stubSession) call(name string, input map[string]any) ToolCall {
+        <span class="cov8" title="1">s.seq++
+        return ToolCall{ID: fmt.Sprintf("stub_%d", s.seq), Name: name, Input: input}
+</span>}
+
+var isoDate = regexp.MustCompile(`\d{4}-\d{2}-\d{2}`)
+
+var weekdays = map[string]time.Weekday{"понедельник": time.Monday, "вторник": time.Tuesday, "сред": time.Wednesday,
+        "четверг": time.Thursday, "пятниц": time.Friday}
+
+// ParseDay — дата из фразы: ISO, «завтра», «в пятницу» (ближайшая следующая).
+func ParseDay(text string, today time.Time) string {
+        <span class="cov8" title="1">if m := isoDate.FindString(text); m != "" </span>{
+                <span class="cov8" title="1">return m
+</span>        }
+        <span class="cov8" title="1">low := strings.ToLower(text)
+        if strings.Contains(low, "завтра") </span>{
+                <span class="cov8" title="1">return today.AddDate(0, 0, 1).Format(time.DateOnly)
+</span>        }
+        <span class="cov8" title="1">for stem, wd := range weekdays </span>{
+                <span class="cov8" title="1">if strings.Contains(low, stem) </span>{
+                        <span class="cov8" title="1">delta := (int(wd) - int(today.Weekday()) + 7) % 7
+                        if delta == 0 </span>{
+                                <span class="cov8" title="1">delta = 7
+</span>                        }
+                        <span class="cov8" title="1">return today.AddDate(0, 0, delta).Format(time.DateOnly)</span>
+                }
+        }
+        <span class="cov8" title="1">return ""</span>
+}
+
+var systemKeywords = []struct{ word, system string }{
+        {"персональн", "sys-dwh-pii"}, {"пдн", "sys-dwh-pii"}, {"redash", "sys-redash"}, {"витрин", "sys-dwh-marts-ro"},
+        {"a/b", "sys-ab-platform-ro"}, {"база знаний", "sys-kb-analytics"},
+}
+
+func (s *stubSession) SendUser(ctx context.Context, text string) (Step, error) {
+        <span class="cov8" title="1">if err := s.wait(ctx); err != nil </span>{
+                <span class="cov8" title="1">return Step{}, err
+</span>        }
+        <span class="cov8" title="1">s.question = text
+        low := strings.ToLower(text)
+        var calls []ToolCall
+        switch </span>{
+        case strings.HasPrefix(low, "не помогло"): // BR-03: ответ из базы не помог → сразу ищем человека
+                <span class="cov8" title="1">calls = append(calls, s.call("find_expert", map[string]any{"question": text}))</span>
+        case strings.Contains(low, "отгул"):
+                <span class="cov8" title="1">day := ParseDay(text, s.stub.today)
+                if day == "" </span>{
+                        <span class="cov8" title="1">return Step{Text: "На какую дату нужен отгул?"}, nil
+</span>                }
+                <span class="cov8" title="1">calls = append(calls, s.call("get_absence_rules", map[string]any{"type": "day_off"}),
+                        s.call("precheck_absence", map[string]any{"type": "day_off", "date": day}),
+                        s.call("create_absence_request", map[string]any{"type": "day_off", "date": day}))</span>
+        case strings.Contains(low, "доступ"):
+                <span class="cov8" title="1">for _, k := range systemKeywords </span>{
+                        <span class="cov8" title="1">if strings.Contains(low, k.word) </span>{
+                                <span class="cov8" title="1">calls = append(calls, s.call("request_access", map[string]any{"system": k.system, "reason": "Шаг плана адаптации"}))
+                                break</span>
+                        }
+                }
+                <span class="cov8" title="1">if calls == nil </span>{
+                        <span class="cov8" title="1">calls = append(calls, s.call("get_required_accesses", map[string]any{}))
+</span>                }
+        case regexp.MustCompile(`сегодня|что делать|чем заняться`).MatchString(low):
+                <span class="cov8" title="1">calls = append(calls, s.call("get_today", map[string]any{}))</span>
+        case regexp.MustCompile(`план|прогресс|где я`).MatchString(low):
+                <span class="cov8" title="1">calls = append(calls, s.call("get_plan", map[string]any{}))</span>
+        case regexp.MustCompile(`кто есть кто|кто в команде|кто за что`).MatchString(low):
+                <span class="cov8" title="1">calls = append(calls, s.call("team_directory", map[string]any{}))</span>
+        default:
+                <span class="cov8" title="1">calls = append(calls, s.call("search_kb", map[string]any{"query": text}))</span>
+        }
+        <span class="cov8" title="1">return s.filter(calls), nil</span>
+}
+
+func (s *stubSession) filter(calls []ToolCall) Step {
+        <span class="cov8" title="1">var out []ToolCall
+        for _, c := range calls </span>{
+                <span class="cov8" title="1">if s.allowed[c.Name] </span>{
+                        <span class="cov8" title="1">out = append(out, c)
+</span>                }
+        }
+        <span class="cov8" title="1">if len(out) == 0 </span>{
+                <span class="cov8" title="1">return Step{Text: "Это действие тебе недоступно."}
+</span>        }
+        <span class="cov8" title="1">return Step{ToolCalls: out}</span>
+}
+
+type stubResult struct {
+        OK     bool            `json:"ok"`
+        Status string          `json:"status"`
+        Data   json.RawMessage `json:"data"`
+        Error  *struct {
+                Message string `json:"message"`
+                WhoCan  string `json:"who_can"`
+        } `json:"error"`
+}
+
+func (s *stubSession) SendToolResults(ctx context.Context, results []ToolResult) (Step, error) {
+        <span class="cov8" title="1">if err := s.wait(ctx); err != nil </span>{
+                <span class="cov8" title="1">return Step{}, err
+</span>        }
+        <span class="cov8" title="1">var parts []string
+        for _, r := range results </span>{
+                <span class="cov8" title="1">var res stubResult
+                _ = json.Unmarshal([]byte(r.Content), &amp;res)
+                if !res.OK &amp;&amp; res.Error != nil </span>{
+                        <span class="cov8" title="1">msg := res.Error.Message
+                        if res.Error.WhoCan != "" </span>{
+                                <span class="cov8" title="1">msg += " Могу подготовить запрос: " + res.Error.WhoCan + "."
+</span>                        }
+                        <span class="cov8" title="1">parts = append(parts, msg)
+                        continue</span>
+                }
+                <span class="cov8" title="1">if res.Status == "needs_confirmation" </span>{
+                        <span class="cov8" title="1">parts = append(parts, "Подготовил черновик — проверь и подтверди, тогда отправлю.")
+                        continue</span>
+                }
+                <span class="cov8" title="1">text, next := s.describe(r.Call.Name, res.Data)
+                if next != nil </span>{
+                        <span class="cov8" title="1">return s.filter([]ToolCall{*next}), nil
+</span>                }
+                <span class="cov8" title="1">if text != "" </span>{
+                        <span class="cov8" title="1">parts = append(parts, text)
+</span>                }
+        }
+        <span class="cov8" title="1">if len(parts) == 0 </span>{
+                <span class="cov8" title="1">parts = append(parts, "Готово.")
+</span>        }
+        <span class="cov8" title="1">return Step{Text: strings.Join(parts, "\n")}, nil</span>
+}
+
+// describe — текст по результату инструмента; next — следующий вызов (поиск не дал ответа → ищем человека).
+func (s *stubSession) describe(tool string, raw json.RawMessage) (string, *ToolCall) {
+        <span class="cov8" title="1">switch tool </span>{
+        case "search_kb":
+                <span class="cov8" title="1">var d struct {
+                        Found bool `json:"found"`
+                        Hits  []struct {
+                                Title     string `json:"title"`
+                                Body      string `json:"body"`
+                                Author    string `json:"author"`
+                                UpdatedAt string `json:"updated_at"`
+                                Label     string `json:"label"`
+                        } `json:"hits"`
+</span>                }
+                <span class="cov8" title="1">_ = json.Unmarshal(raw, &amp;d)
+                if !d.Found </span>{
+                        <span class="cov8" title="1">c := s.call("find_expert", map[string]any{"question": s.question})
+                        return "", &amp;c
+</span>                }
+                <span class="cov8" title="1">h := d.Hits[0]
+                label := ""
+                if h.Label != "" </span>{
+                        <span class="cov8" title="1">label = " · " + h.Label
+</span>                }
+                <span class="cov8" title="1">return fmt.Sprintf("%s\nИсточник: «%s», %s, %s%s", h.Body, h.Title, h.Author, h.UpdatedAt, label), nil</span>
+        case "find_expert":
+                <span class="cov8" title="1">var d struct {
+                        AddresseeID string `json:"addressee_id"`
+                        Name        string `json:"name"`
+                        Reason      string `json:"reason"`
+</span>                }
+                <span class="cov8" title="1">_ = json.Unmarshal(raw, &amp;d)
+                c := s.call("send_question", map[string]any{"text": s.question, "addressee_id": d.AddresseeID, "reason": d.Reason})
+                return "", &amp;c</span>
+        case "get_today":
+                <span class="cov8" title="1">var d struct {
+                        Week  int `json:"week"`
+                        Steps []struct {
+                                Title, Status string
+                        } `json:"steps"`
+                        Events []struct{ Title, Start string } `json:"events"`
+</span>                }
+                <span class="cov8" title="1">_ = json.Unmarshal(raw, &amp;d)
+                var lines []string
+                for _, st := range d.Steps </span>{
+                        <span class="cov8" title="1">mark := ""
+                        if st.Status == "Overdue" </span>{
+                                <span class="cov8" title="1">mark = " (просрочен — нужна помощь?)"
+</span>                        }
+                        <span class="cov8" title="1">lines = append(lines, "• "+st.Title+mark)</span>
+                }
+                <span class="cov8" title="1">for _, e := range d.Events </span>{
+                        <span class="cov8" title="1">lines = append(lines, "• "+e.Start+" — "+e.Title)
+</span>                }
+                <span class="cov8" title="1">return fmt.Sprintf("Неделя %d. На сегодня:\n%s", d.Week, strings.Join(lines, "\n")), nil</span>
+        case "get_plan":
+                <span class="cov8" title="1">var d struct {
+                        Progress int                     `json:"progress_pct"`
+                        Next     *struct{ Title string } `json:"next_step"`
+</span>                }
+                <span class="cov8" title="1">_ = json.Unmarshal(raw, &amp;d)
+                next := "всё пройдено"
+                if d.Next != nil </span>{
+                        <span class="cov8" title="1">next = d.Next.Title
+</span>                }
+                <span class="cov8" title="1">return fmt.Sprintf("Прогресс плана %d%%. Следующий шаг: %s.", d.Progress, next), nil</span>
+        case "precheck_absence":
+                <span class="cov8" title="1">var d struct {
+                        Warnings []struct{ Message string } `json:"warnings"`
+</span>                }
+                <span class="cov8" title="1">_ = json.Unmarshal(raw, &amp;d)
+                var ws []string
+                for _, w := range d.Warnings </span>{
+                        <span class="cov8" title="1">ws = append(ws, w.Message)
+</span>                }
+                <span class="cov8" title="1">if len(ws) &gt; 0 </span>{
+                        <span class="cov8" title="1">return "Обрати внимание: " + strings.Join(ws, "; ") + ".", nil
+</span>                }
+        case "get_absence_rules":
+                <span class="cov8" title="1">var d struct {
+                        Rules  string                        `json:"rules"`
+                        Source struct{ Title, Label string } `json:"source"`
+</span>                }
+                <span class="cov8" title="1">_ = json.Unmarshal(raw, &amp;d)
+                return fmt.Sprintf("%s\nИсточник: «%s» · %s. Можешь оформить сам по ссылке или я сделаю за тебя.", d.Rules, d.Source.Title, d.Source.Label), nil</span>
+        case "team_directory":
+                <span class="cov8" title="1">var d struct {
+                        People []struct{ Name, Responsibility string } `json:"people"`
+</span>                }
+                <span class="cov8" title="1">_ = json.Unmarshal(raw, &amp;d)
+                var lines []string
+                for _, p := range d.People </span>{
+                        <span class="cov8" title="1">lines = append(lines, "• "+p.Name+" — "+p.Responsibility)
+</span>                }
+                <span class="cov8" title="1">return "Кто есть кто:\n" + strings.Join(lines, "\n"), nil</span>
+        case "get_required_accesses":
+                <span class="cov8" title="1">var d struct {
+                        Systems []struct{ Title, Status string } `json:"systems"`
+</span>                }
+                <span class="cov8" title="1">_ = json.Unmarshal(raw, &amp;d)
+                var lines []string
+                for _, sy := range d.Systems </span>{
+                        <span class="cov8" title="1">lines = append(lines, "• "+sy.Title+": "+sy.Status)
+</span>                }
+                <span class="cov8" title="1">return "Доступы на этой неделе:\n" + strings.Join(lines, "\n"), nil</span>
+        }
+        <span class="cov8" title="1">return "", nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file10" style="display: none">// Package mockdata читает синтетические данные команды из docs/04-mock-data.
+//
+// Источник правды — JSON-файлы команды; код их не дублирует. Поля, которые бэкенду пока не нужны,
+// просто не описаны в структурах и игнорируются при разборе.
+package mockdata
+
+import (
+        "encoding/json"
+        "fmt"
+        "os"
+        "path/filepath"
+)
+
+type Settings struct {
+        Proactivity              string `json:"proactivity"`
+        QuestionTextVisibleBuddy bool   `json:"question_text_visible_to_buddy"`
+}
+
+type User struct {
+        ID             string    `json:"id"`
+        Login          string    `json:"login"`
+        Name           string    `json:"name"`
+        Position       string    `json:"position"`
+        Roles          []string  `json:"roles"`
+        Responsibility string    `json:"responsibility"`
+        WorkingHours   string    `json:"working_hours"`
+        BuddyFor       []string  `json:"buddy_for"`
+        BuddyID        string    `json:"buddy_id"`
+        LeadID         string    `json:"lead_id"`
+        StartDate      string    `json:"start_date"`
+        Settings       *Settings `json:"settings"`
+        TGConnected    bool      `json:"tg_connected"`
+}
+
+type Department struct {
+        ID        string `json:"id"`
+        Name      string `json:"name"`
+        KBSpaceID string `json:"kb_space_id"`
+        LeadID    string `json:"lead_id"`
+}
+
+type Team struct {
+        Department Department `json:"department"`
+        Users      []User     `json:"users"`
+}
+
+type Space struct {
+        ID           string `json:"id"`
+        Name         string `json:"name"`
+        DepartmentID string `json:"department_id"`
+}
+
+type Page struct {
+        ID              string `json:"id"`
+        Space           string `json:"space"`
+        Folder          string `json:"folder"`
+        Type            string `json:"type"`
+        Status          string `json:"status"`
+        Title           string `json:"title"`
+        AuthorID        string `json:"author_id"`
+        UpdatedAt       string `json:"updated_at"`
+        TestInstruction bool   `json:"test_instruction"`
+        Body            string `json:"body"`
+}
+
+type Folder struct {
+        ID    string `json:"id"`
+        Space string `json:"space"`
+        Title string `json:"title"`
+}
+
+type KB struct {
+        Spaces  []Space  `json:"spaces"`
+        Folders []Folder `json:"folders"`
+        Pages   []Page   `json:"pages"`
+}
+
+type Stage struct {
+        ID    string `json:"id"`
+        Title string `json:"title"`
+        Order int    `json:"order"`
+}
+
+type TemplateStep struct {
+        ID             string `json:"id"`
+        Stage          string `json:"stage"`
+        Owner          string `json:"owner"` // intern | buddy | lead
+        Type           string `json:"type"`
+        Title          string `json:"title"`
+        Source         string `json:"source"`
+        PreparedAction string `json:"prepared_action"`
+}
+
+type PlanTemplate struct {
+        Stages []Stage        `json:"stages"`
+        Steps  []TemplateStep `json:"steps"`
+}
+
+type TrackerStep struct {
+        StepID    string `json:"step_id"`
+        IssueKey  string `json:"issue_key"`
+        DueDate   string `json:"due_date"`
+        Status    string `json:"status"` // Planned | Today | Done | Overdue
+        ReceiptID string `json:"receipt_id"`
+}
+
+type Plan struct {
+        ID       string        `json:"id"`
+        EpicKey  string        `json:"epic_key"`
+        InternID string        `json:"intern_id"`
+        Status   string        `json:"status"`
+        Steps    []TrackerStep `json:"steps"`
+}
+
+type Tracker struct {
+        Plans []Plan `json:"plans"`
+}
+
+type Event struct {
+        ID           string   `json:"id"`
+        Title        string   `json:"title"`
+        Type         string   `json:"type"`
+        Start        string   `json:"start"`
+        End          string   `json:"end"`
+        Participants []string `json:"participants"`
+        RelatedStep  string   `json:"related_step"`
+}
+
+type Calendar struct {
+        Events []Event `json:"events"`
+}
+
+type RequestType struct {
+        Type              string `json:"type"`
+        Title             string `json:"title"`
+        MinNoticeWorkdays int    `json:"min_notice_workdays"`
+        MinNoticeDays     int    `json:"min_notice_days"`
+}
+
+type SelfService struct {
+        Title      string   `json:"title"`
+        Steps      []string `json:"steps"`
+        Link       string   `json:"link"`
+        SourcePage string   `json:"source_page"`
+}
+
+type AbsenceService struct {
+        RequestTypes    []RequestType `json:"request_types"`
+        ForbiddenFields []string      `json:"forbidden_fields"`
+        SelfService     SelfService   `json:"self_service"`
+}
+
+type System struct {
+        ID                  string `json:"id"`
+        Title               string `json:"title"`
+        WeekFrom            *int   `json:"week_from"`
+        Department          string `json:"department"`
+        RequestableByIntern *bool  `json:"requestable_by_intern"`
+}
+
+type AccessState struct {
+        System    string `json:"system"`
+        Status    string `json:"status"`
+        ReceiptID string `json:"receipt_id"`
+}
+
+type AccessService struct {
+        Systems      []System                 `json:"systems"`
+        CurrentState map[string][]AccessState `json:"current_state"`
+}
+
+type Data struct {
+        DemoToday string
+        Team      Team
+        KB        KB
+        Template  PlanTemplate
+        Tracker   Tracker
+        Calendar  Calendar
+        Absence   AbsenceService
+        Access    AccessService
+}
+
+func readJSON(dir, name string, v any) error {
+        <span class="cov8" title="1">raw, err := os.ReadFile(filepath.Join(dir, name))
+        if err != nil </span>{
+                <span class="cov8" title="1">return fmt.Errorf("мок-данные %s: %w", name, err)
+</span>        }
+        <span class="cov8" title="1">if err := json.Unmarshal(raw, v); err != nil </span>{
+                <span class="cov8" title="1">return fmt.Errorf("мок-данные %s: %w", name, err)
+</span>        }
+        <span class="cov8" title="1">return nil</span>
+}
+
+// Load читает все файлы мок-данных из каталога dir.
+func Load(dir string) (*Data, error) {
+        <span class="cov8" title="1">d := &amp;Data{}
+        var meta struct {
+                Meta struct {
+                        DemoToday string `json:"demo_today"`
+                } `json:"_meta"`
+</span>        }
+        <span class="cov8" title="1">files := []struct {
+                name string
+                v    any
+        }{
+                {"team.json", &amp;d.Team},
+                {"kb-pages.json", &amp;d.KB},
+                {"adaptation-plan-template.json", &amp;d.Template},
+                {"tracker.json", &amp;d.Tracker},
+                {"calendar.json", &amp;d.Calendar},
+                {"absence-service.json", &amp;d.Absence},
+                {"access-service.json", &amp;d.Access},
+                {"team.json", &amp;meta},
+</span>        }
+        <span class="cov8" title="1">for _, f := range files </span>{
+                <span class="cov8" title="1">if err := readJSON(dir, f.name, f.v); err != nil </span>{
+                        <span class="cov8" title="1">return nil, err
+</span>                }
+        }
+        <span class="cov8" title="1">d.DemoToday = meta.Meta.DemoToday
+        return d, nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file11" style="display: none">// Package store — состояние прототипа: мок-данные плюс то, что меняется во время демо
+// (статусы шагов, заявки, вопросы). Живёт в памяти; следующий шаг — PostgreSQL за тем же интерфейсом.
+package store
+
+import (
+        "fmt"
+        "slices"
+        "sync"
+        "time"
+
+        "github.com/worker4556/naparnik/backend/internal/mockdata"
+)
+
+const (
+        RoleIntern = "intern"
+        RoleBuddy  = "buddy"
+        RoleExpert = "expert"
+        RoleLead   = "lead"
+)
+
+type Request struct {
+        ID         string `json:"id"`
+        Kind       string `json:"kind"` // absence | access
+        Type       string `json:"type,omitempty"`
+        Date       string `json:"date,omitempty"`
+        System     string `json:"system,omitempty"`
+        Comment    string `json:"comment,omitempty"`
+        EmployeeID string `json:"employee_id"`
+        ApproverID string `json:"approver_id"`
+        Status     string `json:"status"`
+        CreatedAt  string `json:"created_at"`
+}
+
+type Question struct {
+        ID          string `json:"id"`
+        AskedBy     string `json:"asked_by"`
+        AddresseeID string `json:"addressee_id"`
+        Text        string `json:"text"`
+        Reason      string `json:"reason"`
+        Urgent      bool   `json:"urgent"`
+        Status      string `json:"status"` // Sent | Answered
+}
+
+type Store struct {
+        mu        sync.Mutex
+        Data      *mockdata.Data
+        Today     time.Time
+        steps     map[string]map[string]*mockdata.TrackerStep // intern -&gt; step -&gt; статус в трекере
+        requests  []*Request
+        questions []*Question
+        seq       map[string]int
+}
+
+func New(d *mockdata.Data, today time.Time) *Store {
+        <span class="cov8" title="1">s := &amp;Store{Data: d, Today: today, steps: map[string]map[string]*mockdata.TrackerStep{},
+                seq: map[string]int{"ABS": 1041, "ACC": 2001, "Q": 100, "DRAFT": 0}}
+        for _, p := range d.Tracker.Plans </span>{
+                <span class="cov8" title="1">m := map[string]*mockdata.TrackerStep{}
+                for i := range p.Steps </span>{
+                        <span class="cov8" title="1">st := p.Steps[i]
+                        m[st.StepID] = &amp;st
+</span>                }
+                <span class="cov8" title="1">s.steps[p.InternID] = m</span>
+        }
+        <span class="cov8" title="1">return s</span>
+}
+
+func (s *Store) NextID(prefix string) string {
+        <span class="cov8" title="1">s.mu.Lock()
+        defer s.mu.Unlock()
+        s.seq[prefix]++
+        return fmt.Sprintf("%s-%d", prefix, s.seq[prefix])
+</span>}
+
+func (s *Store) UserByLogin(login string) (*mockdata.User, bool) {
+        <span class="cov8" title="1">for i := range s.Data.Team.Users </span>{
+                <span class="cov8" title="1">if s.Data.Team.Users[i].Login == login </span>{
+                        <span class="cov8" title="1">return &amp;s.Data.Team.Users[i], true
+</span>                }
+        }
+        <span class="cov8" title="1">return nil, false</span>
+}
+
+func (s *Store) User(id string) (*mockdata.User, bool) {
+        <span class="cov8" title="1">for i := range s.Data.Team.Users </span>{
+                <span class="cov8" title="1">if s.Data.Team.Users[i].ID == id </span>{
+                        <span class="cov8" title="1">return &amp;s.Data.Team.Users[i], true
+</span>                }
+        }
+        <span class="cov8" title="1">return nil, false</span>
+}
+
+func (s *Store) Name(id string) string {
+        <span class="cov8" title="1">if u, ok := s.User(id); ok </span>{
+                <span class="cov8" title="1">return u.Name
+</span>        }
+        <span class="cov8" title="1">return id</span>
+}
+
+func HasRole(u *mockdata.User, role string) bool { <span class="cov8" title="1">return slices.Contains(u.Roles, role) }</span>
+
+// CanSeeIntern: сам стажёр, его бадди и руководитель (02-ROLES).
+func (s *Store) CanSeeIntern(viewer *mockdata.User, internID string) bool {
+        <span class="cov8" title="1">if viewer.ID == internID </span>{
+                <span class="cov8" title="1">return true
+</span>        }
+        <span class="cov8" title="1">intern, ok := s.User(internID)
+        if !ok </span>{
+                <span class="cov8" title="1">return false
+</span>        }
+        <span class="cov8" title="1">return viewer.ID == intern.BuddyID || viewer.ID == intern.LeadID</span>
+}
+
+// Week — неделя стажировки, начиная с 1.
+func (s *Store) Week(u *mockdata.User) int {
+        <span class="cov8" title="1">start, err := time.Parse(time.DateOnly, u.StartDate)
+        if err != nil || s.Today.Before(start) </span>{
+                <span class="cov8" title="1">return 1
+</span>        }
+        <span class="cov8" title="1">return int(s.Today.Sub(start).Hours()/24)/7 + 1</span>
+}
+
+// ReadableSpaces — пространства базы знаний отдела пользователя (BR-02, BR-40).
+func (s *Store) ReadableSpaces() map[string]bool {
+        <span class="cov8" title="1">out := map[string]bool{}
+        for _, sp := range s.Data.KB.Spaces </span>{
+                <span class="cov8" title="1">if sp.DepartmentID == s.Data.Team.Department.ID </span>{
+                        <span class="cov8" title="1">out[sp.ID] = true
+</span>                }
+        }
+        <span class="cov8" title="1">return out</span>
+}
+
+func (s *Store) TemplateStep(id string) (mockdata.TemplateStep, bool) {
+        <span class="cov8" title="1">for _, st := range s.Data.Template.Steps </span>{
+                <span class="cov8" title="1">if st.ID == id </span>{
+                        <span class="cov8" title="1">return st, true
+</span>                }
+        }
+        <span class="cov8" title="1">return mockdata.TemplateStep{}, false</span>
+}
+
+// PlanSteps — шаги плана стажёра в порядке шаблона, со статусами из трекера.
+func (s *Store) PlanSteps(internID string) []mockdata.TrackerStep {
+        <span class="cov8" title="1">s.mu.Lock()
+        defer s.mu.Unlock()
+        m := s.steps[internID]
+        var out []mockdata.TrackerStep
+        for _, t := range s.Data.Template.Steps </span>{
+                <span class="cov8" title="1">if st, ok := m[t.ID]; ok </span>{
+                        <span class="cov8" title="1">out = append(out, *st)
+</span>                }
+        }
+        <span class="cov8" title="1">return out</span>
+}
+
+func (s *Store) SetStepStatus(internID, stepID, status string) bool {
+        <span class="cov8" title="1">s.mu.Lock()
+        defer s.mu.Unlock()
+        st, ok := s.steps[internID][stepID]
+        if ok </span>{
+                <span class="cov8" title="1">st.Status = status
+</span>        }
+        <span class="cov8" title="1">return ok</span>
+}
+
+func (s *Store) AddRequest(r *Request) {
+        <span class="cov8" title="1">s.mu.Lock()
+        defer s.mu.Unlock()
+        s.requests = append(s.requests, r)
+</span>}
+
+func (s *Store) Requests(employeeID string) []Request {
+        <span class="cov8" title="1">s.mu.Lock()
+        defer s.mu.Unlock()
+        var out []Request
+        for _, r := range s.requests </span>{
+                <span class="cov8" title="1">if employeeID == "" || r.EmployeeID == employeeID </span>{
+                        <span class="cov8" title="1">out = append(out, *r)
+</span>                }
+        }
+        <span class="cov8" title="1">return out</span>
+}
+
+func (s *Store) AddQuestion(q *Question) {
+        <span class="cov8" title="1">s.mu.Lock()
+        defer s.mu.Unlock()
+        s.questions = append(s.questions, q)
+</span>}
+
+func (s *Store) Questions() []Question {
+        <span class="cov8" title="1">s.mu.Lock()
+        defer s.mu.Unlock()
+        out := make([]Question, 0, len(s.questions))
+        for _, q := range s.questions </span>{
+                <span class="cov8" title="1">out = append(out, *q)
+</span>        }
+        <span class="cov8" title="1">return out</span>
+}
+</pre>
+		
+		<pre class="file" id="file12" style="display: none">package tools
+
+import (
+        "fmt"
+        "regexp"
+        "sort"
+        "strings"
+        "time"
+
+        "github.com/worker4556/naparnik/backend/internal/mockdata"
+        "github.com/worker4556/naparnik/backend/internal/store"
+)
+
+// MinCoverage — доля слов вопроса, найденных на странице. Ниже порога — «не нашёл», а не слабый ответ (BR-04).
+const MinCoverage = 0.6
+
+// ExpertThreshold — BR-13: уверенность выбора эксперта ниже порога → вопрос бадди.
+const ExpertThreshold = 0.6
+
+// MinExpertEvidence — сколько «очков» сигнала нужно для полной уверенности (страница по теме ≈ 1–4, зона ответственности ≈ 1.5).
+const MinExpertEvidence = 3.0
+
+var wordRe = regexp.MustCompile(`[\p{L}\p{N}_]+`)
+
+var stopWords = map[string]bool{
+        "как": true, "что": true, "где": true, "это": true, "мне": true, "для": true, "через": true, "такое": true,
+        "нужно": true, "нужен": true, "можно": true, "почему": true, "когда": true, "какой": true, "какие": true,
+        "кто": true, "мой": true, "или": true, "если": true, "есть": true, "наш": true, "нашем": true, "the": true,
+}
+
+// synonyms — словарь синонимов отдела: сводит разные слова к одной основе.
+// Данные, а не логика: в проде — из настроек отдела. Пополняется по эталонному набору evals.json.
+var synonyms = map[string]string{
+        "отлич": "расхо", // «отличается» ≈ «расхождение»
+        "совпа": "расхо", // «не совпадает» ≈ «расхождение»
+        "сходи": "расхо",
+}
+
+// Stems — грубый стемминг префиксом: для русского работает прилично и не требует словарей.
+func Stems(text string) map[string]bool {
+        <span class="cov8" title="1">out := map[string]bool{}
+        for _, w := range wordRe.FindAllString(strings.ToLower(strings.ReplaceAll(text, "ё", "е")), -1) </span>{
+                <span class="cov8" title="1">r := []rune(w)
+                if len(r) &lt; 3 || stopWords[w] </span>{
+                        <span class="cov8" title="1">continue</span>
+                }
+                <span class="cov8" title="1">if len(r) &gt; 5 </span>{
+                        <span class="cov8" title="1">r = r[:5]
+</span>                }
+                <span class="cov8" title="1">stem := string(r)
+                if syn, found := synonyms[stem]; found </span>{
+                        <span class="cov8" title="1">stem = syn
+</span>                }
+                <span class="cov8" title="1">out[stem] = true</span>
+        }
+        <span class="cov8" title="1">return out</span>
+}
+
+func overlap(q, doc map[string]bool) int {
+        <span class="cov8" title="1">n := 0
+        for s := range q </span>{
+                <span class="cov8" title="1">if doc[s] </span>{
+                        <span class="cov8" title="1">n++
+</span>                }
+        }
+        <span class="cov8" title="1">return n</span>
+}
+
+type Hit struct {
+        PageID          string  `json:"page_id"`
+        Title           string  `json:"title"`
+        Body            string  `json:"body"`
+        Author          string  `json:"author"`
+        UpdatedAt       string  `json:"updated_at"`
+        TestInstruction bool    `json:"test_instruction"`
+        Label           string  `json:"label,omitempty"`
+        Score           float64 `json:"score"`
+}
+
+// readablePages — BR-02, BR-40: только опубликованные страницы пространств своего отдела.
+func readablePages(c Ctx) []mockdata.Page {
+        <span class="cov8" title="1">spaces := c.Store.ReadableSpaces()
+        var out []mockdata.Page
+        for _, p := range c.Store.Data.KB.Pages </span>{
+                <span class="cov8" title="1">if spaces[p.Space] &amp;&amp; p.Status == "Published" </span>{
+                        <span class="cov8" title="1">out = append(out, p)
+</span>                }
+        }
+        <span class="cov8" title="1">return out</span>
+}
+
+func SearchKB(c Ctx, query string) []Hit {
+        <span class="cov8" title="1">q := Stems(query)
+        if len(q) == 0 </span>{
+                <span class="cov8" title="1">return nil
+</span>        }
+        <span class="cov8" title="1">var hits []Hit
+        for _, p := range readablePages(c) </span>{
+                <span class="cov8" title="1">score := float64(overlap(q, Stems(p.Title+" "+p.Body))) / float64(len(q))
+                if score &lt; MinCoverage </span>{
+                        <span class="cov8" title="1">continue</span>
+                }
+                <span class="cov8" title="1">h := Hit{p.ID, p.Title, p.Body, c.Store.Name(p.AuthorID), p.UpdatedAt, p.TestInstruction, "", score}
+                if p.TestInstruction </span>{
+                        <span class="cov8" title="1">h.Label = TestInstructionLabel
+</span>                }
+                <span class="cov8" title="1">hits = append(hits, h)</span>
+        }
+        <span class="cov8" title="1">sort.SliceStable(hits, func(i, j int) bool </span>{ <span class="cov8" title="1">return hits[i].Score &gt; hits[j].Score }</span>)
+        <span class="cov8" title="1">if len(hits) &gt; 3 </span>{
+                <span class="cov8" title="1">hits = hits[:3]
+</span>        }
+        <span class="cov8" title="1">return hits</span>
+}
+
+func searchKB(c Ctx, args map[string]any) Result {
+        <span class="cov8" title="1">hits := SearchKB(c, str(args, "query"))
+        return ok(map[string]any{"found": len(hits) &gt; 0, "hits": hits})
+</span>}
+
+func teamDirectory(c Ctx, _ map[string]any) Result {
+        <span class="cov8" title="1">var people []map[string]string
+        for _, u := range c.Store.Data.Team.Users </span>{
+                <span class="cov8" title="1">if u.ID == c.User.ID || store.HasRole(&amp;u, store.RoleIntern) </span>{
+                        <span class="cov8" title="1">continue</span>
+                }
+                <span class="cov8" title="1">people = append(people, map[string]string{"id": u.ID, "name": u.Name, "position": u.Position,
+                        "responsibility": u.Responsibility, "working_hours": u.WorkingHours})</span>
+        }
+        <span class="cov8" title="1">return ok(map[string]any{"department": c.Store.Data.Team.Department.Name, "people": people,
+                "note": "Черновик сообщения коллеге стажёр отправляет сам (BR-62)."})</span>
+}
+
+// FindExpert — BR-10…BR-13: кандидат по авторству страниц по теме (свежие весят больше) и зоне ответственности.
+//
+// Базовый лексический подбор. Лидер на сценарных вопросах верный (Q2 → Орлов, Q3 → Смирнова, Q5 → Лебедева),
+// но уверенность у Q2 и Q5 ниже порога BR-13 → они уйдут бадди. Настраивать по docs/04-mock-data/evals.json.
+func FindExpert(c Ctx, question string) (id string, confidence float64, reason string) {
+        <span class="cov8" title="1">q := Stems(question)
+        type cand struct {
+                pageScores []float64
+                resp       int
+</span>        }
+        <span class="cov8" title="1">cands := map[string]*cand{}
+        get := func(uid string) *cand </span>{
+                <span class="cov8" title="1">if cands[uid] == nil </span>{
+                        <span class="cov8" title="1">cands[uid] = &amp;cand{}
+</span>                }
+                <span class="cov8" title="1">return cands[uid]</span>
+        }
+        <span class="cov8" title="1">for _, p := range readablePages(c) </span>{
+                <span class="cov8" title="1">n := overlap(q, Stems(p.Title+" "+p.Body))
+                if p.AuthorID == "" || p.AuthorID == c.User.ID || n == 0 </span>{
+                        <span class="cov8" title="1">continue</span>
+                }
+                <span class="cov8" title="1">get(p.AuthorID).pageScores = append(get(p.AuthorID).pageScores, recencyWeight(c, p.UpdatedAt)*float64(n))</span>
+        }
+        <span class="cov8" title="1">for _, u := range c.Store.Data.Team.Users </span>{
+                <span class="cov8" title="1">if u.ID == c.User.ID || store.HasRole(&amp;u, store.RoleIntern) </span>{
+                        <span class="cov8" title="1">continue</span>
+                }
+                <span class="cov8" title="1">if n := overlap(q, Stems(u.Responsibility)); n &gt; 0 </span>{
+                        <span class="cov8" title="1">get(u.ID).resp = n
+</span>                }
+        }
+        <span class="cov8" title="1">score := func(cd *cand) float64 </span>{
+                <span class="cov8" title="1">ps := append([]float64(nil), cd.pageScores...)
+                sort.Sort(sort.Reverse(sort.Float64Slice(ps)))
+                total := 1.5 * float64(cd.resp)
+                for i := 0; i &lt; len(ps) &amp;&amp; i &lt; 2; i++ </span>{ // две лучшие страницы: число страниц само по себе не экспертиза
+                        <span class="cov8" title="1">total += ps[i]
+</span>                }
+                <span class="cov8" title="1">return total</span>
+        }
+        <span class="cov8" title="1">var best, second float64
+        for uid, cd := range cands </span>{
+                <span class="cov8" title="1">if sc := score(cd); sc &gt; best </span>{
+                        <span class="cov8" title="1">second, best, id = best, sc, uid
+</span>                } else <span class="cov8" title="1">if sc &gt; second </span>{
+                        <span class="cov8" title="1">second = sc
+</span>                }
+        }
+        <span class="cov8" title="1">if id == "" </span>{
+                <span class="cov8" title="1">return "", 0, ""
+</span>        }
+        // Уверенность: насколько лидер отрывается от второго, с поправкой на силу сигнала
+        // (одно случайное совпадение слова — ещё не экспертиза).
+        <span class="cov8" title="1">confidence = best / (best + second) * min(1, best/MinExpertEvidence)
+        cd := cands[id]
+        pages := len(cd.pageScores)
+        switch </span>{
+        case pages &gt; 0 &amp;&amp; cd.resp &gt; 0:
+                <span class="cov8" title="1">reason = fmt.Sprintf("автор страниц по теме (%d) и это его зона ответственности", pages)</span>
+        case pages &gt; 0:
+                <span class="cov8" title="1">reason = fmt.Sprintf("автор страниц по теме (%d)", pages)</span>
+        default:
+                <span class="cov0" title="0">reason = "это его зона ответственности"</span>
+        }
+        <span class="cov8" title="1">return id, confidence, reason</span>
+}
+
+func findExpert(c Ctx, args map[string]any) Result {
+        <span class="cov8" title="1">id, conf, reason := FindExpert(c, str(args, "question"))
+        if id == "" || conf &lt; ExpertThreshold </span>{
+                <span class="cov8" title="1">buddy := c.User.BuddyID
+                return ok(map[string]any{"addressee_id": buddy, "name": c.Store.Name(buddy), "is_buddy": true,
+                        "reason": "уверенного эксперта нет — спросим бадди", "confidence": conf})
+</span>        }
+        <span class="cov8" title="1">return ok(map[string]any{"addressee_id": id, "name": c.Store.Name(id), "is_buddy": false, "reason": reason, "confidence": conf})</span>
+}
+
+func sendQuestion(c Ctx, args map[string]any) Result {
+        <span class="cov8" title="1">to, found := c.Store.User(str(args, "addressee_id"))
+        if !found </span>{
+                <span class="cov8" title="1">return fail("not_found", "Адресат не найден в команде.")
+</span>        }
+        <span class="cov8" title="1">text := str(args, "text")
+        if text == "" </span>{
+                <span class="cov8" title="1">return fail("validation", "Пустой вопрос.")
+</span>        }
+        <span class="cov8" title="1">q := &amp;store.Question{ID: c.Store.NextID("Q"), AskedBy: c.User.ID, AddresseeID: to.ID, Text: text,
+                Reason: str(args, "reason"), Urgent: boolean(args, "urgent"), Status: "Sent"}
+        c.Store.AddQuestion(q)
+        delivery := "в сводке"
+        if q.Urgent </span>{
+                <span class="cov8" title="1">delivery = "сразу (срочно)"
+</span>        }
+        <span class="cov8" title="1">return Result{OK: true, Data: q, Receipt: map[string]string{"id": q.ID, "status": "Sent", "to": to.Name, "delivery": delivery}}</span>
+}
+
+// recencyWeight — BR-10: свежие страницы весят больше, давно не обновлённые — слабый сигнал.
+func recencyWeight(c Ctx, updatedAt string) float64 {
+        <span class="cov8" title="1">upd, err := time.Parse(time.DateOnly, updatedAt)
+        if err != nil </span>{
+                <span class="cov0" title="0">return 1
+</span>        }
+        <span class="cov8" title="1">age := c.Store.Today.Sub(upd)
+        switch </span>{
+        case age &lt;= 30*24*time.Hour:
+                <span class="cov8" title="1">return 2</span>
+        case age &lt;= 180*24*time.Hour:
+                <span class="cov8" title="1">return 1</span>
+        case age &lt;= 365*24*time.Hour:
+                <span class="cov8" title="1">return 0.6</span>
+        default:
+                <span class="cov8" title="1">return 0.3</span>
+        }
+}
+
+// PageCard — страница базы для списка в интерфейсе (без полного текста).
+type PageCard struct {
+        ID              string `json:"id"`
+        Folder          string `json:"folder"`
+        Type            string `json:"type"`
+        Title           string `json:"title"`
+        Excerpt         string `json:"excerpt"`
+        Author          string `json:"author"`
+        UpdatedAt       string `json:"updated_at"`
+        TestInstruction bool   `json:"test_instruction"`
+}
+
+// KBPages — папки и опубликованные страницы своего пространства (BR-02, BR-40).
+func KBPages(c Ctx) (folders []mockdata.Folder, pages []PageCard) {
+        <span class="cov8" title="1">spaces := c.Store.ReadableSpaces()
+        for _, f := range c.Store.Data.KB.Folders </span>{
+                <span class="cov8" title="1">if spaces[f.Space] </span>{
+                        <span class="cov8" title="1">folders = append(folders, f)
+</span>                }
+        }
+        <span class="cov8" title="1">for _, p := range readablePages(c) </span>{
+                <span class="cov8" title="1">ex := []rune(p.Body)
+                if len(ex) &gt; 140 </span>{
+                        <span class="cov8" title="1">ex = append(ex[:140], '…')
+</span>                }
+                <span class="cov8" title="1">pages = append(pages, PageCard{p.ID, p.Folder, p.Type, p.Title, string(ex), c.Store.Name(p.AuthorID), p.UpdatedAt, p.TestInstruction})</span>
+        }
+        <span class="cov8" title="1">return folders, pages</span>
+}
+</pre>
+		
+		<pre class="file" id="file13" style="display: none">package tools
+
+import (
+        "strings"
+
+        "github.com/worker4556/naparnik/backend/internal/store"
+)
+
+type stepView struct {
+        ID      string `json:"id"`
+        Title   string `json:"title"`
+        Stage   string `json:"stage"`
+        Owner   string `json:"owner"`
+        DueDate string `json:"due_date"`
+        Status  string `json:"status"`
+        Source  string `json:"source"`
+}
+
+func targetIntern(c Ctx, internID string) (string, *Result) {
+        <span class="cov8" title="1">if internID == "" </span>{
+                <span class="cov8" title="1">if store.HasRole(c.User, store.RoleIntern) </span>{
+                        <span class="cov8" title="1">return c.User.ID, nil
+</span>                }
+                <span class="cov8" title="1">r := fail("validation", "Укажи intern_id стажёра.")
+                return "", &amp;r</span>
+        }
+        <span class="cov8" title="1">if !c.Store.CanSeeIntern(c.User, internID) </span>{
+                <span class="cov8" title="1">r := fail("forbidden", "Можно смотреть только свой план или план своих стажёров.")
+                return "", &amp;r
+</span>        }
+        <span class="cov8" title="1">return internID, nil</span>
+}
+
+func planViews(c Ctx, internID string) []stepView {
+        <span class="cov8" title="1">var out []stepView
+        for _, st := range c.Store.PlanSteps(internID) </span>{
+                <span class="cov8" title="1">t, _ := c.Store.TemplateStep(st.StepID)
+                out = append(out, stepView{st.StepID, t.Title, t.Stage, t.Owner, st.DueDate, st.Status, t.Source})
+</span>        }
+        <span class="cov8" title="1">return out</span>
+}
+
+func getPlan(c Ctx, args map[string]any) Result {
+        <span class="cov8" title="1">internID, errRes := targetIntern(c, str(args, "intern_id"))
+        if errRes != nil </span>{
+                <span class="cov8" title="1">return *errRes
+</span>        }
+        <span class="cov8" title="1">steps := planViews(c, internID)
+        if len(steps) == 0 </span>{
+                <span class="cov8" title="1">return fail("not_found", "План адаптации ещё не утверждён.")
+</span>        }
+        <span class="cov8" title="1">var mine, done int
+        var next *stepView
+        for i, s := range steps </span>{
+                <span class="cov8" title="1">if s.Owner != store.RoleIntern </span>{
+                        <span class="cov8" title="1">continue</span>
+                }
+                <span class="cov8" title="1">mine++
+                if s.Status == "Done" </span>{
+                        <span class="cov8" title="1">done++
+</span>                } else <span class="cov8" title="1">if next == nil || s.Status == "Overdue" &amp;&amp; next.Status != "Overdue" </span>{
+                        <span class="cov8" title="1">next = &amp;steps[i]
+</span>                }
+        }
+        <span class="cov8" title="1">return ok(map[string]any{
+                "intern": c.Store.Name(internID), "stages": c.Store.Data.Template.Stages, "steps": steps,
+                "progress_pct": done * 100 / max(mine, 1), "next_step": next,
+        })</span>
+}
+
+func getToday(c Ctx, _ map[string]any) Result {
+        <span class="cov8" title="1">var overdue, today []stepView
+        for _, s := range planViews(c, c.User.ID) </span>{
+                <span class="cov8" title="1">if s.Owner != store.RoleIntern </span>{
+                        <span class="cov8" title="1">continue</span>
+                }
+                <span class="cov8" title="1">switch s.Status </span>{
+                case "Overdue":
+                        <span class="cov8" title="1">overdue = append(overdue, s)</span>
+                case "Today":
+                        <span class="cov8" title="1">today = append(today, s)</span>
+                }
+        }
+        <span class="cov8" title="1">steps := append(overdue, today...)
+        if len(steps) &gt; 3 </span>{
+                <span class="cov0" title="0">steps = steps[:3]
+</span>        }
+        <span class="cov8" title="1">day := c.Store.Today.Format("2006-01-02")
+        var events []map[string]string
+        for _, e := range c.Store.Data.Calendar.Events </span>{
+                <span class="cov8" title="1">if strings.HasPrefix(e.Start, day) &amp;&amp; containsStr(e.Participants, c.User.ID) </span>{
+                        <span class="cov8" title="1">events = append(events, map[string]string{"title": e.Title, "start": e.Start[11:16]})
+</span>                }
+        }
+        <span class="cov8" title="1">return ok(map[string]any{"week": c.Store.Week(c.User), "steps": steps, "events": events})</span>
+}
+
+func markStepDone(c Ctx, args map[string]any) Result {
+        <span class="cov8" title="1">internID := str(args, "intern_id")
+        if internID == "" </span>{
+                <span class="cov8" title="1">internID = c.User.ID
+</span>        }
+        <span class="cov8" title="1">if internID != c.User.ID </span>{
+                <span class="cov8" title="1">intern, found := c.Store.User(internID)
+                if !found || intern.BuddyID != c.User.ID </span>{
+                        <span class="cov8" title="1">return fail("forbidden", "Отметить шаг может стажёр или его бадди.")
+</span>                }
+        }
+        <span class="cov8" title="1">stepID := str(args, "step_id")
+        if !c.Store.SetStepStatus(internID, stepID, "Done") </span>{
+                <span class="cov8" title="1">return fail("not_found", "Такого шага нет в плане.")
+</span>        }
+        <span class="cov8" title="1">return Result{OK: true, Data: map[string]string{"step_id": stepID, "status": "Done"},
+                Receipt: map[string]string{"id": "STEP-" + stepID, "status": "Done"}}</span>
+}
+
+func containsStr(xs []string, x string) bool {
+        <span class="cov8" title="1">for _, v := range xs </span>{
+                <span class="cov8" title="1">if v == x </span>{
+                        <span class="cov8" title="1">return true
+</span>                }
+        }
+        <span class="cov8" title="1">return false</span>
+}
+</pre>
+		
+		<pre class="file" id="file14" style="display: none">package tools
+
+import (
+        "strings"
+        "time"
+
+        "github.com/worker4556/naparnik/backend/internal/mockdata"
+        "github.com/worker4556/naparnik/backend/internal/store"
+)
+
+func requestType(c Ctx, t string) (mockdata.RequestType, bool) {
+        <span class="cov8" title="1">for _, rt := range c.Store.Data.Absence.RequestTypes </span>{
+                <span class="cov8" title="1">if rt.Type == t </span>{
+                        <span class="cov8" title="1">return rt, true
+</span>                }
+        }
+        <span class="cov8" title="1">return mockdata.RequestType{}, false</span>
+}
+
+func pageBody(c Ctx, id string) (mockdata.Page, bool) {
+        <span class="cov8" title="1">for _, p := range readablePages(c) </span>{
+                <span class="cov8" title="1">if p.ID == id </span>{
+                        <span class="cov8" title="1">return p, true
+</span>                }
+        }
+        <span class="cov0" title="0">return mockdata.Page{}, false</span>
+}
+
+// BR-42: два пути — «сделай сам» (шаги и ссылка) или «сделаю за тебя».
+func getAbsenceRules(c Ctx, args map[string]any) Result {
+        <span class="cov8" title="1">rt, found := requestType(c, str(args, "type"))
+        if !found </span>{
+                <span class="cov8" title="1">return fail("validation", "Неизвестный тип отсутствия.")
+</span>        }
+        <span class="cov8" title="1">ss := c.Store.Data.Absence.SelfService
+        data := map[string]any{"type": rt.Type, "title": rt.Title, "self_service": ss, "approver": c.Store.Name(c.User.LeadID)}
+        if p, found := pageBody(c, ss.SourcePage); found </span>{
+                <span class="cov8" title="1">data["rules"] = p.Body
+                data["source"] = map[string]any{"page_id": p.ID, "title": p.Title, "author": c.Store.Name(p.AuthorID),
+                        "updated_at": p.UpdatedAt, "label": TestInstructionLabel}
+</span>        }
+        <span class="cov8" title="1">return ok(data)</span>
+}
+
+type warning struct {
+        Code    string `json:"code"`
+        Message string `json:"message"`
+}
+
+func precheckAbsence(c Ctx, args map[string]any) Result {
+        <span class="cov8" title="1">day, valid := parseDate(str(args, "date"))
+        if !valid </span>{
+                <span class="cov8" title="1">return fail("validation", "Дата в формате ГГГГ-ММ-ДД.")
+</span>        }
+        <span class="cov8" title="1">rt, _ := requestType(c, str(args, "type"))
+        var ws []warning
+        if !day.After(c.Store.Today) </span>{
+                <span class="cov8" title="1">ws = append(ws, warning{"PAST_DATE", "Дата уже прошла"})
+</span>        } else <span class="cov8" title="1">if rt.MinNoticeWorkdays &gt; 0 &amp;&amp; workdaysBetween(c.Store.Today, day) &lt; rt.MinNoticeWorkdays </span>{
+                <span class="cov8" title="1">ws = append(ws, warning{"SHORT_NOTICE", "По тестовой инструкции отгул подают за 2 рабочих дня"})
+</span>        }
+        <span class="cov8" title="1">date := day.Format(time.DateOnly)
+        for _, e := range c.Store.Data.Calendar.Events </span>{
+                <span class="cov8" title="1">if strings.HasPrefix(e.Start, date) &amp;&amp; containsStr(e.Participants, c.User.ID) &amp;&amp; e.Type != "deadline" </span>{
+                        <span class="cov8" title="1">ws = append(ws, warning{"MEETING_CONFLICT", "В этот день у тебя встреча: " + e.Title})
+</span>                }
+        }
+        <span class="cov8" title="1">for _, s := range planViews(c, c.User.ID) </span>{
+                <span class="cov8" title="1">if s.DueDate == date &amp;&amp; s.Status != "Done" &amp;&amp; s.Owner == store.RoleIntern </span>{
+                        <span class="cov8" title="1">ws = append(ws, warning{"STEP_DEADLINE", "В этот день срок шага плана: " + s.Title})
+</span>                }
+        }
+        <span class="cov8" title="1">return ok(map[string]any{"date": date, "warnings": ws})</span>
+}
+
+func createAbsenceRequest(c Ctx, args map[string]any) Result {
+        <span class="cov8" title="1">rt, found := requestType(c, str(args, "type"))
+        if !found </span>{
+                <span class="cov8" title="1">return fail("validation", "Неизвестный тип отсутствия.")
+</span>        }
+        <span class="cov8" title="1">day, valid := parseDate(str(args, "date"))
+        if !valid || !day.After(c.Store.Today) </span>{
+                <span class="cov8" title="1">return fail("validation", "Укажи будущую дату")
+</span>        }
+        <span class="cov8" title="1">if mockFail("absence") </span>{
+                <span class="cov8" title="1">return fail("unavailable", "Сервис отсутствий временно недоступен. Черновик сохранён — можно повторить.")
+</span>        }
+        <span class="cov8" title="1">r := &amp;store.Request{ID: c.Store.NextID("ABS"), Kind: "absence", Type: rt.Type, Date: day.Format(time.DateOnly),
+                Comment: str(args, "comment"), EmployeeID: c.User.ID, ApproverID: c.User.LeadID, Status: "pending",
+                CreatedAt: time.Now().Format(time.RFC3339)}
+        c.Store.AddRequest(r)
+        return Result{OK: true, Data: r, Receipt: map[string]string{"id": r.ID, "status": "pending", "approver": c.Store.Name(r.ApproverID)}}</span>
+}
+
+func listMyRequests(c Ctx, _ map[string]any) Result {
+        <span class="cov8" title="1">return ok(c.Store.Requests(c.User.ID))
+</span>}
+
+func getRequiredAccesses(c Ctx, _ map[string]any) Result {
+        <span class="cov8" title="1">week := c.Store.Week(c.User)
+        status := map[string]string{}
+        for _, st := range c.Store.Data.Access.CurrentState[c.User.ID] </span>{
+                <span class="cov8" title="1">status[st.System] = st.Status
+</span>        }
+        <span class="cov8" title="1">for _, r := range c.Store.Requests(c.User.ID) </span>{
+                <span class="cov8" title="1">if r.Kind == "access" </span>{
+                        <span class="cov8" title="1">status[r.System] = r.Status
+</span>                }
+        }
+        <span class="cov8" title="1">var out []map[string]string
+        for _, s := range c.Store.Data.Access.Systems </span>{
+                // BR-40: системы чужих отделов стажёру не показываются вовсе
+                <span class="cov8" title="1">if s.Department != c.Store.Data.Team.Department.ID || s.WeekFrom == nil || *s.WeekFrom &gt; week </span>{
+                        <span class="cov8" title="1">continue</span>
+                }
+                <span class="cov8" title="1">st := status[s.ID]
+                if st == "" </span>{
+                        <span class="cov0" title="0">st = "not_requested"
+</span>                }
+                <span class="cov8" title="1">out = append(out, map[string]string{"system": s.ID, "title": s.Title, "status": st})</span>
+        }
+        <span class="cov8" title="1">return ok(map[string]any{"week": week, "systems": out})</span>
+}
+
+func findSystem(c Ctx, id string) *mockdata.System {
+        <span class="cov8" title="1">for i := range c.Store.Data.Access.Systems </span>{
+                <span class="cov8" title="1">if c.Store.Data.Access.Systems[i].ID == id </span>{
+                        <span class="cov8" title="1">return &amp;c.Store.Data.Access.Systems[i]
+</span>                }
+        }
+        <span class="cov8" title="1">return nil</span>
+}
+
+func checkAccess(c Ctx, id string) *Error {
+        <span class="cov8" title="1">sys := findSystem(c, id)
+        if sys == nil </span>{
+                <span class="cov8" title="1">return &amp;Error{Code: "not_found", Message: "Такой системы нет."}
+</span>        }
+        <span class="cov8" title="1">if sys.Department != c.Store.Data.Team.Department.ID || (sys.RequestableByIntern != nil &amp;&amp; !*sys.RequestableByIntern) </span>{
+                // BR-44: объяснить и предложить запрос тому, у кого есть право
+                <span class="cov8" title="1">return &amp;Error{Code: "forbidden", Message: "Эта система вне зоны отдела.", WhoCan: c.Store.Name(c.User.LeadID)}
+</span>        }
+        <span class="cov8" title="1">return nil</span>
+}
+
+func requestAccess(c Ctx, args map[string]any) Result {
+        <span class="cov8" title="1">if e := checkAccess(c, str(args, "system")); e != nil </span>{
+                <span class="cov8" title="1">return Result{Error: e}
+</span>        }
+        <span class="cov8" title="1">sys := findSystem(c, str(args, "system"))
+        if mockFail("access") </span>{
+                <span class="cov8" title="1">return fail("unavailable", "Сервис доступов временно недоступен. Черновик сохранён — можно повторить.")
+</span>        }
+        <span class="cov8" title="1">r := &amp;store.Request{ID: c.Store.NextID("ACC"), Kind: "access", System: sys.ID, Comment: str(args, "reason"),
+                EmployeeID: c.User.ID, ApproverID: c.User.LeadID, Status: "pending", CreatedAt: time.Now().Format(time.RFC3339)}
+        c.Store.AddRequest(r)
+        return Result{OK: true, Data: r, Receipt: map[string]string{"id": r.ID, "status": "pending", "approver": c.Store.Name(r.ApproverID)}}</span>
+}
+</pre>
+		
+		<pre class="file" id="file15" style="display: none">// Package tools — инструменты агента AI-buddy.
+//
+// Правила из docs/03-requirements, которые проверяет код (а не промпт):
+//   - BR-40: права проверяются до вызова; недоступное не показывается и не упоминается;
+//   - пользователь берётся из сессии, аргументам модели «кто я» не доверяем;
+//   - BR-11, BR-43: инструменты с Confirm=true не выполняются по решению модели — агент делает черновик,
+//     выполнение только после подтверждения человеком (лестница доверия);
+//   - BR-01, BR-02, BR-04, BR-05: ответы из базы — только опубликованные страницы своего пространства,
+//     с источником, датой, автором и пометкой тестовой инструкции; слабое совпадение = «не нашёл».
+package tools
+
+import (
+        "os"
+        "slices"
+        "strings"
+        "time"
+
+        "github.com/worker4556/naparnik/backend/internal/mockdata"
+        "github.com/worker4556/naparnik/backend/internal/store"
+)
+
+const TestInstructionLabel = "тестовая инструкция, не регламент Авито"
+
+type Error struct {
+        Code    string `json:"code"` // forbidden | not_found | validation | unavailable
+        Message string `json:"message"`
+        WhoCan  string `json:"who_can,omitempty"`
+}
+
+type Result struct {
+        OK      bool   `json:"ok"`
+        Data    any    `json:"data,omitempty"`
+        Receipt any    `json:"receipt,omitempty"`
+        Error   *Error `json:"error,omitempty"`
+}
+
+func fail(code, msg string) Result { <span class="cov8" title="1">return Result{Error: &amp;Error{Code: code, Message: msg}} }</span>
+func ok(data any) Result           { <span class="cov8" title="1">return Result{OK: true, Data: data} }</span>
+
+type Ctx struct {
+        Store *store.Store
+        User  *mockdata.User
+}
+
+type Tool struct {
+        Name        string
+        Description string
+        Schema      map[string]any
+        Roles       []string // кому инструмент вообще передаётся модели
+        Confirm     bool
+        Run         func(Ctx, map[string]any) Result
+}
+
+func str(args map[string]any, key string) string {
+        <span class="cov8" title="1">v, _ := args[key].(string)
+        return strings.TrimSpace(v)
+</span>}
+
+func boolean(args map[string]any, key string) bool {
+        <span class="cov8" title="1">v, _ := args[key].(bool)
+        return v
+</span>}
+
+func schema(props map[string]any, required ...string) map[string]any {
+        <span class="cov8" title="1">if required == nil </span>{
+                <span class="cov8" title="1">required = []string{}
+</span>        }
+        <span class="cov8" title="1">return map[string]any{"type": "object", "properties": props, "required": required, "additionalProperties": false}</span>
+}
+
+func prop(typ, descr string) map[string]any { <span class="cov8" title="1">return map[string]any{"type": typ, "description": descr} }</span>
+
+func mockFail(service string) bool {
+        <span class="cov8" title="1">return slices.Contains(strings.Split(os.Getenv("MOCK_FAIL"), ","), service)
+</span>}
+
+var allRoles = []string{store.RoleIntern, store.RoleBuddy, store.RoleExpert, store.RoleLead}
+
+// All — полный список инструментов.
+func All() []Tool {
+        <span class="cov8" title="1">return []Tool{
+                {"get_today", "Шаги на сегодня (до 3, просроченные первыми) и события дня стажёра.",
+                        schema(map[string]any{}), []string{store.RoleIntern}, false, getToday},
+                {"get_plan", "План адаптации: этапы, шаги со статусами, прогресс, следующий шаг. intern_id — только для бадди и руководителя.",
+                        schema(map[string]any{"intern_id": prop("string", "id стажёра")}), allRoles, false, getPlan},
+                {"mark_step_done", "Отметить шаг плана выполненным (после подтверждения).",
+                        schema(map[string]any{"step_id": prop("string", "id шага, например s-04"), "intern_id": prop("string", "для бадди")}, "step_id"),
+                        []string{store.RoleIntern, store.RoleBuddy}, true, markStepDone},
+                {"search_kb", "Поиск в базе знаний своего отдела. Возвращает страницы с источником, автором и датой.",
+                        schema(map[string]any{"query": prop("string", "вопрос или ключевые слова")}, "query"), allRoles, false, searchKB},
+                {"team_directory", "Кто есть кто в отделе: роль и зона ответственности.",
+                        schema(map[string]any{}), allRoles, false, teamDirectory},
+                {"find_expert", "Подобрать человека для вопроса, которого нет в базе: по авторству страниц и зоне ответственности. Если уверенности нет — бадди.",
+                        schema(map[string]any{"question": prop("string", "текст вопроса")}, "question"), []string{store.RoleIntern}, false, findExpert},
+                {"send_question", "Отправить сформулированный вопрос человеку (только после подтверждения стажёра).",
+                        schema(map[string]any{"text": prop("string", "суть, контекст, что уже пробовал"), "addressee_id": prop("string", "id адресата"),
+                                "reason": prop("string", "почему выбран адресат"), "urgent": prop("boolean", "блокирует работу")}, "text", "addressee_id"),
+                        []string{store.RoleIntern}, true, sendQuestion},
+                {"get_absence_rules", "Порядок оформления отсутствия и путь «сделай сам».",
+                        schema(map[string]any{"type": map[string]any{"type": "string", "enum": []string{"day_off", "vacation", "sick_leave"}}}, "type"),
+                        allRoles, false, getAbsenceRules},
+                {"precheck_absence", "Проверить дату отсутствия: срок подачи, встречи, дедлайны шагов.",
+                        schema(map[string]any{"type": map[string]any{"type": "string", "enum": []string{"day_off", "vacation", "sick_leave"}},
+                                "date": prop("string", "ГГГГ-ММ-ДД")}, "type", "date"), []string{store.RoleIntern}, false, precheckAbsence},
+                {"create_absence_request", "Создать заявку в сервисе отсутствий (после подтверждения).",
+                        schema(map[string]any{"type": map[string]any{"type": "string", "enum": []string{"day_off", "vacation", "sick_leave"}},
+                                "date": prop("string", "ГГГГ-ММ-ДД"), "comment": prop("string", "необязательно")}, "type", "date"),
+                        []string{store.RoleIntern}, true, createAbsenceRequest},
+                {"list_my_requests", "Мои заявки и их статусы.", schema(map[string]any{}), []string{store.RoleIntern}, false, listMyRequests},
+                {"get_required_accesses", "Какие доступы нужны на текущей неделе и их статусы.",
+                        schema(map[string]any{}), []string{store.RoleIntern}, false, getRequiredAccesses},
+                {"request_access", "Создать заявку на доступ к системе (после подтверждения).",
+                        schema(map[string]any{"system": prop("string", "id системы, например sys-redash"), "reason": prop("string", "зачем")}, "system", "reason"),
+                        []string{store.RoleIntern}, true, requestAccess},
+</span>        }
+}
+
+func ByName(name string) (Tool, bool) {
+        <span class="cov8" title="1">for _, t := range All() </span>{
+                <span class="cov8" title="1">if t.Name == name </span>{
+                        <span class="cov8" title="1">return t, true
+</span>                }
+        }
+        <span class="cov8" title="1">return Tool{}, false</span>
+}
+
+func Allowed(t Tool, u *mockdata.User) bool {
+        <span class="cov8" title="1">for _, r := range t.Roles </span>{
+                <span class="cov8" title="1">if store.HasRole(u, r) </span>{
+                        <span class="cov8" title="1">return true
+</span>                }
+        }
+        <span class="cov8" title="1">return false</span>
+}
+
+// For — инструменты, которые можно передать модели для этого пользователя.
+func For(u *mockdata.User) []Tool {
+        <span class="cov8" title="1">var out []Tool
+        for _, t := range All() </span>{
+                <span class="cov8" title="1">if Allowed(t, u) </span>{
+                        <span class="cov8" title="1">out = append(out, t)
+</span>                }
+        }
+        <span class="cov8" title="1">return out</span>
+}
+
+// Run выполняет инструмент с проверкой прав (BR-40).
+func Run(c Ctx, name string, args map[string]any) Result {
+        <span class="cov8" title="1">t, found := ByName(name)
+        if !found || !Allowed(t, c.User) </span>{
+                <span class="cov8" title="1">return fail("forbidden", "Это действие тебе недоступно.")
+</span>        }
+        <span class="cov8" title="1">if args == nil </span>{
+                <span class="cov8" title="1">args = map[string]any{}
+</span>        }
+        <span class="cov8" title="1">return t.Run(c, args)</span>
+}
+
+func parseDate(s string) (time.Time, bool) {
+        <span class="cov8" title="1">t, err := time.Parse(time.DateOnly, s)
+        return t, err == nil
+</span>}
+
+func workdaysBetween(from, to time.Time) int {
+        <span class="cov8" title="1">n := 0
+        for d := from.AddDate(0, 0, 1); !d.After(to); d = d.AddDate(0, 0, 1) </span>{
+                <span class="cov8" title="1">if d.Weekday() != time.Saturday &amp;&amp; d.Weekday() != time.Sunday </span>{
+                        <span class="cov8" title="1">n++
+</span>                }
+        }
+        <span class="cov8" title="1">return n</span>
+}
+
+// Check — проверки прав и данных для инструментов с подтверждением, БЕЗ побочных эффектов.
+// Агент вызывает их до создания черновика: недоступное не предлагается даже черновиком (BR-40, BR-44).
+func Check(c Ctx, name string, args map[string]any) *Error {
+        <span class="cov8" title="1">t, found := ByName(name)
+        if !found || !Allowed(t, c.User) </span>{
+                <span class="cov8" title="1">return &amp;Error{Code: "forbidden", Message: "Это действие тебе недоступно."}
+</span>        }
+        <span class="cov8" title="1">switch name </span>{
+        case "request_access":
+                <span class="cov8" title="1">return checkAccess(c, str(args, "system"))</span>
+        case "send_question":
+                <span class="cov8" title="1">if _, ok := c.Store.User(str(args, "addressee_id")); !ok </span>{
+                        <span class="cov8" title="1">return &amp;Error{Code: "not_found", Message: "Адресат не найден в команде."}
+</span>                }
+        case "create_absence_request":
+                <span class="cov8" title="1">if _, ok := requestType(c, str(args, "type")); !ok </span>{
+                        <span class="cov8" title="1">return &amp;Error{Code: "validation", Message: "Неизвестный тип отсутствия."}
+</span>                }
+                <span class="cov8" title="1">if day, ok := parseDate(str(args, "date")); !ok || !day.After(c.Store.Today) </span>{
+                        <span class="cov8" title="1">return &amp;Error{Code: "validation", Message: "Укажи будущую дату"}
+</span>                }
+        case "mark_step_done":
+                <span class="cov8" title="1">if internID := str(args, "intern_id"); internID != "" &amp;&amp; internID != c.User.ID </span>{
+                        <span class="cov8" title="1">if intern, ok := c.Store.User(internID); !ok || intern.BuddyID != c.User.ID </span>{
+                                <span class="cov8" title="1">return &amp;Error{Code: "forbidden", Message: "Отметить шаг может стажёр или его бадди."}
+</span>                        }
+                }
+        }
+        <span class="cov8" title="1">return nil</span>
+}
+</pre>
+		
+		</div>
+	</body>
+	<script>
+	(function() {
+		var files = document.getElementById('files');
+		var visible;
+		files.addEventListener('change', onChange, false);
+		function select(part) {
+			if (visible)
+				visible.style.display = 'none';
+			visible = document.getElementById(part);
+			if (!visible)
+				return;
+			files.value = part;
+			visible.style.display = 'block';
+			location.hash = part;
+		}
+		function onChange() {
+			select(files.value);
+			window.scrollTo(0, 0);
+		}
+		if (location.hash != "") {
+			select(location.hash.substr(1));
+		}
+		if (!visible) {
+			select("file0");
+		}
+	})();
+	</script>
+</html>
