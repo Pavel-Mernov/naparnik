@@ -19,10 +19,12 @@
 ```bash
 git clone https://github.com/worker4556/naparnik.git && cd naparnik
 cp .env.example .env          # ключ модели — по желанию, без него работает заглушка
-docker compose up --build
+docker compose up --build -d
 ```
 
 Откройте **http://localhost:8080**.
+
+PostgreSQL запускается автоматически; данные сохраняются в томе `pgdata`. Обычная остановка — `docker compose down` (без `-v`). Проверка сохранения: создай заявку, выполни `docker compose restart backend` и обнови страницу. Подробнее: [хранение и повторы](docs/PERSISTENCE.md).
 
 ### Вариант 2. Без Docker
 
@@ -88,11 +90,11 @@ cd backend && go run ./cmd/server
 ## Тесты и покрытие
 
 ```bash
-cd backend && go test ./...            # все тесты
+cd backend && go test ./...            # PostgreSQL-тесты требуют TEST_DATABASE_URL
 ./scripts/coverage.sh                  # из корня: отчёт о покрытии
 ```
 
-Отчёт — [docs/coverage/coverage.txt](docs/coverage/coverage.txt) (по функциям и итог) и `docs/coverage/coverage.html`. Покрытие строк прикладного кода — **98.9%**. Считаются `backend/internal` и `backend/cmd/buddy`; не входят зависимости, тесты и точка входа `cmd/server`. Порог 80% проверяется в CI ([.github/workflows/tests.yml](.github/workflows/tests.yml)).
+Отчёт — [docs/coverage/coverage.txt](docs/coverage/coverage.txt) (по функциям и итог) и `docs/coverage/coverage.html`. Покрытие строк прикладного кода — **96.5%**. Считаются `backend/internal` и `backend/cmd/buddy`; не входят зависимости, тесты и точка входа `cmd/server`. Порог 80% проверяется в CI ([.github/workflows/tests.yml](.github/workflows/tests.yml)).
 
 Тесты не обращаются к внешней модели: используется заглушка, для Claude и DeepSeek — локальный тестовый HTTP-сервер.
 
@@ -147,5 +149,5 @@ cd backend && go run ./cmd/buddy -user intern.sokolov "Мне нужен отг�
 
 ## Ограничения прототипа
 
-- Данные хранятся в памяти: после перезапуска сервера заявки и вопросы сбрасываются к исходным тестовым данным.
+- В Docker состояние сохраняется в PostgreSQL. Без `DATABASE_URL` режим остаётся временным, в памяти. История разговора модели после перезапуска сбрасывается; заявки, вопросы, страницы и прогресс в PostgreSQL сохраняются. См. [PERSISTENCE](docs/PERSISTENCE.md).
 - Часть сценариев из [06-TEST-PERSONAS](docs/03-requirements/06-TEST-PERSONAS.md) ещё не реализована. Полный список — в [docs/STATUS.md](docs/STATUS.md).

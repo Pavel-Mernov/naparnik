@@ -19,6 +19,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer a.Store.Close()
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"

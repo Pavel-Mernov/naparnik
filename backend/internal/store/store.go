@@ -1,8 +1,9 @@
 // Package store — состояние прототипа: мок-данные плюс то, что меняется во время демо
-// (статусы шагов, заявки, вопросы). Живёт в памяти; следующий шаг — PostgreSQL за тем же интерфейсом.
+// (статусы шагов, заявки, вопросы). PostgreSQL сохраняет изменения транзакционно; тесты работают в памяти.
 package store
 
 import (
+	"database/sql"
 	"fmt"
 	"slices"
 	"sync"
@@ -63,17 +64,23 @@ type Question struct {
 }
 
 type Store struct {
-	mu        sync.Mutex
-	Data      *mockdata.Data
-	Today     time.Time
-	steps     map[string]map[string]*mockdata.TrackerStep // intern -> step -> статус в трекере
-	requests  []*Request
-	questions []*Question
-	seq       map[string]int
+	mu            sync.Mutex
+	db            *sql.DB
+	inTransaction bool
+	pages         []mockdata.Page
+	drafts        map[string]ActionDraft
+	operations    map[string]Operation
+	Data          *mockdata.Data
+	Today         time.Time
+	steps         map[string]map[string]*mockdata.TrackerStep // intern -> step -> статус в трекере
+	requests      []*Request
+	questions     []*Question
+	seq           map[string]int
 }
 
 func New(d *mockdata.Data, today time.Time) *Store {
 	s := &Store{Data: d, Today: today, steps: map[string]map[string]*mockdata.TrackerStep{},
+		pages: append([]mockdata.Page(nil), d.KB.Pages...), drafts: map[string]ActionDraft{}, operations: map[string]Operation{},
 		seq: map[string]int{"ABS": 1041, "ACC": 2001, "Q": 100, "DRAFT": 0, "kb": 19}}
 	for _, p := range d.Tracker.Plans {
 		m := map[string]*mockdata.TrackerStep{}
@@ -198,7 +205,9 @@ func (s *Store) UpdateRequest(id string, fn func(*Request)) (Request, bool) {
 	for _, r := range s.requests {
 		if r.ID == id {
 			fn(r)
-			return *r, true
+			out := *r
+			out.History = slices.Clone(r.History)
+			return out, true
 		}
 	}
 	return Request{}, false
@@ -241,23 +250,23 @@ func (s *Store) UpdateQuestion(id string, fn func(*Question)) (Question, bool) {
 func (s *Store) Pages() []mockdata.Page {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	return append([]mockdata.Page(nil), s.Data.KB.Pages...)
+	return append([]mockdata.Page(nil), s.pages...)
 }
 
 func (s *Store) AddPage(p mockdata.Page) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	s.Data.KB.Pages = append(s.Data.KB.Pages, p)
+	s.pages = append(s.pages, p)
 }
 
 // UpdatePage применяет изменение к странице под блокировкой.
 func (s *Store) UpdatePage(id string, fn func(*mockdata.Page)) (mockdata.Page, bool) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	for i := range s.Data.KB.Pages {
-		if s.Data.KB.Pages[i].ID == id {
-			fn(&s.Data.KB.Pages[i])
-			return s.Data.KB.Pages[i], true
+	for i := range s.pages {
+		if s.pages[i].ID == id {
+			fn(&s.pages[i])
+			return s.pages[i], true
 		}
 	}
 	return mockdata.Page{}, false

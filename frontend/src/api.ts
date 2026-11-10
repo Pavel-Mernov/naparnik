@@ -89,15 +89,23 @@ export class ApiError extends Error {
   }
 }
 
+const requestKeys = new Map<string, string>();
+
 export const api = async <T>(login: string, path: string, init: RequestInit = {}): Promise<T> => {
+  const headers = new Headers(init.headers);
+  headers.set("Content-Type", "application/json");
+  headers.set("X-User", login);
+  const signature = init.method?.toUpperCase() === "POST" && path === "/api/requests"
+    ? JSON.stringify([login, path, init.body]) : "";
+  if (signature && !headers.has("Idempotency-Key")) {
+    if (!requestKeys.has(signature)) requestKeys.set(signature, crypto.randomUUID());
+    headers.set("Idempotency-Key", requestKeys.get(signature)!);
+  }
   const response = await fetch(path, {
     ...init,
-    headers: {
-      "Content-Type": "application/json",
-      "X-User": login,
-      ...init.headers,
-    },
+    headers,
   });
+  if (signature && response.status < 500) requestKeys.delete(signature);
   const payload = (await response.json().catch(() => ({}))) as ApiEnvelope<T> | T;
   if (!response.ok) {
     const envelope = payload as ApiEnvelope<T>;

@@ -31,6 +31,10 @@ func created(c Ctx, r *store.Request) {
 // Нажатие «Отправить» в форме — и есть подтверждение человека, черновик не нужен.
 // Проверки те же, что у агента: права, даты, системы своего отдела (BR-40, BR-44).
 func CreateSelf(c Ctx, kind string, args map[string]any) Result {
+	return atomicResult(c, func(c Ctx) Result { return createSelf(c, kind, args) })
+}
+
+func createSelf(c Ctx, kind string, args map[string]any) Result {
 	tool := map[string]string{"absence": "create_absence_request", "access": "request_access"}[kind]
 	if tool == "" {
 		return fail("validation", "Неизвестный тип заявки.")
@@ -59,6 +63,10 @@ func reasonCodes(c Ctx, kind string) []mockdata.ReasonCode {
 // Decide — согласующий одобряет или отклоняет заявку (status_flow в мок-данных сервисов).
 // Решает только согласующий этой заявки; отказ — с кодом причины, «Другое» — с комментарием.
 func Decide(c Ctx, id, decision, reason, comment string) (store.Request, *Error) {
+	return atomic(c, func(c Ctx) (store.Request, *Error) { return decide(c, id, decision, reason, comment) })
+}
+
+func decide(c Ctx, id, decision, reason, comment string) (store.Request, *Error) {
 	var req *store.Request
 	for _, r := range c.Store.Requests("") {
 		if r.ID == id {
@@ -70,6 +78,8 @@ func Decide(c Ctx, id, decision, reason, comment string) (store.Request, *Error)
 		return store.Request{}, &Error{Code: "not_found", Message: "Заявка не найдена."}
 	case req.ApproverID != c.User.ID:
 		return store.Request{}, &Error{Code: "forbidden", Message: "Решение принимает согласующий заявки."}
+	case req.Status != "pending" && ((decision == "approve" && (req.Status == "approved" || req.Status == "granted") && req.Decision == comment) || (decision == "reject" && req.Status == "rejected" && req.ReasonCode == reason && req.Decision == comment)):
+		return *req, nil
 	case req.Status != "pending":
 		return store.Request{}, &Error{Code: "validation", Message: "По заявке уже есть решение."}
 	}

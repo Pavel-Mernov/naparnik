@@ -154,6 +154,9 @@ func Run(c Ctx, name string, args map[string]any) Result {
 	if args == nil {
 		args = map[string]any{}
 	}
+	if t.Confirm {
+		return atomicResult(c, func(c Ctx) Result { return t.Run(c, args) })
+	}
 	return t.Run(c, args)
 }
 

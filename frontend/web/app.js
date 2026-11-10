@@ -7,15 +7,28 @@ const state = { login: 'intern.sokolov', me: null, users: [], plan: null, questi
 
 try { state.login = localStorage.getItem('buddy.login') || state.login; } catch { /* приватный режим — не страшно */ }
 
+// Один ключ на отправку формы; после сетевого сбоя повтор использует тот же ключ.
+const requestKeys = new Map();
+const pendingRequests = new Map();
 async function api(method, path, body) {
-  const res = await fetch(path, {
-    method,
-    headers: { 'X-User': state.login, 'Content-Type': 'application/json' },
-    body: body ? JSON.stringify(body) : undefined,
-  });
-  let data = {};
-  try { data = await res.json(); } catch { /* пустой ответ */ }
-  return { status: res.status, data };
+  const login = state.login;
+  const signature = method === 'POST' && path === '/api/requests' ? JSON.stringify([login, path, body]) : '';
+  if (signature && pendingRequests.has(signature)) return pendingRequests.get(signature);
+  const headers = { 'X-User': login, 'Content-Type': 'application/json' };
+  if (signature) {
+    if (!requestKeys.has(signature)) requestKeys.set(signature, crypto.randomUUID());
+    headers['Idempotency-Key'] = requestKeys.get(signature);
+  }
+  const run = async () => {
+    const res = await fetch(path, { method, headers, body: body ? JSON.stringify(body) : undefined });
+    let data = {};
+    try { data = await res.json(); } catch { /* пустой ответ */ }
+    if (signature && res.status < 500) requestKeys.delete(signature);
+    return { status: res.status, data };
+  };
+  const promise = run();
+  if (signature) pendingRequests.set(signature, promise);
+  try { return await promise; } finally { if (signature) pendingRequests.delete(signature); }
 }
 
 // Только textContent — никаких HTML-вставок из данных.

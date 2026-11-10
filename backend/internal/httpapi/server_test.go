@@ -34,6 +34,9 @@ func call(t *testing.T, h http.Handler, method, path, user, body string) (int, m
 	req := httptest.NewRequest(method, path, strings.NewReader(body))
 	if user != "" {
 		req.Header.Set("X-User", user)
+		if path == "/api/requests" && method == "POST" {
+			req.Header.Set("Idempotency-Key", "test:"+body)
+		}
 	}
 	rec := httptest.NewRecorder()
 	h.ServeHTTP(rec, req)
@@ -77,7 +80,7 @@ func TestChatDraftConfirmReceipt(t *testing.T) {
 	if _, list := call(t, h, "GET", "/api/requests", "buddy.belova", ""); len(list["requests"].([]any)) != 0 {
 		t.Fatal("бадди заявки на отгул не видит")
 	}
-	if code, _ := call(t, h, "POST", "/api/requests/"+id+"/confirm", "intern.sokolov", ""); code != 404 {
+	if code, _ := call(t, h, "POST", "/api/requests/"+id+"/confirm", "intern.sokolov", ""); code != 200 {
 		t.Fatal("повторное подтверждение")
 	}
 }
