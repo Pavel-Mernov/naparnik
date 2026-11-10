@@ -109,6 +109,8 @@ func (s *stubSession) SendUser(ctx context.Context, text string) (Step, error) {
 	low := strings.ToLower(text)
 	var calls []ToolCall
 	switch {
+	case strings.HasPrefix(low, "не помогло"): // BR-03: ответ из базы не помог → сразу ищем человека
+		calls = append(calls, s.call("find_expert", map[string]any{"question": text}))
 	case strings.Contains(low, "отгул"):
 		day := ParseDay(text, s.stub.today)
 		if day == "" {

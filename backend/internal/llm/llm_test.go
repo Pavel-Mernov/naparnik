@@ -91,6 +91,7 @@ func TestStubRoutesToTools(t *testing.T) {
 		"мне нужен отгул в пятницу": "get_absence_rules", "нужен доступ к Redash": "request_access",
 		"какие доступы нужны": "get_required_accesses", "что мне сегодня делать": "get_today",
 		"покажи мой план": "get_plan", "кто есть кто": "team_directory", "что такое витрина": "search_kb",
+		"Не помогло, нужен человек: что такое витрина": "find_expert",
 	}
 	for in, want := range cases {
 		if st := send(t, stub.Start("", "", all), in); len(st.ToolCalls) == 0 || st.ToolCalls[0].Name != want {

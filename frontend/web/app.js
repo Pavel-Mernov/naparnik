@@ -62,28 +62,104 @@ function openPage(name) {
 
 // ---------- загрузка ----------
 
+// ---------- всплывающее окно (из прототипа Павла; содержимое — DOM-узлы, без innerHTML из данных) ----------
+
+function openModal(title, subtitle, body, actions = [{ label: 'Понятно', primary: true }]) {
+  $('modalTitle').textContent = title;
+  $('modalSubtitle').textContent = subtitle || '';
+  $('modalBody').replaceChildren(...[].concat(body).filter(Boolean));
+  $('modalActions').replaceChildren(...actions.map((a) => {
+    const b = el('button', a.primary ? 'primary' : 'secondary', a.label);
+    b.onclick = async () => { closeModal(); if (a.onClick) await a.onClick(); };
+    return b;
+  }));
+  $('modalBackdrop').classList.add('open');
+  $('modalBackdrop').setAttribute('aria-hidden', 'false');
+  document.body.style.overflow = 'hidden';
+  const first = $('modalActions').querySelector('button');
+  if (first) first.focus();
+}
+
+function closeModal() {
+  $('modalBackdrop').classList.remove('open');
+  $('modalBackdrop').setAttribute('aria-hidden', 'true');
+  document.body.style.overflow = '';
+}
+
+function noteItem(icon, title, meta, unread) {
+  const n = el('div', 'notification' + (unread ? ' unread' : ''));
+  const body = el('div');
+  body.append(el('b', '', title), el('div', 'meta', meta));
+  n.append(el('span', '', icon), body);
+  return n;
+}
+
+const ROLE_RU = { intern: 'Стажёр', buddy: 'Бадди', expert: 'Эксперт', lead: 'Руководитель' };
+const roleText = (roles) => roles.map((r) => ROLE_RU[r] || r).join(', ');
+
 async function loadUsers() {
   const { data } = await api('GET', '/api/users');
   state.users = data.users || [];
-  const who = $('who');
-  who.replaceChildren();
+}
+
+function openRoles() {
+  const list = el('div', 'role-list');
   for (const u of state.users) {
-    const o = el('option', '', `${u.name} · ${u.position}`);
-    o.value = u.login;
-    o.selected = u.login === state.login;
-    who.appendChild(o);
+    const r = el('div', 'role' + (u.login === state.login ? ' active' : ''));
+    const body = el('div');
+    body.append(el('b', '', u.name), el('div', 'meta', `${roleText(u.roles)} · ${u.position}`));
+    r.append(el('span', 'avatar', initials(u.name)), body);
+    r.tabIndex = 0;
+    r.onclick = () => { closeModal(); switchUser(u.login); };
+    list.appendChild(r);
   }
+  openModal('Тестовые учётки', 'Переключение роли для демонстрации', list, [{ label: 'Закрыть', primary: true }]);
+}
+
+async function switchUser(login) {
+  state.login = login;
+  try { localStorage.setItem('buddy.login', login); } catch { /* не критично */ }
+  document.querySelectorAll('#messages > :not(:first-child):not(#quick)').forEach((n) => n.remove());
+  await loadAll();
+  toast(`Вы вошли как ${state.me ? state.me.name : login}`);
 }
 
 async function loadAll() {
   const me = await api('GET', '/api/me');
   if (me.status !== 200) { $('hello').textContent = 'Не удалось войти — проверь, что сервер запущен'; return; }
   state.me = me.data;
+  $('accAvatar').textContent = initials(state.me.name);
+  $('accName').textContent = state.me.name;
+  $('accRole').textContent = `${roleText(state.me.roles)} · демо`;
   $('date').textContent = ruDate(state.me.today);
   $('hello').textContent = `Доброе утро, ${state.me.name.split(' ')[0]}`;
   $('weekPill').replaceChildren(el('b', '', isIntern() ? `Неделя ${state.me.week}` : state.me.position), document.createTextNode(` · ${state.me.department}`));
   $('kbEyebrow').textContent = state.me.department;
   await Promise.all([renderToday(), loadPlan(), loadQuestions(), loadKB(), renderRequests()]);
+  $('notifDot').hidden = notifications().length === 0;
+}
+
+// Уведомления — из настоящих данных: просрочки, заявки на согласовании, вопросы, события дня.
+function notifications() {
+  const out = [];
+  const plan = state.plan && !state.plan.error ? state.plan : null;
+  if (plan && isIntern()) {
+    plan.steps.filter((s) => s.owner === 'intern' && s.status === 'Overdue')
+      .forEach((s) => out.push(['!', `Просрочен шаг: ${s.title}`, 'Нужна помощь? Напарник подскажет', true]));
+  }
+  (state.requests || []).filter((r) => r.status === 'pending')
+    .forEach((r) => out.push(['☂', `${requestTitle(r)} — на согласовании`, `${r.id} · ${nameById(r.approver_id)}`, false]));
+  (state.questions || []).forEach((q) => out.push(['✉', q.addressee_id === state.me.id ? `Вам вопрос: ${questionText(q)}` : `Вопрос ${q.addressee}`, STATUS[q.status] ? STATUS[q.status][1] : q.status, q.addressee_id === state.me.id]));
+  (state.events || []).forEach((e) => out.push(['◷', `${e.start} · ${e.title}`, 'Сегодня', false]));
+  return out;
+}
+
+function openNotifications() {
+  const items = notifications();
+  const list = el('div', 'notification-list');
+  items.forEach(([icon, title, meta, unread]) => list.appendChild(noteItem(icon, title, meta, unread)));
+  if (!items.length) list.appendChild(el('div', 'empty', 'Новых событий нет'));
+  openModal('Уведомления', items.length ? `Событий: ${items.length}` : '', list, [{ label: 'Понятно', primary: true, onClick: () => { $('notifDot').hidden = true; } }]);
 }
 
 // ---------- Мой день ----------
@@ -94,6 +170,7 @@ async function renderToday() {
   list.replaceChildren();
   box.replaceChildren();
   $('todayCard').hidden = !isIntern();
+  state.events = [];
   if (!isIntern()) {
     $('subtitle').textContent = 'Здесь видно прогресс стажёров и вопросы, адресованные тебе.';
     box.appendChild(el('div', 'empty', 'Событий на сегодня нет'));
@@ -102,6 +179,7 @@ async function renderToday() {
   const { data } = await api('GET', '/api/today');
   const steps = (data.data && data.data.steps) || [];
   const events = (data.data && data.data.events) || [];
+  state.events = events;
   $('todayCount').textContent = steps.length;
   $('subtitle').textContent = `Сегодня шагов: ${steps.length}, встреч: ${events.length}. Начнём без спешки.`;
   if (!steps.length) list.appendChild(el('div', 'empty', 'На сегодня всё сделано'));
@@ -214,6 +292,8 @@ function renderPlanPage() {
     for (const s of steps) {
       const row = el('div', 'plan-step' + (s.status === 'Done' ? ' done-step' : ''));
       row.append(document.createTextNode(`${s.status === 'Done' ? '✓' : '○'} ${s.title}${s.source === 'demo-analytics' ? ' (демо)' : ''}`), badge(s.status));
+      row.tabIndex = 0;
+      row.onclick = () => openStep(s);
       list.appendChild(row);
     }
     stage.appendChild(list);
@@ -225,6 +305,22 @@ function renderPlanPage() {
   $('statDone').textContent = done;
   $('statLeft').textContent = mine.length - done;
   $('planNext').textContent = p.next_step ? p.next_step.title : 'Все шаги пройдены';
+}
+
+// Окно шага: «Нужна помощь» — в чат, «Отметить готовым» — настоящий PATCH (стажёр — свои шаги, бадди — своих стажёров).
+function openStep(s) {
+  const canMark = s.status !== 'Done' && (isIntern() || state.me.roles.includes('buddy'));
+  const body = [el('p', '', `Срок: ${ruDate(s.due_date, { day: 'numeric', month: 'long' })}`), badge(s.status)];
+  if (s.source === 'demo-analytics') body.push(el('p', '', 'Демо-шаг по образцу чек-листа Авито.'));
+  const actions = [{ label: 'Нужна помощь', onClick: () => openChat(`Помоги с шагом: ${s.title}`) }];
+  if (canMark) {
+    actions.push({ label: 'Отметить готовым', primary: true, onClick: async () => {
+      const { status, data } = await api('PATCH', `/api/plan-steps/${s.id}`, isIntern() ? {} : { intern_id: planOwner() });
+      toast(status === 200 ? 'Шаг отмечен выполненным' : (data.error && data.error.message) || 'Не получилось');
+      await Promise.all([renderToday(), loadPlan()]);
+    } });
+  }
+  openModal('Шаг плана', s.title, body, actions);
 }
 
 // ---------- Вопросы ----------
@@ -252,6 +348,7 @@ function renderQuestions() {
     const body = el('div');
     body.append(el('p', '', questionText(q)), el('small', '', `${q.addressee}${q.urgent ? ' · срочно' : ''}`));
     row.append(body, badge(q.status));
+    row.onclick = () => openQuestion(q);
     day.appendChild(row);
   }
   // таблица на странице «Вопросы»
@@ -267,6 +364,8 @@ function renderQuestions() {
     const c4 = el('td');
     c4.appendChild(badge(q.status));
     tr.append(c1, person(nameById(q.asked_by)), person(q.addressee), c4);
+    tr.className = 'clickable';
+    tr.onclick = () => openQuestion(q);
     tbody.appendChild(tr);
   }
   $('qEmpty').replaceChildren(rows.length ? '' : el('div', 'empty', state.teamCount ? 'Тексты вопросов руководителю не показываются.' : 'Вопросов нет. Спроси Напарника — если ответа нет в базе, он поможет написать нужному человеку.'));
@@ -312,7 +411,9 @@ function renderKB() {
     meta.appendChild(el('span', '', `${p.author} · ${ruDate(p.updated_at, { day: 'numeric', month: 'long', year: 'numeric' })}`));
     if (p.test_instruction) meta.appendChild(el('span', 'badge amber', 'Тестовая инструкция'));
     card.appendChild(meta);
-    card.onclick = () => openChat(`Расскажи подробнее: ${p.title}`);
+    card.onclick = () => openModal(p.title, `${p.author} · обновлено ${ruDate(p.updated_at, { day: 'numeric', month: 'long', year: 'numeric' })}`,
+      [p.test_instruction ? el('span', 'badge amber', 'Тестовая инструкция, не регламент Авито') : null, el('p', '', p.excerpt)],
+      [{ label: 'Закрыть' }, { label: 'Спросить Напарника', primary: true, onClick: () => openChat(`Расскажи подробнее: ${p.title}`) }]);
     grid.appendChild(card);
   }
 }
@@ -324,6 +425,7 @@ const requestTitle = (r) => (r.kind === 'absence' ? `Отгул · ${ruDate(r.da
 async function renderRequests() {
   const { data } = await api('GET', '/api/requests');
   const rs = data.requests || [];
+  state.requests = rs;
   $('reqCount').textContent = rs.length;
   const list = $('reqList');
   list.replaceChildren();
@@ -333,6 +435,7 @@ async function renderRequests() {
     const body = el('div');
     body.append(el('div', 'table-title', requestTitle(r)), el('div', 'meta', `${r.id} · ${nameById(r.employee_id)} · согласует ${nameById(r.approver_id)}`));
     card.append(el('div', 'request-icon', r.kind === 'absence' ? '☂' : '⌘'), body, badge(r.status));
+    card.onclick = () => openRequest(r);
     list.appendChild(card);
   }
   const last = rs[rs.length - 1];
@@ -341,6 +444,23 @@ async function renderRequests() {
   if (!last) { box.appendChild(el('p', 'meta', 'Квитанций пока нет')); return; }
   box.append(el('div', 'receipt-code', last.id), el('b', '', requestTitle(last)),
     el('p', 'meta', `Заявка сохранена и отправлена: ${nameById(last.approver_id)}. Статус обновится здесь.`), badge(last.status));
+}
+
+function openRequest(r) {
+  const box = el('div', 'receipt');
+  box.append(el('b', '', 'История заявки'),
+    el('p', '', `Черновик подготовлен Напарником → ${nameById(r.employee_id)} подтвердил → отправлено: ${nameById(r.approver_id)}.`),
+    badge(r.status));
+  if (r.comment) box.appendChild(el('p', 'meta', `Причина: ${r.comment}`));
+  openModal(requestTitle(r), `${r.id} · создана ${new Date(r.created_at).toLocaleString('ru-RU')}`, box);
+}
+
+function openQuestion(q) {
+  const tip = el('div', 'tip');
+  const p = el('p');
+  p.append(el('b', '', 'Маршрут прозрачен'), document.createTextNode(`Вопрос направлен: ${q.addressee}. ${q.urgent ? 'Срочный — уходит сразу.' : 'Обычный — придёт адресату в сводке.'}`));
+  tip.append(el('div', 'tip-icon', '↗'), p);
+  openModal(questionText(q), `${nameById(q.asked_by)} → ${q.addressee}`, [badge(q.status), tip]);
 }
 
 // ---------- Чат ----------
@@ -408,6 +528,23 @@ function renderSource(s) {
   return box;
 }
 
+// BR-03: «помогло / не помогло / устарело». «Не помогло» сразу предлагает спросить человека.
+// В прототипе отметки пока не сохраняются на сервере — это следующий шаг (метрики M-14…M-17).
+function feedbackRow(question) {
+  const row = el('div', 'quick');
+  const mk = (label, onClick) => {
+    const b = el('button', '', label);
+    b.onclick = () => { row.querySelectorAll('button').forEach((x) => { x.disabled = true; }); b.classList.add('active'); onClick(); };
+    return b;
+  };
+  row.append(
+    mk('Помогло', () => toast('Спасибо! Отметка учтена')),
+    mk('Не помогло', () => ask(`Не помогло, нужен человек: ${question}`)),
+    mk('Устарело', () => toast('Спасибо! Сообщу владельцу базы')),
+  );
+  return row;
+}
+
 function retryButton(text) {
   const row = el('div', 'row-btns');
   const retry = el('button', 'btn ghost', 'Повторить');
@@ -419,7 +556,10 @@ function retryButton(text) {
 async function ask(text) {
   state.lastQuestion = text;
   addToChat(el('div', 'bubble user', text));
-  const thinking = addToChat(el('div', 'bubble bot thinking', 'Думаю…')); // BR-70: интерфейс не блокируется
+  // BR-70: интерфейс не блокируется, пока модель думает; три точки — из прототипа Павла
+  const thinking = addToChat(el('div', 'bubble bot thinking'));
+  thinking.setAttribute('aria-label', 'Думаю');
+  thinking.append(el('i'), el('i'), el('i'));
   let res;
   try { res = await api('POST', '/api/chat/messages', { text }); } catch { res = { status: 0, data: {} }; }
   thinking.remove();
@@ -431,6 +571,7 @@ async function ask(text) {
   const r = res.data;
   addToChat(el('div', 'bubble bot', r.text));
   (r.sources || []).slice(0, 2).forEach((s) => addToChat(renderSource(s)));
+  if ((r.sources || []).length) addToChat(feedbackRow(text));
   (r.drafts || []).forEach((d) => addToChat(renderDraft(d)));
   if (r.retry) addToChat(retryButton(text));
 }
@@ -471,13 +612,11 @@ $('theme').onclick = () => {
   document.documentElement.dataset.theme = dark ? 'dark' : 'light';
   $('theme').textContent = dark ? '☾' : '☼';
 };
-$('who').onchange = async (e) => {
-  state.login = e.target.value;
-  try { localStorage.setItem('buddy.login', state.login); } catch { /* не критично */ }
-  document.querySelectorAll('#messages > :not(:first-child):not(#quick)').forEach((n) => n.remove());
-  await loadAll();
-  toast(`Вы вошли как ${state.me ? state.me.name : state.login}`);
-};
+$('account').onclick = openRoles;
+$('notifications').onclick = openNotifications;
+$('modalClose').onclick = closeModal;
+$('modalBackdrop').onclick = (e) => { if (e.target === $('modalBackdrop')) closeModal(); };
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeModal(); setChat(false); } });
 
 openPage(location.hash.slice(1));
 (async () => { await loadUsers(); await loadAll(); })();
