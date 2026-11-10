@@ -120,6 +120,7 @@ async function switchUser(login) {
   state.login = login;
   try { localStorage.setItem('buddy.login', login); } catch { /* не критично */ }
   document.querySelectorAll('#messages > :not(:first-child):not(#quick)').forEach((n) => n.remove());
+  await api('POST', '/api/chat/reset'); // чат на экране пуст — и модель начинает разговор заново
   await loadAll();
   toast(`Вы вошли как ${state.me ? state.me.name : login}`);
 }
@@ -619,4 +620,4 @@ $('modalBackdrop').onclick = (e) => { if (e.target === $('modalBackdrop')) close
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeModal(); setChat(false); } });
 
 openPage(location.hash.slice(1));
-(async () => { await loadUsers(); await loadAll(); })();
+(async () => { await loadUsers(); await api('POST', '/api/chat/reset'); await loadAll(); })();

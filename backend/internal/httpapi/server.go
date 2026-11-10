@@ -25,6 +25,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/health", func(w http.ResponseWriter, _ *http.Request) { writeJSON(w, 200, map[string]string{"status": "ok"}) })
 	mux.HandleFunc("GET /api/me", s.auth(s.me))
 	mux.HandleFunc("POST /api/chat/messages", s.auth(s.chat))
+	mux.HandleFunc("POST /api/chat/reset", s.auth(s.chatReset))
 	mux.HandleFunc("POST /api/drafts/{id}/confirm", s.auth(s.confirm))
 	mux.HandleFunc("POST /api/requests/{id}/confirm", s.auth(s.confirm))       // заявки (отгул, доступ)
 	mux.HandleFunc("POST /api/questions/{id}/confirm-send", s.auth(s.confirm)) // BR-11: вопрос человеку
@@ -122,6 +123,11 @@ func (s *Server) chat(w http.ResponseWriter, r *http.Request, u *mockdata.User) 
 		return
 	}
 	writeJSON(w, 200, reply)
+}
+
+func (s *Server) chatReset(w http.ResponseWriter, _ *http.Request, u *mockdata.User) {
+	s.Agent.Reset(u.Login)
+	writeJSON(w, 200, map[string]bool{"ok": true})
 }
 
 func (s *Server) confirm(w http.ResponseWriter, r *http.Request, u *mockdata.User) {

@@ -207,3 +207,10 @@ func TestKBPages(t *testing.T) {
 		}
 	}
 }
+
+func TestChatReset(t *testing.T) {
+	_, h := newServer(t)
+	if code, r := call(t, h, "POST", "/api/chat/reset", "intern.sokolov", ""); code != 200 || r["ok"] != true {
+		t.Fatal(code)
+	}
+}

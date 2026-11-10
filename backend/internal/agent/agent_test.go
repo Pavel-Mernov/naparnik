@@ -192,3 +192,45 @@ func TestLoopLimitAndRefusal(t *testing.T) {
 		t.Fatal(r.Text)
 	}
 }
+
+// Разговор продолжается: вторая реплика идёт в ту же сессию; ошибка и Reset начинают заново.
+type countingProvider struct{ starts int }
+
+func (p *countingProvider) Start(string, string, []llm.ToolSpec) llm.Session {
+	p.starts++
+	return &scripted{p: &scriptedProvider{steps: []llm.Step{{Text: "ок"}}}}
+}
+
+func TestConversationIsKept(t *testing.T) {
+	base := newAgent(t, "stub_ok", time.Second)
+	p := &countingProvider{}
+	a := New(base.Store, p, time.Second)
+	ask(t, a, "intern.sokolov", "Мне нужен отгул в пятницу")
+	ask(t, a, "intern.sokolov", "Сделай за меня")
+	if p.starts != 1 {
+		t.Fatalf("разговор должен продолжаться, сессий: %d", p.starts)
+	}
+	ask(t, a, "intern.egorova", "Привет")
+	if p.starts != 2 {
+		t.Fatal("у другого пользователя — своя сессия")
+	}
+	a.Reset("intern.sokolov")
+	ask(t, a, "intern.sokolov", "Снова")
+	if p.starts != 3 {
+		t.Fatal("после Reset — новая сессия")
+	}
+	for i := 0; i < maxTurns; i++ {
+		ask(t, a, "intern.sokolov", "ещё")
+	}
+	if p.starts != 4 {
+		t.Fatalf("после %d реплик — новая сессия, сессий: %d", maxTurns, p.starts)
+	}
+}
+
+func TestErrorResetsConversation(t *testing.T) {
+	a := newAgent(t, "stub_error", time.Second)
+	ask(t, a, "intern.sokolov", "x")
+	if len(a.sessions) != 0 {
+		t.Fatal("после ошибки модели разговор сбрасывается")
+	}
+}

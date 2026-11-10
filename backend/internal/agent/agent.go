@@ -51,12 +51,21 @@ type Agent struct {
 	Provider llm.Provider
 	Timeout  time.Duration
 
-	mu     sync.Mutex
-	drafts map[string]Draft
+	mu       sync.Mutex
+	drafts   map[string]Draft
+	sessions map[string]*chat // история разговора по логину: «сделай за меня» помнит, о чём шла речь
 }
 
+// chat — разговор пользователя с моделью. Ограничен по числу реплик, чтобы контекст не рос бесконечно.
+type chat struct {
+	session llm.Session
+	turns   int
+}
+
+const maxTurns = 20
+
 func New(s *store.Store, p llm.Provider, timeout time.Duration) *Agent {
-	return &Agent{Store: s, Provider: p, Timeout: timeout, drafts: map[string]Draft{}}
+	return &Agent{Store: s, Provider: p, Timeout: timeout, drafts: map[string]Draft{}, sessions: map[string]*chat{}}
 }
 
 func (a *Agent) contextFor(u *mockdata.User) string {
@@ -95,7 +104,15 @@ func (a *Agent) Ask(ctx context.Context, login, text string) (Reply, error) {
 	defer cancel()
 
 	reply := Reply{Drafts: []Draft{}, Sources: []Source{}}
-	session := a.Provider.Start(SystemPrompt, a.contextFor(u), specs)
+	a.mu.Lock()
+	c := a.sessions[login]
+	if c == nil || c.turns >= maxTurns {
+		c = &chat{session: a.Provider.Start(SystemPrompt, a.contextFor(u), specs)}
+		a.sessions[login] = c
+	}
+	c.turns++
+	a.mu.Unlock()
+	session := c.session
 	step, err := session.SendUser(ctx, text)
 	for round := 0; err == nil && len(step.ToolCalls) > 0; round++ {
 		if round == maxToolRounds {
@@ -109,6 +126,8 @@ func (a *Agent) Ask(ctx context.Context, login, text string) (Reply, error) {
 		step, err = session.SendToolResults(ctx, results)
 	}
 	if err != nil {
+		// История могла оборваться посреди вызова инструментов — начинаем разговор заново.
+		a.Reset(login)
 		return a.fallback(tc, text, err), nil
 	}
 	reply.Text = step.Text
@@ -163,6 +182,13 @@ func (a *Agent) fallback(tc tools.Ctx, text string, err error) Reply {
 		reply.Sources = append(reply.Sources, Source{h.PageID, h.Title, h.Author, h.UpdatedAt, h.Label})
 	}
 	return reply
+}
+
+// Reset — начать разговор заново (смена учётки, ошибка модели, кнопка «Новый разговор»).
+func (a *Agent) Reset(login string) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	delete(a.sessions, login)
 }
 
 // Confirm — человек нажал «Подтвердить»: выполнить черновик и вернуть квитанцию (BR-43).
