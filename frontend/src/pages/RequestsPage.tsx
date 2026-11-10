@@ -98,20 +98,60 @@ const RejectDialog = ({ request, data, onClose, onReject }: { request: RequestIt
   );
 };
 
-export const RequestsPage = ({ data, login, isLead, busy, onAgent, onDecide, onSent }: {
-  data: DataState; login: string; isLead: boolean; busy: boolean; onAgent: () => void;
+/** Карточка заявки (SCR-I7): квитанция и история статусов, как журнал в трекере. */
+const RequestDialog = ({ request, data, onClose, onMarkStep }: { request: RequestItem | null; data: DataState; onClose: () => void; onMarkStep?: (stepId: string) => void }) => {
+  const { t } = useTheme();
+  if (!request) return null;
+  const name = (id: string) => data.users.find((u) => u.id === id)?.name ?? id;
+  const step = request.step_id ? data.plan?.steps.find((s) => s.id === request.step_id) : undefined;
+  const codes = request.kind === "access" ? data.services?.access.reason_codes : data.services?.absence.reason_codes;
+  const fields: Array<[string, string | undefined]> = [
+    ["Номер", request.id], ["Автор", name(request.employee_id)], ["Согласует", name(request.approver_id)],
+    ["Как оформлена", request.source === "self" ? "сам, в форме сервиса" : "через Напарника"],
+    ["Шаг плана", step?.title], [request.kind === "access" ? "Зачем" : "Комментарий", request.comment],
+    ["Причина отказа", request.reason_code ? codes?.find((c) => c.code === request.reason_code)?.text ?? request.reason_code : undefined],
+    ["Комментарий согласующего", request.decision],
+  ];
+  const canMark = onMarkStep && request.status === "granted" && step && step.status !== "Done";
+  return (
+    <Dialog open onClose={onClose} fullWidth maxWidth="sm">
+      <DialogTitle sx={{ pb: 0.5 }}>{requestTitle(request)}</DialogTitle>
+      <DialogContent>
+        <Box mb={2}><StatusTag status={request.status} /></Box>
+        <Box component="dl" sx={{ display: "grid", gridTemplateColumns: "auto 1fr", gap: "6px 16px", m: 0, mb: 3 }}>
+          {fields.filter(([, v]) => v).map(([k, v]) => [<Typography key={`${k}-k`} component="dt" color="text.secondary">{k}</Typography>, <Typography key={`${k}-v`} component="dd" sx={{ m: 0 }}>{v}</Typography>])}
+        </Box>
+        <Typography variant="h3" component="h3" mb={1}>История</Typography>
+        <Box sx={{ borderLeft: `2px solid ${t.line}`, pl: 2 }}>
+          {(request.history ?? []).map((h, i) => <Box key={i} mb={1.25}>
+            <Typography variant="caption" color="text.secondary">{shortDateTime(h.at)}</Typography>
+            <Typography variant="body2">{h.text}</Typography>
+          </Box>)}
+        </Box>
+      </DialogContent>
+      <DialogActions sx={{ p: 2, gap: 1 }}>
+        <Button variant={canMark ? "text" : "contained"} onClick={onClose}>Закрыть</Button>
+        {canMark && <Button variant="contained" onClick={() => { onMarkStep(step.id); onClose(); }}>Отметить шаг выполненным</Button>}
+      </DialogActions>
+    </Dialog>
+  );
+};
+
+export const RequestsPage = ({ data, login, isLead, busy, onAgent, onDecide, onSent, onMarkStep }: {
+  data: DataState; login: string; isLead: boolean; busy: boolean; onAgent: () => void; onMarkStep?: (stepId: string) => void;
   onDecide: (r: RequestItem, decision: "approve" | "reject", reason?: string, comment?: string) => Promise<void>; onSent: (msg: string) => void;
 }) => {
   const [form, setForm] = useState(false);
   const [rejecting, setRejecting] = useState<RequestItem | null>(null);
+  const [opened, setOpened] = useState<RequestItem | null>(null);
   const name = (id: string) => data.users.find((u) => u.id === id)?.name ?? "Стажёр";
   const pending = data.requests.filter((r) => r.status === "pending");
   const done = data.requests.filter((r) => r.status !== "pending");
-  const row = (r: RequestItem) => <Row key={r.id} title={requestTitle(r)}
+  const row = (r: RequestItem) => <Row key={r.id} title={requestTitle(r)} onClick={() => setOpened(r)}
     sub={<>{isLead ? `${name(r.employee_id)} · ` : ""}{r.id} · {shortDateTime(r.created_at)} · {r.source === "self" ? "оформлена сам" : <AiTag>через Напарника</AiTag>}</>}
     end={isLead && r.status === "pending" && r.approver_id === data.me.id ? <>
-      <Button variant="contained" size="small" disabled={busy} sx={{ minHeight: 36 }} onClick={() => void onDecide(r, "approve")}>{r.kind === "access" ? "Выдать" : "Согласовать"}</Button>
-      <Button variant="text" size="small" disabled={busy} sx={{ minHeight: 36 }} onClick={() => setRejecting(r)}>Отклонить</Button>
+      <Button variant="contained" size="small" disabled={busy} sx={{ minHeight: 36 }} onClick={(e) => { e.stopPropagation(); void onDecide(r, "approve"); }}>{r.kind === "access" ? "Выдать" : "Согласовать"}</Button>
+      <Button variant="text" size="small" disabled={busy} sx={{ minHeight: 36 }} onClick={(e) => { e.stopPropagation(); setRejecting(r); }}>Отклонить</Button>
     </> : <StatusTag status={r.status} />} />;
   return <>
     <PageHead context={isLead ? (pending.length ? `Ждут твоего решения: ${pending.length}` : "Новых заявок нет") : "Отгулы и доступы через сервисы отдела"}
@@ -127,6 +167,7 @@ export const RequestsPage = ({ data, login, isLead, busy, onAgent, onDecide, onS
       {done.length > 0 && <Block title="Решено">{done.map(row)}</Block>}
     </Stack>
     {!isLead && <SelfServiceDialog open={form} data={data} login={login} onClose={() => setForm(false)} onSent={(m) => { setForm(false); onSent(m); }} />}
+    <RequestDialog request={opened} data={data} onClose={() => setOpened(null)} onMarkStep={onMarkStep} />
     <RejectDialog request={rejecting} data={data} onClose={() => setRejecting(null)} onReject={async (r, reason, comment) => { setRejecting(null); await onDecide(r, "reject", reason, comment); }} />
   </>;
 };

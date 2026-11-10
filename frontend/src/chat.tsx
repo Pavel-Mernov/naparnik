@@ -1,9 +1,9 @@
 // Чат с Напарником: Markdown без HTML-вставок, читаемые черновики с «Подтвердить / Отмена»,
 // квитанция после подтверждения, «Повторить» при сбое (BR-11, BR-14, BR-43, BR-70, SC-05, SC-15).
 import { Fragment, useEffect, useRef, useState, type ReactNode } from "react";
-import { Avatar, Box, Button, CircularProgress, Drawer, IconButton, Stack, TextField, Typography, useMediaQuery, useTheme } from "@mui/material";
+import { Box, Button, CircularProgress, Drawer, IconButton, Stack, TextField, Typography, useMediaQuery, useTheme } from "@mui/material";
 import { CloseRounded, SendRounded } from "@mui/icons-material";
-import mascotCat from "../mascot-cat.png";
+import { MascotBadge } from "./components/Mascot";
 import { ApiError, api, type ChatReply } from "./api";
 
 export type ChatMessage = { role: "user" | "assistant"; text: string; reply?: ChatReply; retryText?: string };
@@ -113,6 +113,18 @@ const DraftCard = ({ draft, login, look, onDone }: { draft: Draft; login: string
 
 // ---------- окно чата ----------
 
+/** Отметка полезности ответа из базы (SCR-I2). «Не помогло» сразу ведёт к человеку. */
+const Feedback = ({ onNotHelpful }: { onNotHelpful: () => void }) => {
+  const [picked, setPicked] = useState("");
+  const options: Array<[string, string]> = [["helped", "Помогло"], ["not", "Не помогло"], ["stale", "Устарело"]];
+  const thanks: Record<string, string> = { helped: "Спасибо, учту", not: "Ищу, кто поможет…", stale: "Спасибо, передам владельцу базы" };
+  if (picked) return <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.75 }}>{thanks[picked]}</Typography>;
+  return <Stack direction="row" gap={0.75} mt={0.75} flexWrap="wrap">
+    {options.map(([id, label]) => <Button key={id} variant="outlined" size="small" sx={{ minHeight: 32, py: 0.25, px: 1.25, fontSize: 13 }}
+      onClick={() => { setPicked(id); if (id === "not") onNotHelpful(); }}>{label}</Button>)}
+  </Stack>;
+};
+
 const QUICK = ["Что мне сегодня делать?", "Что такое витрина?", "Нужен отгул в пятницу", "Нужен доступ к Redash"];
 
 /** На компьютере — панель справа, на телефоне — шторка снизу (как в дизайн-системе Авито). */
@@ -131,7 +143,7 @@ export const ChatDrawer = ({ open, onClose, text, setText, messages, loading, on
       <Stack height="100%" sx={{ bgcolor: t.bg }}>
         {mobile && <Box aria-hidden sx={{ width: 40, height: 4, bgcolor: t.line, mx: "auto", mt: 1 }} />}
         <Stack direction="row" alignItems="center" spacing={1.5} sx={{ px: 2, py: 1.5, borderBottom: `2px solid ${t.line}` }}>
-          <Avatar src={mascotCat} alt="" sx={{ width: 40, height: 40, bgcolor: t.aiSoft }} />
+          <MascotBadge size={48} />
           <Box flex={1}>
             <Typography fontWeight={600}>Напарник</Typography>
             <Typography variant="caption" sx={{ color: t.ai }}>{loading ? "думает…" : "ИИ-помощник · без подтверждения ничего не отправит"}</Typography>
@@ -151,6 +163,7 @@ export const ChatDrawer = ({ open, onClose, text, setText, messages, loading, on
                 </Box>
               ))}
               {m.reply?.drafts.map((d) => <DraftCard key={d.id} draft={d} login={login} look={look} onDone={onAction} />)}
+              {m.reply && m.reply.sources.length > 0 && !m.reply.drafts.length && <Feedback onNotHelpful={() => onSend(`Не помогло, нужен человек: ${messages[index - 1]?.text ?? ""}`)} />}
               {m.retryText && <Button variant="text" size="small" sx={{ mt: 1, minHeight: 36 }} onClick={() => onSend(m.retryText)}>Повторить</Button>}
             </Box>
           ))}

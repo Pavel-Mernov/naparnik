@@ -46,6 +46,8 @@ export type Question = {
   text?: string;
   text_hidden?: boolean;
   answer?: string;
+  page_id?: string;
+  reason?: string;
   urgent: boolean;
   status: string;
 };
@@ -58,6 +60,11 @@ export type RequestItem = {
   system?: string;
   title?: string;
   source?: string;
+  comment?: string;
+  step_id?: string;
+  reason_code?: string;
+  decision?: string;
+  history?: Array<{ at: string; by: string; text: string }>;
   employee_id: string;
   approver_id: string;
   status: string;

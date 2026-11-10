@@ -61,7 +61,16 @@ export const QuestionsPage = ({ data, role, onAsk, onAnswer, onApprove }: {
   const [draft, setDraft] = useState<KbDraft | null>(null);
   const name = (id: string) => data.users.find((u) => u.id === id)?.name ?? "Стажёр";
   const incoming = data.questions.filter((q) => q.addressee_id === data.me.id && q.status === "Sent");
-  const others = data.questions.filter((q) => !incoming.includes(q));
+  const [filter, setFilter] = useState("");
+  const [search, setSearch] = useState("");
+  const all = data.questions.filter((q) => !incoming.includes(q));
+  const others = all.filter((q) => (!filter || q.status === filter)
+    && (!search.trim() || `${q.title ?? ""} ${q.text ?? ""} ${q.addressee}`.toLowerCase().includes(search.trim().toLowerCase())));
+  const { t } = useTheme();
+  const chip = (id: string, label: string) => <Box component="button" key={id || "all"} onClick={() => setFilter(id)} aria-pressed={filter === id} sx={{
+    font: "inherit", fontSize: 14, border: "none", px: 1.5, py: 0.75, whiteSpace: "nowrap",
+    bgcolor: filter === id ? t.inverse : t.surface, color: filter === id ? t.onInverse : t.text,
+  }}>{label} <Box component="span" sx={{ opacity: 0.6 }}>{id ? all.filter((q) => q.status === id).length : all.length}</Box></Box>;
   const title = role === "intern" ? "Мои вопросы" : role === "buddy" ? "Вопросы" : "Вопросы мне";
   const context = incoming.length ? `Ждут твоего ответа: ${incoming.length}` : role === "intern" ? "Сначала Напарник ищет в базе, потом зовёт человека" : "Новых вопросов нет";
   return <>
@@ -73,6 +82,10 @@ export const QuestionsPage = ({ data, role, onAsk, onAnswer, onApprove }: {
       </Block>}
       {incoming.length > 0 && <Block title="Ждут ответа">{incoming.map((q) => <Incoming key={q.id} q={q} from={`От ${name(q.asked_by)}`} onAnswer={onAnswer} />)}</Block>}
       <Block title={role === "buddy" ? "Маршрут вопросов стажёров" : "Все вопросы"}>
+        {all.length > 0 && <Stack direction={{ xs: "column", sm: "row" }} gap={1} mb={1.5}>
+          <TextField size="small" placeholder="Найти вопрос" value={search} onChange={(e) => setSearch(e.target.value)} aria-label="Поиск вопросов" sx={{ flex: 1 }} />
+          <Stack direction="row" gap={0.75} sx={{ overflowX: "auto" }}>{chip("", "Все")}{chip("Sent", "Ждут ответа")}{chip("Answered", "Есть ответ")}</Stack>
+        </Stack>}
         {others.length ? others.map((q) => (
           <Box key={q.id} sx={{ py: 1.5, borderBottom: 1, borderColor: "divider" }}>
             <Stack direction="row" justifyContent="space-between" gap={2}>
@@ -85,7 +98,9 @@ export const QuestionsPage = ({ data, role, onAsk, onAnswer, onApprove }: {
             {q.answer && <Box sx={{ mt: 1.5, pl: 2, borderLeft: 3, borderColor: "success.main" }}>
               <Typography variant="body2" fontWeight={600} mb={0.5}>Ответ · {q.addressee}</Typography>
               <Markdown text={q.answer} />
+              {q.page_id && <Typography variant="caption" color="text.secondary">Ответ сохранён в базе знаний — следующему стажёру Напарник ответит сразу</Typography>}
             </Box>}
+            {q.reason && !q.answer && <Typography variant="caption" color="text.secondary">Почему {q.addressee}: {q.reason}</Typography>}
           </Box>)) : <Empty text={role === "intern" ? "Вопросов людям пока нет. Спроси Напарника — он сначала поищет в базе." : "Здесь появятся вопросы, на которые ты ответил."} action={role === "intern" ? <Button variant="text" onClick={onAsk}>Спросить</Button> : undefined} />}
       </Block>
     </Stack>

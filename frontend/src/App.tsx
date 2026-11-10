@@ -11,7 +11,6 @@ import {
   NotificationsNoneOutlined, TaskAltOutlined,
 } from "@mui/icons-material";
 import avitoLogo from "../avito-logo.svg";
-import mascotCat from "../mascot-cat.png";
 import { ChatDrawer, type ChatMessage, type Lookup } from "./chat";
 import {
   api, ApiError, unwrap, type ChatReply, type KbDraft, type KbFolder, type KbPage, type Me, type PlanData, type PlanStep,
@@ -21,6 +20,7 @@ import { makeTheme, tokens, type Mode } from "./theme";
 import { buildNotes, initials, requestTitle, statusOf } from "./helpers";
 import { ROLE_RU, primaryRole, viewLabel, viewsFor, type DataState, type View } from "./state";
 import { Block, Empty, Row, StatusTag } from "./components/ui";
+import { MascotBadge } from "./components/Mascot";
 import { DayPage, PlanPage } from "./pages/InternPages";
 import { QuestionsPage } from "./pages/QuestionsPage";
 import { KnowledgePage } from "./pages/KnowledgePage";
@@ -190,8 +190,8 @@ function App() {
   const page = () => {
     if (!data || !role) return null;
     if (view === "day") {
-      if (role === "intern") return <DayPage data={data} onMarkDone={(s) => void markDone(s)} onAsk={openChat} onOpenPlan={() => nav("plan")}
-        waiting={<Block title="Новости">{waitingForMe.length ? waitingForMe.slice(0, 5).map((n) => <Row key={n.id} title={n.text} sub={n.meta} onClick={() => nav(n.go)} />)
+      if (role === "intern") return <DayPage data={data} onMarkDone={(s) => void markDone(s)} onAsk={openChat} onOpenPlan={() => nav("plan")} onOpenQuestions={() => nav("questions")}
+        waiting={<Block title="Новости">{waitingForMe.filter((n) => !n.id.startsWith("ans-")).length ? waitingForMe.filter((n) => !n.id.startsWith("ans-")).slice(0, 5).map((n) => <Row key={n.id} title={n.text} sub={n.meta} onClick={() => nav(n.go)} />)
           : <Empty text="Ответы людей и статусы заявок появятся здесь." variant={1} />}</Block>} />;
       if (role === "lead") return <TeamPage overview={data.overview} onRequests={() => nav("requests")} />;
       if (role === "buddy") return <BuddyPage data={data} onPlan={(id) => { setSelectedIntern(id); nav("plan"); }} onQuestions={() => nav("questions")} />;
@@ -210,6 +210,7 @@ function App() {
     if (view === "knowledge") return <KnowledgePage data={data} onAsk={openChat} />;
     if (view === "requests") return <RequestsPage data={data} login={login} isLead={role === "lead"} busy={busy} onAgent={() => openChat("Мне нужен отгул ")}
       onSent={(m) => { setSnack(m); void load(); }}
+      onMarkStep={role === "intern" ? (id) => { const st = data.plan?.steps.find((x) => x.id === id); if (st) void markDone(st); } : undefined}
       onDecide={async (r, decision, reason, comment) => {
         await perform(`/api/requests/${r.id}/decision`, "POST", { decision, reason, comment },
           decision === "approve" ? `${requestTitle(r)}: ${statusOf(r.kind === "access" ? "granted" : "approved").label.toLowerCase()}` : "Заявка отклонена, стажёр увидит причину");
@@ -273,16 +274,21 @@ function App() {
           {views.map((v) => <BottomNavigationAction key={v} value={v} label={viewLabel(role, v)} icon={ICONS[v]} />)}
         </BottomNavigation>}
 
-        {/* Маскот: компактный, без тени и прыжков; бейдж — сколько ждёт внимания (08-DESIGN) */}
-        {role && <Tooltip title={chatLoading ? "Думаю…" : urgent ? "Есть новое" : "Спросить Напарника"} placement="left">
-          <Box component="button" onClick={() => openChat()} aria-label="Открыть чат с Напарником" sx={{
-            position: "fixed", right: { xs: 12, md: 28 }, bottom: { xs: 76, md: 28 }, zIndex: 12, width: { xs: 52, md: 64 }, height: { xs: 52, md: 64 }, p: 0, border: `2px solid ${chatLoading ? t.ai : t.line}`,
-            bgcolor: t.aiSoft, overflow: "hidden", display: role === "intern" || mobile ? "block" : "none",
-          }}>
-            <Box component="img" src={mascotCat} alt="" sx={{ width: "120%", ml: "-10%", mt: "-4%", display: "block" }} />
-            {urgent > 0 && <Box component="span" sx={{ position: "absolute", top: 2, right: 2, minWidth: 18, height: 18, px: 0.5, bgcolor: "error.main", color: "#000", fontSize: 12, fontWeight: 700, lineHeight: "18px" }}>{urgent}</Box>}
-          </Box>
-        </Tooltip>}
+        {/* Маскот — на всех экранах, 96 px (08-DESIGN): клик открывает чат, бейдж — сколько ждёт внимания,
+            «Думаю…» — пока отвечает модель. Плавное «дыхание» отключается при prefers-reduced-motion. */}
+        {role && !chatOpen && <Box component="button" onClick={() => openChat()} aria-label="Открыть чат с Напарником" sx={{
+          position: "fixed", right: { xs: 8, md: 24 }, bottom: { xs: 70, md: 20 }, zIndex: 12, p: 0, border: "none", bgcolor: "transparent",
+          transition: "transform .2s ease", "&:hover, &:focus-visible": { transform: "translateY(-3px)" },
+          "&:hover .mascot-label, &:focus-visible .mascot-label": { opacity: 1, transform: "none" },
+        }}>
+          <MascotBadge size={mobile ? 72 : 96} float />
+          <Box component="span" className="mascot-label" sx={{
+            position: "absolute", right: "100%", top: "30%", mr: 0.5, px: 1.25, py: 0.75, bgcolor: t.inverse, color: t.onInverse, fontSize: 13, fontWeight: 600,
+            whiteSpace: "nowrap", opacity: chatLoading ? 1 : 0, transform: chatLoading ? "none" : "translateX(6px)", transition: "opacity .2s, transform .2s", pointerEvents: "none",
+            display: { xs: "none", md: "block" },
+          }}>{chatLoading ? "Думаю…" : urgent ? `Есть новое: ${urgent}` : "Спроси меня"}</Box>
+          {urgent > 0 && <Box component="span" sx={{ position: "absolute", top: { xs: 6, md: 10 }, right: { xs: 6, md: 10 }, minWidth: 24, height: 24, px: 0.5, borderRadius: "12px", bgcolor: "error.main", color: "#000", fontSize: 12, fontWeight: 700, lineHeight: "20px", border: `2px solid ${t.bg}` }}>{urgent}</Box>}
+        </Box>}
 
         <Popover open={Boolean(notesAnchor)} anchorEl={notesAnchor} onClose={() => setNotesAnchor(null)} anchorOrigin={{ vertical: "bottom", horizontal: "right" }} transformOrigin={{ vertical: "top", horizontal: "right" }}
           slotProps={{ paper: { sx: { width: 360, maxWidth: "calc(100vw - 24px)", maxHeight: 480 } } }}>

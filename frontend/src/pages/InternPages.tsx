@@ -1,6 +1,7 @@
 // Стажёр: «Мой день» и «Мой план». Главное за 3 секунды — сколько шагов сегодня и что горит.
 import type { ReactNode } from "react";
-import { Box, Button, Checkbox, LinearProgress, Stack, Typography } from "@mui/material";
+import { Box, Button, Checkbox, Stack, Typography, useTheme } from "@mui/material";
+import { brand } from "../theme";
 import type { PlanData, PlanStep } from "../api";
 import { dueText, longDate, plural } from "../helpers";
 import type { DataState } from "../state";
@@ -18,6 +19,28 @@ const StepRow = ({ step, today, onMarkDone, onHelp }: { step: PlanStep; today: s
   />
 );
 
+/** Прогресс по этапам плана (SCR-I1): у каждого этапа своя полоса, текущий — подписан, просрочки — красным. */
+const StageBars = ({ plan }: { plan: PlanData }) => {
+  const { t } = useTheme();
+  const stages = plan.stages.map((st) => {
+    const steps = plan.steps.filter((s) => s.stage === st.id);
+    return { st, total: steps.length, done: steps.filter((s) => s.status === "Done").length, overdue: steps.filter((s) => s.status === "Overdue").length };
+  }).filter((x) => x.total > 0);
+  const current = stages.find((x) => x.done < x.total);
+  return <Box sx={{ display: "grid", gridTemplateColumns: `repeat(${stages.length}, minmax(0, 1fr))`, gap: 0.75, mt: 2 }}>
+    {stages.map((x) => (
+      <Box key={x.st.id} title={`${x.st.title}: ${x.done} из ${x.total}`}>
+        <Box sx={{ height: 8, bgcolor: t.surface, position: "relative", overflow: "hidden" }}>
+          <Box sx={{ position: "absolute", inset: 0, width: `${(x.done / x.total) * 100}%`, bgcolor: x.overdue ? brand.red : brand.green }} />
+        </Box>
+        <Typography variant="caption" sx={{ display: "block", mt: 0.75, color: x === current ? "text.primary" : "text.secondary", fontWeight: x === current ? 600 : 400, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          {x.st.title}
+        </Typography>
+        <Typography variant="caption" color="text.secondary">{x.done}/{x.total}{x.overdue ? ` · просрочено ${x.overdue}` : ""}</Typography>
+      </Box>))}
+  </Box>;
+};
+
 export const Progress = ({ plan, onOpen }: { plan?: PlanData; onOpen?: () => void }) => (
   <Block title="Путь адаптации" aside={onOpen && <Button variant="text" size="small" sx={{ minHeight: 36 }} onClick={onOpen}>Весь план</Button>}>
     {!plan ? <Empty text="План ещё готовится — бадди и руководитель его утвердят." variant={2} /> : <>
@@ -25,14 +48,14 @@ export const Progress = ({ plan, onOpen }: { plan?: PlanData; onOpen?: () => voi
         <Typography sx={{ fontSize: 44, fontWeight: 300, lineHeight: 1 }}>{plan.progress_pct}%</Typography>
         <Typography color="text.secondary">{plan.steps.filter((s) => s.status === "Done").length} из {plan.steps.length} шагов</Typography>
       </Stack>
-      <LinearProgress variant="determinate" value={plan.progress_pct} aria-label="Прогресс по плану" sx={{ my: 1.5 }} />
-      <Typography variant="body2" color="text.secondary">{plan.next_step ? `Дальше: ${plan.next_step.title}` : "Все шаги пройдены"}</Typography>
+      <StageBars plan={plan} />
+      <Typography variant="body2" color="text.secondary" mt={1.5}>{plan.next_step ? `Дальше: ${plan.next_step.title}` : "Все шаги пройдены"}</Typography>
     </>}
   </Block>
 );
 
-export const DayPage = ({ data, onMarkDone, onAsk, onOpenPlan, waiting }: {
-  data: DataState; onMarkDone: (s: PlanStep) => void; onAsk: (text: string) => void; onOpenPlan: () => void; waiting: ReactNode;
+export const DayPage = ({ data, onMarkDone, onAsk, onOpenPlan, onOpenQuestions, waiting }: {
+  data: DataState; onMarkDone: (s: PlanStep) => void; onAsk: (text: string) => void; onOpenPlan: () => void; onOpenQuestions?: () => void; waiting: ReactNode;
 }) => {
   const first = data.me.name.split(" ")[0];
   const steps = [...(data.today?.steps ?? [])].sort((a, b) => Number(b.status === "Overdue") - Number(a.status === "Overdue"));
@@ -56,6 +79,11 @@ export const DayPage = ({ data, onMarkDone, onAsk, onOpenPlan, waiting }: {
               <Typography sx={{ fontSize: 22, fontWeight: 300, minWidth: 64 }}>{e.start}</Typography>
               <Typography>{e.title}</Typography>
             </Stack>)) : <Typography color="text.secondary">Сегодня без встреч.</Typography>}
+        </Block>
+        <Block title="Мои вопросы" aside={onOpenQuestions && <Button variant="text" size="small" sx={{ minHeight: 36 }} onClick={onOpenQuestions}>Все</Button>}>
+          {data.questions.length ? data.questions.slice(-3).reverse().map((q) => (
+            <Row key={q.id} title={q.title || q.text || "Вопрос"} sub={`Кому: ${q.addressee}`} end={<StatusTag status={q.status} />} onClick={onOpenQuestions} />))
+            : <Empty text="Вопросов людям пока нет. Спроси Напарника — он сначала поищет в базе." variant={1} />}
         </Block>
         {waiting}
       </Stack>
