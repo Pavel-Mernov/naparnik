@@ -9,6 +9,10 @@
     { "id": "sys-redash", "title": "Redash (дашборды)", "week_from": 1, "role": "viewer", "department": "dept-analytics" },
     { "id": "sys-dwh-marts-ro", "title": "Витрины DWH отдела, только чтение", "week_from": 2, "role": "read_only", "department": "dept-analytics" },
     { "id": "sys-ab-platform-ro", "title": "A/B-платформа, только чтение", "week_from": 4, "role": "viewer", "department": "dept-analytics" },
+    { "id": "sys-jupyter", "title": "JupyterHub отдела (ноутбуки Python)", "week_from": 1, "role": "user", "department": "dept-analytics" },
+    { "id": "sys-gitlab-analytics", "title": "Репозиторий аналитики в GitLab", "week_from": 1, "role": "developer", "department": "dept-analytics" },
+    { "id": "sys-ch-sandbox", "title": "Песочница ClickHouse для стажёров", "week_from": 1, "role": "read_write", "department": "dept-analytics" },
+    { "id": "sys-tracker-analytics", "title": "Трекер задач отдела (Jira, проект ANALYTICS)", "week_from": 2, "role": "user", "department": "dept-analytics" },
     { "id": "sys-dwh-pii", "title": "Витрины с персональными данными", "week_from": null, "role": null, "department": "dept-dwh-core", "requestable_by_intern": false, "note": "SC-16: стажёру не предлагается и не показывается; на прямую просьбу — объяснение и запрос руководителю" }
   ],
   "current_state": {

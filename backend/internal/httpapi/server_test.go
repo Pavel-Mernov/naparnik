@@ -198,10 +198,13 @@ func TestKBPages(t *testing.T) {
 	_, h := newServer(t)
 	_, r := call(t, h, "GET", "/api/kb/pages", "intern.sokolov", "")
 	pages := r["pages"].([]any)
-	if len(pages) != 19 || len(r["folders"].([]any)) != 6 {
+	if len(pages) != 28 || len(r["folders"].([]any)) != 7 {
 		t.Fatalf("страниц %d, папок %d", len(pages), len(r["folders"].([]any)))
 	}
 	for _, p := range pages {
+		if p := p.(map[string]any); p["id"] == "kb-30" && !strings.Contains(p["body"].(string), "партиции") {
+			t.Fatal("полный текст страницы, а не только начало")
+		}
 		if p.(map[string]any)["id"] == "kb-R1" {
 			t.Fatal("страница чужого пространства")
 		}
@@ -253,7 +256,7 @@ func TestAnswerFlowAPI(t *testing.T) {
 		t.Fatalf("публикация: %d %v", code, p)
 	}
 	_, kb := call(t, h, "GET", "/api/kb/pages", "intern.egorova", "")
-	if len(kb["pages"].([]any)) != 20 {
+	if len(kb["pages"].([]any)) != 29 {
 		t.Fatal("опубликованная страница в базе, черновик — нет")
 	}
 }

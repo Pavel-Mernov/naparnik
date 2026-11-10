@@ -100,8 +100,8 @@ func listMyRequests(c Ctx, _ map[string]any) Result {
 	return ok(c.Store.Requests(c.User.ID))
 }
 
-func getRequiredAccesses(c Ctx, _ map[string]any) Result {
-	week := c.Store.Week(c.User)
+// accessStatus — статус каждой системы для стажёра: выданные из сервиса доступов и его заявки поверх.
+func accessStatus(c Ctx) map[string]string {
 	status := map[string]string{}
 	for _, st := range c.Store.Data.Access.CurrentState[c.User.ID] {
 		status[st.System] = st.Status
@@ -111,6 +111,12 @@ func getRequiredAccesses(c Ctx, _ map[string]any) Result {
 			status[r.System] = r.Status
 		}
 	}
+	return status
+}
+
+func getRequiredAccesses(c Ctx, _ map[string]any) Result {
+	week := c.Store.Week(c.User)
+	status := accessStatus(c)
 	var out []map[string]string
 	for _, s := range c.Store.Data.Access.Systems {
 		// BR-40: системы чужих отделов стажёру не показываются вовсе

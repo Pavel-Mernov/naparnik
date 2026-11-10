@@ -89,19 +89,47 @@ func TestDecide(t *testing.T) {
 func TestCatalog(t *testing.T) {
 	s := newStore(t)
 	in := Catalog(ctxFor(t, s, "intern.sokolov"))
-	if sys := in["access"].(map[string]any)["systems"].([]map[string]string); len(sys) == 0 {
-		t.Fatal("стажёру — системы его недели")
-	}
-	for _, x := range in["access"].(map[string]any)["systems"].([]map[string]string) {
-		if x["system"] == "sys-dwh-pii" {
+	sys := in["access"].(map[string]any)["systems"].([]SystemView)
+	now, later := 0, 0
+	for _, x := range sys {
+		if x.System == "sys-dwh-pii" {
 			t.Fatal("BR-40: чужая система не показывается")
 		}
+		if x.System == "sys-kb-analytics" && x.Status != "granted" {
+			t.Fatalf("уже выданный доступ: %+v", x)
+		}
+		if x.Now {
+			now++
+		} else {
+			later++
+		}
+	}
+	if len(sys) != 8 || now != 5 || later != 3 {
+		t.Fatalf("системы отдела: всего %d, сейчас %d, позже %d", len(sys), now, later)
+	}
+	// заявка на систему следующих недель допустима — решает руководитель
+	if r := CreateSelf(ctxFor(t, s, "intern.sokolov"), "access", map[string]any{"system": "sys-ab-platform-ro", "reason": "заранее"}); !r.OK {
+		t.Fatalf("доступ на будущее: %+v", r.Error)
 	}
 	lead := Catalog(ctxFor(t, s, "lead.kovalev"))
-	if len(lead["access"].(map[string]any)["systems"].([]map[string]string)) != 0 {
+	if lead["access"].(map[string]any)["systems"] != nil && len(lead["access"].(map[string]any)["systems"].([]map[string]string)) != 0 {
 		t.Fatal("руководителю системы стажёра не нужны")
 	}
 	if len(s.Data.Absence.ReasonCodes) != 4 || len(s.Data.Access.ReasonCodes) != 3 {
 		t.Fatal("коды причин из мок-данных")
+	}
+}
+
+// База знаний: код-стайл находится по разным формулировкам, профильные страницы — выше памяток.
+func TestSearchCodeStyle(t *testing.T) {
+	c := ctxFor(t, newStore(t), "intern.sokolov")
+	for _, q := range []string{"Какой у нас код-стайл для SQL и Python?", "code style SQL Python", "стиль кода SQL Python"} {
+		hits := SearchKB(c, q)
+		if len(hits) < 2 || hits[0].PageID != "kb-30" || hits[1].PageID != "kb-31" {
+			t.Errorf("%q: %+v", q, hits)
+		}
+	}
+	if hits := SearchKB(c, "Python код-стайл"); hits[0].PageID != "kb-31" {
+		t.Errorf("Python: %s", hits[0].PageID)
 	}
 }

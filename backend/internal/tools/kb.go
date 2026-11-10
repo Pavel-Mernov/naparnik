@@ -17,6 +17,9 @@ const MinCoverage = 0.6
 // ExpertThreshold — BR-13: уверенность выбора эксперта ниже порога → вопрос бадди.
 const ExpertThreshold = 0.6
 
+// titleBonus — вес совпадений в заголовке при сортировке выдачи (на порог MinCoverage не влияет).
+const titleBonus = 0.5
+
 // MinExpertEvidence — сколько «очков» сигнала нужно для полной уверенности (страница по теме ≈ 1–4, зона ответственности ≈ 1.5).
 const MinExpertEvidence = 3.0
 
@@ -38,6 +41,11 @@ var synonyms = map[string]string{
 	"отлич": "расхо", // «отличается» ≈ «расхождение»
 	"совпа": "расхо", // «не совпадает» ≈ «расхождение»
 	"сходи": "расхо",
+	"кода":  "код", // «стиль кода», «кодом», «code style» ≈ «код-стайл»
+	"кодом": "код",
+	"code":  "код",
+	"стиль": "стайл",
+	"style": "стайл",
 }
 
 // Stems — грубый стемминг префиксом: для русского работает прилично и не требует словарей.
@@ -104,6 +112,9 @@ func SearchKB(c Ctx, query string) []Hit {
 		if score < MinCoverage {
 			continue
 		}
+		// Порог — по всему тексту, а порядок — с бонусом за слова запроса в заголовке:
+		// страница «Код-стайл Python» важнее памятки, где код-стайл упомянут одной строкой.
+		score += titleBonus * float64(overlap(q, Stems(p.Title))) / float64(len(q))
 		h := Hit{p.ID, p.Title, p.Body, c.Store.Name(p.AuthorID), p.UpdatedAt, p.TestInstruction, "", score}
 		if p.TestInstruction {
 			h.Label = TestInstructionLabel
@@ -251,13 +262,14 @@ func recencyWeight(c Ctx, updatedAt string) float64 {
 	}
 }
 
-// PageCard — страница базы для списка в интерфейсе (без полного текста).
+// PageCard — страница базы для интерфейса: начало текста для карточки и полный текст для просмотра.
 type PageCard struct {
 	ID              string `json:"id"`
 	Folder          string `json:"folder"`
 	Type            string `json:"type"`
 	Title           string `json:"title"`
 	Excerpt         string `json:"excerpt"`
+	Body            string `json:"body"`
 	Author          string `json:"author"`
 	UpdatedAt       string `json:"updated_at"`
 	TestInstruction bool   `json:"test_instruction"`
@@ -276,7 +288,7 @@ func KBPages(c Ctx) (folders []mockdata.Folder, pages []PageCard) {
 		if len(ex) > 140 {
 			ex = append(ex[:140], '…')
 		}
-		pages = append(pages, PageCard{p.ID, p.Folder, p.Type, p.Title, string(ex), c.Store.Name(p.AuthorID), p.UpdatedAt, p.TestInstruction})
+		pages = append(pages, PageCard{p.ID, p.Folder, p.Type, p.Title, string(ex), p.Body, c.Store.Name(p.AuthorID), p.UpdatedAt, p.TestInstruction})
 	}
 	return folders, pages
 }

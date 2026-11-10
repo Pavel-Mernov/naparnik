@@ -79,15 +79,15 @@
 				
 				<option value="file11">github.com/worker4556/naparnik/backend/internal/store/store.go (97.1%)</option>
 				
-				<option value="file12">github.com/worker4556/naparnik/backend/internal/tools/answers.go (96.3%)</option>
+				<option value="file12">github.com/worker4556/naparnik/backend/internal/tools/answers.go (96.7%)</option>
 				
 				<option value="file13">github.com/worker4556/naparnik/backend/internal/tools/kb.go (98.6%)</option>
 				
 				<option value="file14">github.com/worker4556/naparnik/backend/internal/tools/plan.go (98.4%)</option>
 				
-				<option value="file15">github.com/worker4556/naparnik/backend/internal/tools/requests.go (97.6%)</option>
+				<option value="file15">github.com/worker4556/naparnik/backend/internal/tools/requests.go (98.8%)</option>
 				
-				<option value="file16">github.com/worker4556/naparnik/backend/internal/tools/service.go (98.2%)</option>
+				<option value="file16">github.com/worker4556/naparnik/backend/internal/tools/service.go (98.5%)</option>
 				
 				<option value="file17">github.com/worker4556/naparnik/backend/internal/tools/tools.go (100.0%)</option>
 				
@@ -2022,7 +2022,7 @@ func AnswerQuestion(c Ctx, questionID, text string) (store.Question, mockdata.Pa
 </span>        }
         <span class="cov8" title="1">folder, similar := placePage(c, title)
         page := mockdata.Page{
-                ID: c.Store.NextID("kb"), Space: c.Store.Data.Team.Department.KBSpaceID, Folder: folder, Type: "qa", Status: "Draft",
+                ID: nextPageID(c), Space: c.Store.Data.Team.Department.KBSpaceID, Folder: folder, Type: "qa", Status: "Draft",
                 Title: title, AuthorID: c.User.ID,
                 UpdatedAt: c.Store.Today.Format(time.DateOnly), Body: text, SourceQuestion: q.ID, SimilarPageID: similar,
 </span>        }
@@ -2031,6 +2031,19 @@ func AnswerQuestion(c Ctx, questionID, text string) (store.Question, mockdata.Pa
                 <span class="cov8" title="1">x.Status, x.Answer, x.AnsweredBy, x.AnsweredAt, x.PageID = "Answered", text, c.User.ID, time.Now().Format(time.RFC3339), page.ID
 </span>        })
         <span class="cov8" title="1">return q, page, nil</span>
+}
+
+// nextPageID — следующий свободный номер страницы: в мок-данных есть страницы и с номерами выше kb-20.
+func nextPageID(c Ctx) string {
+        <span class="cov8" title="1">taken := map[string]bool{}
+        for _, p := range c.Store.Pages() </span>{
+                <span class="cov8" title="1">taken[p.ID] = true
+</span>        }
+        <span class="cov8" title="1">for </span>{
+                <span class="cov8" title="1">if id := c.Store.NextID("kb"); !taken[id] </span>{
+                        <span class="cov8" title="1">return id
+</span>                }
+        }
 }
 
 // placePage — папка по самой похожей опубликованной странице и похожая страница для BR-32.
@@ -2112,6 +2125,9 @@ const MinCoverage = 0.6
 // ExpertThreshold — BR-13: уверенность выбора эксперта ниже порога → вопрос бадди.
 const ExpertThreshold = 0.6
 
+// titleBonus — вес совпадений в заголовке при сортировке выдачи (на порог MinCoverage не влияет).
+const titleBonus = 0.5
+
 // MinExpertEvidence — сколько «очков» сигнала нужно для полной уверенности (страница по теме ≈ 1–4, зона ответственности ≈ 1.5).
 const MinExpertEvidence = 3.0
 
@@ -2133,6 +2149,11 @@ var synonyms = map[string]string{
         "отлич": "расхо", // «отличается» ≈ «расхождение»
         "совпа": "расхо", // «не совпадает» ≈ «расхождение»
         "сходи": "расхо",
+        "кода":  "код", // «стиль кода», «кодом», «code style» ≈ «код-стайл»
+        "кодом": "код",
+        "code":  "код",
+        "стиль": "стайл",
+        "style": "стайл",
 }
 
 // Stems — грубый стемминг префиксом: для русского работает прилично и не требует словарей.
@@ -2199,7 +2220,10 @@ func SearchKB(c Ctx, query string) []Hit {
                 if score &lt; MinCoverage </span>{
                         <span class="cov8" title="1">continue</span>
                 }
-                <span class="cov8" title="1">h := Hit{p.ID, p.Title, p.Body, c.Store.Name(p.AuthorID), p.UpdatedAt, p.TestInstruction, "", score}
+                // Порог — по всему тексту, а порядок — с бонусом за слова запроса в заголовке:
+                // страница «Код-стайл Python» важнее памятки, где код-стайл упомянут одной строкой.
+                <span class="cov8" title="1">score += titleBonus * float64(overlap(q, Stems(p.Title))) / float64(len(q))
+                h := Hit{p.ID, p.Title, p.Body, c.Store.Name(p.AuthorID), p.UpdatedAt, p.TestInstruction, "", score}
                 if p.TestInstruction </span>{
                         <span class="cov8" title="1">h.Label = TestInstructionLabel
 </span>                }
@@ -2346,13 +2370,14 @@ func recencyWeight(c Ctx, updatedAt string) float64 {
         }
 }
 
-// PageCard — страница базы для списка в интерфейсе (без полного текста).
+// PageCard — страница базы для интерфейса: начало текста для карточки и полный текст для просмотра.
 type PageCard struct {
         ID              string `json:"id"`
         Folder          string `json:"folder"`
         Type            string `json:"type"`
         Title           string `json:"title"`
         Excerpt         string `json:"excerpt"`
+        Body            string `json:"body"`
         Author          string `json:"author"`
         UpdatedAt       string `json:"updated_at"`
         TestInstruction bool   `json:"test_instruction"`
@@ -2371,7 +2396,7 @@ func KBPages(c Ctx) (folders []mockdata.Folder, pages []PageCard) {
                 if len(ex) &gt; 140 </span>{
                         <span class="cov8" title="1">ex = append(ex[:140], '…')
 </span>                }
-                <span class="cov8" title="1">pages = append(pages, PageCard{p.ID, p.Folder, p.Type, p.Title, string(ex), c.Store.Name(p.AuthorID), p.UpdatedAt, p.TestInstruction})</span>
+                <span class="cov8" title="1">pages = append(pages, PageCard{p.ID, p.Folder, p.Type, p.Title, string(ex), p.Body, c.Store.Name(p.AuthorID), p.UpdatedAt, p.TestInstruction})</span>
         }
         <span class="cov8" title="1">return folders, pages</span>
 }
@@ -2637,9 +2662,9 @@ func listMyRequests(c Ctx, _ map[string]any) Result {
         <span class="cov8" title="1">return ok(c.Store.Requests(c.User.ID))
 </span>}
 
-func getRequiredAccesses(c Ctx, _ map[string]any) Result {
-        <span class="cov8" title="1">week := c.Store.Week(c.User)
-        status := map[string]string{}
+// accessStatus — статус каждой системы для стажёра: выданные из сервиса доступов и его заявки поверх.
+func accessStatus(c Ctx) map[string]string {
+        <span class="cov8" title="1">status := map[string]string{}
         for _, st := range c.Store.Data.Access.CurrentState[c.User.ID] </span>{
                 <span class="cov8" title="1">status[st.System] = st.Status
 </span>        }
@@ -2648,7 +2673,13 @@ func getRequiredAccesses(c Ctx, _ map[string]any) Result {
                         <span class="cov8" title="1">status[r.System] = r.Status
 </span>                }
         }
-        <span class="cov8" title="1">var out []map[string]string
+        <span class="cov8" title="1">return status</span>
+}
+
+func getRequiredAccesses(c Ctx, _ map[string]any) Result {
+        <span class="cov8" title="1">week := c.Store.Week(c.User)
+        status := accessStatus(c)
+        var out []map[string]string
         for _, s := range c.Store.Data.Access.Systems </span>{
                 // BR-40: системы чужих отделов стажёру не показываются вовсе
                 <span class="cov8" title="1">if s.Department != c.Store.Data.Team.Department.ID || s.WeekFrom == nil || *s.WeekFrom &gt; week </span>{
@@ -2656,7 +2687,7 @@ func getRequiredAccesses(c Ctx, _ map[string]any) Result {
                 }
                 <span class="cov8" title="1">st := status[s.ID]
                 if st == "" </span>{
-                        <span class="cov0" title="0">st = "not_requested"
+                        <span class="cov8" title="1">st = "not_requested"
 </span>                }
                 <span class="cov8" title="1">out = append(out, map[string]string{"system": s.ID, "title": s.Title, "status": st})</span>
         }
@@ -2820,8 +2851,10 @@ func Decide(c Ctx, id, decision, reason, comment string) (store.Request, *Error)
         <span class="cov8" title="1">return out, nil</span>
 }
 
-// Catalog — что можно оформить в сервисе: типы отсутствий, доступные системы, порядок «сделай сам» и коды причин.
-// Стажёру — только системы своего отдела и недели (BR-40); остальным — только справочник кодов.
+// Catalog — что можно оформить в сервисе: типы отсутствий, системы, порядок «сделай сам» и коды причин.
+// Стажёру — все системы своего отдела, которые он вправе запросить, с отметкой «нужен сейчас» или «по плану
+// с N-й недели» (заявку раньше срока руководитель может отклонить с кодом NOT_NEEDED_YET).
+// Чужие системы и системы с ПДн не показываются (BR-40). Остальным ролям — только справочник кодов.
 func Catalog(c Ctx) map[string]any {
         <span class="cov8" title="1">abs := c.Store.Data.Absence
         out := map[string]any{
@@ -2829,9 +2862,34 @@ func Catalog(c Ctx) map[string]any {
                         "approver": c.Store.Name(c.User.LeadID)},
                 "access": map[string]any{"systems": []map[string]string{}, "reason_codes": c.Store.Data.Access.ReasonCodes},
 </span>        }
-        <span class="cov8" title="1">if res := Run(c, "get_required_accesses", nil); res.OK </span>{
-                <span class="cov8" title="1">out["access"].(map[string]any)["systems"] = res.Data.(map[string]any)["systems"]
+        <span class="cov8" title="1">if store.HasRole(c.User, store.RoleIntern) </span>{
+                <span class="cov8" title="1">out["access"].(map[string]any)["systems"] = requestableSystems(c)
 </span>        }
+        <span class="cov8" title="1">return out</span>
+}
+
+// SystemView — система в форме заявки на доступ.
+type SystemView struct {
+        System   string `json:"system"`
+        Title    string `json:"title"`
+        Status   string `json:"status"`
+        WeekFrom int    `json:"week_from"`
+        Now      bool   `json:"now"` // нужен на текущей неделе по плану
+}
+
+func requestableSystems(c Ctx) []SystemView {
+        <span class="cov8" title="1">week, status := c.Store.Week(c.User), accessStatus(c)
+        var out []SystemView
+        for _, s := range c.Store.Data.Access.Systems </span>{
+                <span class="cov8" title="1">if checkAccess(c, s.ID) != nil || s.WeekFrom == nil </span>{
+                        <span class="cov8" title="1">continue</span>
+                }
+                <span class="cov8" title="1">st := status[s.ID]
+                if st == "" </span>{
+                        <span class="cov8" title="1">st = "not_requested"
+</span>                }
+                <span class="cov8" title="1">out = append(out, SystemView{s.ID, s.Title, st, *s.WeekFrom, *s.WeekFrom &lt;= week})</span>
+        }
         <span class="cov8" title="1">return out</span>
 }
 </pre>
