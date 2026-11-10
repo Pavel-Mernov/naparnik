@@ -2,6 +2,7 @@ package tools
 
 import (
 	"fmt"
+	"math"
 	"regexp"
 	"sort"
 	"strings"
@@ -16,6 +17,10 @@ const MinCoverage = 0.6
 
 // ExpertThreshold — BR-13: уверенность выбора эксперта ниже порога → вопрос бадди.
 const ExpertThreshold = 0.6
+
+// generalFolders — памятки для всех (онбординг, процессы отдела, справочник «кто есть кто»):
+// они упоминают все темы сразу, и их авторство — не предметная экспертиза (BR-10). В поиске по базе участвуют.
+var generalFolders = map[string]bool{"f-start": true, "f-process": true}
 
 // titleBonus — вес совпадений в заголовке при сортировке выдачи (на порог MinCoverage не влияет).
 const titleBonus = 0.5
@@ -163,12 +168,37 @@ func FindExpert(c Ctx, question string) (id string, confidence float64, reason s
 		}
 		return cands[uid]
 	}
-	for _, p := range readablePages(c) {
-		n := overlap(q, Stems(p.Title+" "+p.Body))
-		if p.AuthorID == "" || p.AuthorID == c.User.ID || n == 0 {
+	kbPages := readablePages(c)
+	docs := make([]map[string]bool, len(kbPages))
+	df := map[string]int{}
+	for i, p := range kbPages {
+		docs[i] = Stems(p.Title + " " + p.Body)
+		for st := range q {
+			if docs[i][st] {
+				df[st]++
+			}
+		}
+	}
+	// IDF: слово, которое есть во многих страницах («правила», «метод», «дашборд»), — слабый сигнал;
+	// редкое предметное («конверсия», «выгрузка») — сильный. Так подбор не уплывает, когда модель
+	// дописывает к вопросу общие слова. Слово из 3 страниц и реже весит 1, чаще — меньше
+	// (сверху ограничено: случайное редкое слово не должно перевешивать тему).
+	n := float64(len(kbPages))
+	weight := func(st string) float64 { return math.Min(1, math.Log(1+n/float64(df[st]))/math.Log(1+n/3)) }
+	for i, p := range kbPages {
+		if p.AuthorID == "" || p.AuthorID == c.User.ID || generalFolders[p.Folder] {
 			continue
 		}
-		get(p.AuthorID).pageScores = append(get(p.AuthorID).pageScores, recencyWeight(c, p.UpdatedAt)*float64(n))
+		topic := 0.0
+		for st := range q {
+			if docs[i][st] {
+				topic += weight(st)
+			}
+		}
+		if topic == 0 {
+			continue
+		}
+		get(p.AuthorID).pageScores = append(get(p.AuthorID).pageScores, recencyWeight(c, p.UpdatedAt)*topic)
 	}
 	for _, u := range c.Store.Data.Team.Users {
 		if u.ID == c.User.ID || store.HasRole(&u, store.RoleIntern) {

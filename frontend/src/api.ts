@@ -78,8 +78,8 @@ export type TeamOverview = {
 };
 
 export type Services = {
-  absence: { reason_codes: Array<{ code: string; text: string }> };
-  access: { reason_codes: Array<{ code: string; text: string }>; systems?: Array<{ system: string; title: string; status: string }> };
+  absence: { reason_codes: Array<{ code: string; text: string }>; types?: AbsenceType[]; approver?: string; self_service?: { steps: string[] } };
+  access: { reason_codes: Array<{ code: string; text: string }>; systems?: SystemOption[] };
 };
 
 export type KbPage = {
@@ -94,6 +94,10 @@ export type KbPage = {
   test_instruction: boolean;
 };
 
+export type KbDraft = { id: string; title: string; body: string; folder: string; similar_page_id?: string; source_question?: string };
+export type AbsenceType = { type: string; title: string };
+export type SystemOption = { system: string; title: string; status: string; week_from: number; now: boolean };
+export type Warning = { code: string; message: string };
 export type KbFolder = { id: string; title: string; space: string };
 
 export type ChatReply = {
