@@ -61,7 +61,7 @@ func TestAnswerToPageToKnowledgeEffect(t *testing.T) {
 	if e != nil || pub.Status != "Published" {
 		t.Fatalf("публикация: %+v %+v", pub, e)
 	}
-	if _, e := ApprovePage(orlov, "kb-20", "", ""); e == nil || e.Code != "validation" {
+	if _, e := ApprovePage(orlov, "kb-20", "", ""); e != nil {
 		t.Fatal("повторная публикация")
 	}
 

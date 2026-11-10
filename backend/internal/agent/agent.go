@@ -6,6 +6,7 @@ import (
 	"context"
 	_ "embed"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 	"sync"
@@ -51,9 +52,9 @@ type Agent struct {
 	Provider llm.Provider
 	Timeout  time.Duration
 
-	mu       sync.Mutex
-	drafts   map[string]Draft
-	sessions map[string]*chat // история разговора по логину: «сделай за меня» помнит, о чём шла речь
+	mu        sync.Mutex
+	userLocks map[string]*sync.Mutex
+	sessions  map[string]*chat // история разговора по логину: «сделай за меня» помнит, о чём шла речь
 }
 
 // chat — разговор пользователя с моделью. Ограничен по числу реплик, чтобы контекст не рос бесконечно.
@@ -65,7 +66,7 @@ type chat struct {
 const maxTurns = 20
 
 func New(s *store.Store, p llm.Provider, timeout time.Duration) *Agent {
-	return &Agent{Store: s, Provider: p, Timeout: timeout, drafts: map[string]Draft{}, sessions: map[string]*chat{}}
+	return &Agent{Store: s, Provider: p, Timeout: timeout, userLocks: map[string]*sync.Mutex{}, sessions: map[string]*chat{}}
 }
 
 func (a *Agent) contextFor(u *mockdata.User) string {
@@ -86,8 +87,23 @@ func (a *Agent) contextFor(u *mockdata.User) string {
 var weekdayRU = map[time.Weekday]string{time.Monday: "понедельник", time.Tuesday: "вторник", time.Wednesday: "среда",
 	time.Thursday: "четверг", time.Friday: "пятница", time.Saturday: "суббота", time.Sunday: "воскресенье"}
 
+func (a *Agent) userLock(login string) *sync.Mutex {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	if a.userLocks[login] == nil {
+		a.userLocks[login] = &sync.Mutex{}
+	}
+	return a.userLocks[login]
+}
+
 // Ask обрабатывает сообщение пользователя.
 func (a *Agent) Ask(ctx context.Context, login, text string) (Reply, error) {
+	lock := a.userLock(login)
+	lock.Lock()
+	defer lock.Unlock()
+	if err := a.Store.Refresh(ctx); err != nil {
+		return Reply{}, fmt.Errorf("хранилище недоступно")
+	}
 	u, found := a.Store.UserByLogin(login)
 	if !found {
 		return Reply{}, fmt.Errorf("нет пользователя %q", login)
@@ -127,7 +143,9 @@ func (a *Agent) Ask(ctx context.Context, login, text string) (Reply, error) {
 	}
 	if err != nil {
 		// История могла оборваться посреди вызова инструментов — начинаем разговор заново.
-		a.Reset(login)
+		a.mu.Lock()
+		delete(a.sessions, login)
+		a.mu.Unlock()
 		return a.fallback(tc, text, err), nil
 	}
 	reply.Text = step.Text
@@ -146,12 +164,18 @@ func (a *Agent) handle(tc tools.Ctx, call llm.ToolCall, reply *Reply) string {
 			raw, _ := json.Marshal(tools.Result{Error: e})
 			return string(raw)
 		}
-		d := Draft{ID: a.Store.NextID("DRAFT"), UserID: tc.User.ID, Tool: call.Name, Args: call.Input}
-		a.mu.Lock()
-		a.drafts[d.ID] = d
-		a.mu.Unlock()
-		reply.Drafts = append(reply.Drafts, d)
-		res = map[string]any{"ok": true, "status": "needs_confirmation", "draft_id": d.ID, "draft": call.Input}
+		var d Draft
+		err := a.Store.Transaction(func(s *store.Store) error {
+			d = Draft{ID: s.NextID("DRAFT"), UserID: tc.User.ID, Tool: call.Name, Args: call.Input}
+			s.PutDraft(store.ActionDraft{ID: d.ID, UserID: d.UserID, Tool: d.Tool, Args: d.Args})
+			return nil
+		})
+		if err != nil {
+			res = tools.Result{Error: &tools.Error{Code: "unavailable", Message: "Не удалось сохранить черновик. Повтори запрос."}}
+		} else {
+			reply.Drafts = append(reply.Drafts, d)
+			res = map[string]any{"ok": true, "status": "needs_confirmation", "draft_id": d.ID, "draft": call.Input}
+		}
 	} else {
 		r := tools.Run(tc, call.Name, call.Input)
 		res = r
@@ -186,6 +210,9 @@ func (a *Agent) fallback(tc tools.Ctx, text string, err error) Reply {
 
 // Reset — начать разговор заново (смена учётки, ошибка модели, кнопка «Новый разговор»).
 func (a *Agent) Reset(login string) {
+	lock := a.userLock(login)
+	lock.Lock()
+	defer lock.Unlock()
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	delete(a.sessions, login)
@@ -195,25 +222,39 @@ func (a *Agent) Reset(login string) {
 // Если сервис недоступен, черновик сохраняется — можно повторить (SC-15).
 func (a *Agent) Confirm(login, draftID string) tools.Result {
 	u, found := a.Store.UserByLogin(login)
-	a.mu.Lock()
-	d, ok := a.drafts[draftID]
-	a.mu.Unlock()
-	if !found || !ok || d.UserID != u.ID {
+	if !found {
 		return tools.Result{Error: &tools.Error{Code: "not_found", Message: "Черновик не найден."}}
 	}
-	res := tools.Run(tools.Ctx{Store: a.Store, User: u}, d.Tool, d.Args)
-	if res.Error == nil || res.Error.Code != "unavailable" {
-		a.mu.Lock()
-		delete(a.drafts, draftID)
-		a.mu.Unlock()
+	var res tools.Result
+	err := a.Store.Transaction(func(s *store.Store) error {
+		d, ok := s.ActionDraft(draftID)
+		if !ok || d.UserID != u.ID {
+			res = tools.Result{Error: &tools.Error{Code: "not_found", Message: "Черновик не найден."}}
+			return errors.New("draft unavailable")
+		}
+		if len(d.Result) > 0 {
+			return json.Unmarshal(d.Result, &res)
+		}
+		res = tools.Run(tools.Ctx{Store: s, User: u}, d.Tool, d.Args)
+		if res.Error != nil {
+			return errors.New("action rejected")
+		}
+		raw, err := json.Marshal(res)
+		if err != nil {
+			return err
+		}
+		d.Result = raw
+		s.PutDraft(d)
+		return nil
+	})
+	if err != nil && res.Error == nil {
+		return tools.Result{Error: &tools.Error{Code: "unavailable", Message: "Не удалось сохранить действие. Повтори подтверждение."}}
 	}
 	return res
 }
 
-// Draft возвращает черновик (для интерфейса).
+// Draft возвращает только незавершённый черновик; квитанция остаётся для повторов.
 func (a *Agent) Draft(id string) (Draft, bool) {
-	a.mu.Lock()
-	defer a.mu.Unlock()
-	d, ok := a.drafts[id]
-	return d, ok
+	d, ok := a.Store.ActionDraft(id)
+	return Draft{ID: d.ID, UserID: d.UserID, Tool: d.Tool, Args: d.Args}, ok && len(d.Result) == 0
 }

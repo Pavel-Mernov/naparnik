@@ -78,8 +78,8 @@ func TestAbsenceDraftAndConfirm(t *testing.T) {
 	if !res.OK || res.Receipt.(map[string]string)["id"] != "ABS-1042" {
 		t.Fatalf("квитанция: %+v", res)
 	}
-	if res := a.Confirm("intern.sokolov", r.Drafts[0].ID); res.Error == nil {
-		t.Fatal("черновик исполняется один раз")
+	if res := a.Confirm("intern.sokolov", r.Drafts[0].ID); !res.OK || len(a.Store.Requests("u-sokolov")) != 1 {
+		t.Fatal("повтор возвращает квитанцию без новой заявки")
 	}
 }
 

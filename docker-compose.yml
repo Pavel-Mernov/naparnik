@@ -4,6 +4,21 @@
 #   docker compose up --build
 #
 services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: naparnik
+      POSTGRES_PASSWORD: naparnik
+      POSTGRES_DB: naparnik
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U naparnik -d naparnik"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
   backend:
     build:
       context: .
@@ -12,6 +27,11 @@ services:
     env_file:
       - path: .env
         required: false
+    environment:
+      DATABASE_URL: postgres://naparnik:naparnik@postgres:5432/naparnik?sslmode=disable
+    depends_on:
+      postgres:
+        condition: service_healthy
     restart: unless-stopped
 
   frontend:
@@ -23,3 +43,6 @@ services:
       backend:
         condition: service_healthy
     restart: unless-stopped
+
+volumes:
+  pgdata:

@@ -12,3 +12,5 @@
 | [coverage](./coverage/) | Отчёт о покрытии тестами (`scripts/coverage.sh`) |
 
 Порядок чтения: 00 → 01 → 02 → 03 → 04. Разработке — сразу [03-requirements](./03-requirements/README.md) и [spec](./spec/00-overview.md).
+
+Постоянное хранение, Docker и защита повторов: [PERSISTENCE.md](PERSISTENCE.md).

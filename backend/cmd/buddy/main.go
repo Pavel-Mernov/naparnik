@@ -37,6 +37,7 @@ func run(args []string, in io.Reader, out io.Writer) error {
 	if err != nil {
 		return err
 	}
+	defer a.Store.Close()
 	fmt.Fprintf(out, "Модель: %s/%s (%s), пользователь: %s\n", a.LLM.Provider, a.LLM.Model, a.LLM.Mode, *user)
 	reader := bufio.NewReader(in)
 	ask := func(text string) error {

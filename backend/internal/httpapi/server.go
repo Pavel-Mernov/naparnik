@@ -23,10 +23,17 @@ type Server struct {
 
 func (s *Server) Handler() http.Handler {
 	mux := http.NewServeMux()
-	mux.HandleFunc("GET /api/health", func(w http.ResponseWriter, _ *http.Request) { writeJSON(w, 200, map[string]string{"status": "ok"}) })
+	mux.HandleFunc("GET /api/health", func(w http.ResponseWriter, r *http.Request) {
+		if err := s.Store.Refresh(r.Context()); err != nil {
+			writeJSON(w, 503, errBody("unavailable", "Хранилище недоступно"))
+			return
+		}
+		writeJSON(w, 200, map[string]string{"status": "ok"})
+	})
 	mux.HandleFunc("GET /api/me", s.auth(s.me))
 	mux.HandleFunc("POST /api/chat/messages", s.auth(s.chat))
 	mux.HandleFunc("POST /api/chat/reset", s.auth(s.chatReset))
+	mux.HandleFunc("GET /api/drafts", s.auth(s.drafts))
 	mux.HandleFunc("POST /api/drafts/{id}/confirm", s.auth(s.confirm))
 	mux.HandleFunc("POST /api/requests/{id}/confirm", s.auth(s.confirm))       // заявки (отгул, доступ)
 	mux.HandleFunc("POST /api/questions/{id}/confirm-send", s.auth(s.confirm)) // BR-11: вопрос человеку
@@ -62,6 +69,10 @@ func (s *Server) auth(h handler) http.HandlerFunc {
 		u, ok := s.Store.UserByLogin(r.Header.Get("X-User"))
 		if !ok {
 			writeJSON(w, http.StatusUnauthorized, errBody("unauthorized", "Укажи тестовую учётку в заголовке X-User"))
+			return
+		}
+		if err := s.Store.Refresh(r.Context()); err != nil {
+			writeJSON(w, 503, errBody("unavailable", "Хранилище недоступно"))
 			return
 		}
 		h(w, r, u)
@@ -197,7 +208,7 @@ func (s *Server) markStep(w http.ResponseWriter, r *http.Request, u *mockdata.Us
 		writeResult(w, tools.Result{Error: &tools.Error{Code: "forbidden", Message: "Отметить шаг может стажёр или его бадди."}})
 		return
 	}
-	writeResult(w, t.Run(c, map[string]any{"step_id": r.PathValue("id"), "intern_id": body.InternID}))
+	writeResult(w, tools.Run(c, "mark_step_done", map[string]any{"step_id": r.PathValue("id"), "intern_id": body.InternID}))
 }
 
 // requests — свои заявки; руководитель видит заявки своих стажёров (лента, SC-29).
@@ -219,7 +230,7 @@ func (s *Server) createRequest(w http.ResponseWriter, r *http.Request, u *mockda
 		return
 	}
 	kind, _ := body["kind"].(string)
-	writeResult(w, tools.CreateSelf(tools.Ctx{Store: s.Store, User: u}, kind, body))
+	writeResult(w, tools.CreateSelfOnce(tools.Ctx{Store: s.Store, User: u}, r.Header.Get("Idempotency-Key"), kind, body))
 }
 
 // decide — согласующий одобряет или отклоняет заявку с кодом причины.
@@ -291,4 +302,13 @@ func nonNil[T any](xs []T) []T {
 		return []T{}
 	}
 	return xs
+}
+
+// drafts восстанавливает незавершённые действия после перезапуска сервера.
+func (s *Server) drafts(w http.ResponseWriter, _ *http.Request, u *mockdata.User) {
+	out := []agent.Draft{}
+	for _, d := range s.Store.PendingDrafts(u.ID) {
+		out = append(out, agent.Draft{ID: d.ID, Tool: d.Tool, Args: d.Args})
+	}
+	writeJSON(w, 200, map[string]any{"drafts": out})
 }

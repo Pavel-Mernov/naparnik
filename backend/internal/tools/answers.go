@@ -16,7 +16,20 @@ const defaultFolder = "f-start"
 // AnswerQuestion — адресат отвечает текстом (US-10). Ответ сразу уходит стажёру,
 // а Напарник готовит черновик страницы «Вопрос-ответ» (BR-31): папка — по похожим страницам,
 // похожая страница — предложение дополнить её (BR-32). Черновик не виден в поиске до «Ок» автора (BR-02, BR-30).
+type answerResult struct {
+	question store.Question
+	page     mockdata.Page
+}
+
 func AnswerQuestion(c Ctx, questionID, text string) (store.Question, mockdata.Page, *Error) {
+	r, e := atomic(c, func(c Ctx) (answerResult, *Error) {
+		q, p, e := answerQuestion(c, questionID, text)
+		return answerResult{q, p}, e
+	})
+	return r.question, r.page, e
+}
+
+func answerQuestion(c Ctx, questionID, text string) (store.Question, mockdata.Page, *Error) {
 	text = strings.TrimSpace(text)
 	if text == "" {
 		return store.Question{}, mockdata.Page{}, &Error{Code: "validation", Message: "Пустой ответ."}
@@ -32,6 +45,13 @@ func AnswerQuestion(c Ctx, questionID, text string) (store.Question, mockdata.Pa
 	}
 	if q.AddresseeID != c.User.ID {
 		return store.Question{}, mockdata.Page{}, &Error{Code: "forbidden", Message: "Ответить может только адресат вопроса."}
+	}
+	if q.Status == "Answered" && q.Answer == text {
+		for _, p := range c.Store.Pages() {
+			if p.ID == q.PageID {
+				return q, p, nil
+			}
+		}
 	}
 	if q.Status != "Sent" {
 		return store.Question{}, mockdata.Page{}, &Error{Code: "validation", Message: "На вопрос уже ответили."}
@@ -99,6 +119,10 @@ func DraftsFor(c Ctx) []mockdata.Page {
 
 // ApprovePage — автор подтверждает черновик (можно с правками) → страница опубликована под его именем (BR-30).
 func ApprovePage(c Ctx, pageID, title, body string) (mockdata.Page, *Error) {
+	return atomic(c, func(c Ctx) (mockdata.Page, *Error) { return approvePage(c, pageID, title, body) })
+}
+
+func approvePage(c Ctx, pageID, title, body string) (mockdata.Page, *Error) {
 	var found *mockdata.Page
 	for _, p := range c.Store.Pages() {
 		if p.ID == pageID {
@@ -110,6 +134,8 @@ func ApprovePage(c Ctx, pageID, title, body string) (mockdata.Page, *Error) {
 		return mockdata.Page{}, &Error{Code: "not_found", Message: "Черновик не найден."}
 	case found.AuthorID != c.User.ID:
 		return mockdata.Page{}, &Error{Code: "forbidden", Message: "Опубликовать может только автор ответа."}
+	case found.Status == "Published" && (strings.TrimSpace(title) == "" || strings.TrimSpace(title) == found.Title) && (strings.TrimSpace(body) == "" || strings.TrimSpace(body) == found.Body):
+		return *found, nil
 	case found.Status != "Draft":
 		return mockdata.Page{}, &Error{Code: "validation", Message: "Страница уже опубликована."}
 	}

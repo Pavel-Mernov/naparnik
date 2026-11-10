@@ -2,6 +2,7 @@
 package app
 
 import (
+	"context"
 	"os"
 	"time"
 
@@ -40,5 +41,13 @@ func New() (*App, error) {
 		return nil, err
 	}
 	s := store.New(data, today)
+	if url := os.Getenv("DATABASE_URL"); url != "" {
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		s, err = store.OpenPostgres(ctx, data, today, url)
+		if err != nil {
+			return nil, err
+		}
+	}
 	return &App{Store: s, Agent: agent.New(s, llm.New(cfg, today), cfg.Timeout), LLM: cfg}, nil
 }
