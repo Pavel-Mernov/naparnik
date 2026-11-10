@@ -178,7 +178,7 @@
 | GET / POST | `/api/plans/{internId}`, `/api/plans/{id}/approve` | План адаптации |
 | PATCH | `/api/plan-steps/{id}` | Отметить шаг |
 | POST | `/api/requests`, `/api/requests/{id}/confirm` | Заявки (отгул) |
-| GET | `/api/dashboard/team` | Дашборд руководителя |
+| GET | `/api/dashboard/team` | Реализован: обзор только своих стажёров, прогресс, просрочки, счётчики вопросов и заявки; контракт в [SDD](../spec/05-tools-api.md#обзор-команды-sc-21) |
 | GET / POST | `/api/kb/maintenance`, `/api/kb/merge-proposals/{id}/resolve` | Поддержка базы |
 | POST | `/api/notifications/telegram/link` | Одноразовый код для Telegram |
 | GET | `/api/events/stream` | Поток событий (SSE / WebSocket) |
