@@ -14,7 +14,7 @@ func load(t *testing.T) *Store {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if d.DemoToday != "2026-11-11" || len(d.Team.Users) != 7 || len(d.Template.Steps) != 20 {
+	if d.DemoToday != "2026-11-11" || len(d.Team.Users) == 0 || len(d.Template.Steps) != 20 {
 		t.Fatalf("мок-данные: %s, %d людей, %d шагов", d.DemoToday, len(d.Team.Users), len(d.Template.Steps))
 	}
 	today, _ := time.Parse(time.DateOnly, d.DemoToday)

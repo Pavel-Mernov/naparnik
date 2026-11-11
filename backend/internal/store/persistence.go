@@ -11,6 +11,7 @@ import (
 	_ "github.com/jackc/pgx/v5/stdlib"
 
 	"github.com/worker4556/naparnik/backend/internal/mockdata"
+	"github.com/worker4556/naparnik/backend/internal/practice"
 )
 
 // Для небольшого прототипа состояние хранится одним версионированным JSONB-документом.
@@ -25,6 +26,7 @@ type snapshot struct {
 	Seq        map[string]int                              `json:"seq"`
 	Drafts     map[string]ActionDraft                      `json:"drafts"`
 	Operations map[string]Operation                        `json:"operations"`
+	Practices  map[string]practice.State                   `json:"practices"`
 }
 
 type ActionDraft struct {
@@ -42,15 +44,19 @@ type Operation struct {
 }
 
 func (s *Store) snapshot() snapshot {
-	return snapshot{1, s.steps, s.requests, s.questions, s.pages, s.seq, s.drafts, s.operations}
+	return snapshot{2, s.steps, s.requests, s.questions, s.pages, s.seq, s.drafts, s.operations, s.practices}
 }
 
 func (s *Store) restore(v snapshot) error {
-	if v.Version != 1 || v.Steps == nil || v.Seq == nil || v.Drafts == nil || v.Operations == nil {
+	if (v.Version != 1 && v.Version != 2) || v.Steps == nil || v.Seq == nil || v.Drafts == nil || v.Operations == nil {
 		return errors.New("unsupported or corrupt stored state")
 	}
 	s.steps, s.requests, s.questions, s.pages = v.Steps, v.Requests, v.Questions, v.Pages
 	s.seq, s.drafts, s.operations = v.Seq, v.Drafts, v.Operations
+	s.practices = v.Practices
+	if s.practices == nil {
+		s.practices = map[string]practice.State{}
+	}
 	return nil
 }
 

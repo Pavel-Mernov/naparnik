@@ -79,6 +79,8 @@ var allRoles = []string{store.RoleIntern, store.RoleBuddy, store.RoleExpert, sto
 // All — полный список инструментов.
 func All() []Tool {
 	return []Tool{
+		{"get_practice", "Практика перед шагом своего плана: термины, этап, одобрение задания, результат. Покажи стажёру практику в «Мой день» или «Мой план».", schema(map[string]any{"practice_id": prop("string", "необязательно: id практики")}), []string{store.RoleIntern}, false, getPractice},
+		{"advance_practice", "Выбор стажёра: начать, следующий этап или пропустить практику. Реальная задача не отмечается выполненной.", schema(map[string]any{"practice_id": prop("string", "необязательно: id практики"), "action": map[string]any{"type": "string", "enum": []string{"start", "next", "skip_stage", "skip_all"}}, "expected_stage": prop("string", "текущий этап из get_practice, нужен для next и skip_stage")}, "action"), []string{store.RoleIntern}, false, advancePracticeTool},
 		{"get_today", "Шаги на сегодня (до 3, просроченные первыми) и события дня стажёра.",
 			schema(map[string]any{}), []string{store.RoleIntern}, false, getToday},
 		{"get_plan", "План адаптации: этапы, шаги со статусами, прогресс, следующий шаг. intern_id — только для бадди и руководителя.",
