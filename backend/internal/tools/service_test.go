@@ -4,6 +4,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/worker4556/naparnik/backend/internal/cache"
+	"github.com/worker4556/naparnik/backend/internal/mockdata"
 	"github.com/worker4556/naparnik/backend/internal/store"
 )
 
@@ -147,5 +149,48 @@ func TestExpertStableForRephrasedQ2(t *testing.T) {
 		if id, conf, _ := FindExpert(c, q); id != "u-orlov" || conf < ExpertThreshold {
 			t.Errorf("%q → %s %.2f", q, id, conf)
 		}
+	}
+}
+
+// Кэш поиска и подбора эксперта: второй одинаковый запрос — из кэша; публикация страницы меняет версию базы,
+// и кэш не отдаёт устаревшую выдачу; у другого пользователя — свой ключ (права, BR-40).
+func TestKBCache(t *testing.T) {
+	KBCache = cache.NewMemory()
+	defer func() { KBCache = nil }()
+	s := newStore(t)
+	c := ctxFor(t, s, "intern.sokolov")
+	h0, m0 := CacheStats()
+	first := Run(c, "search_kb", map[string]any{"query": "Что такое витрина?"})
+	second := Run(c, "search_kb", map[string]any{"query": "  что такое  ВИТРИНА? "})
+	h1, m1 := CacheStats()
+	if h1-h0 != 1 || m1-m0 != 1 {
+		t.Fatalf("попадания %d, промахи %d", h1-h0, m1-m0)
+	}
+	a := first.Data.(map[string]any)["hits"].([]Hit)
+	b := second.Data.(map[string]any)["hits"].([]Hit)
+	if len(a) == 0 || a[0].PageID != b[0].PageID || a[0].Body != b[0].Body {
+		t.Fatal("из кэша — тот же результат того же типа")
+	}
+	e1 := Run(c, "find_expert", map[string]any{"question": "Почему конверсия в дашборде отличается от выгрузки из DWH?"})
+	e2 := Run(c, "find_expert", map[string]any{"question": "Почему конверсия в дашборде отличается от выгрузки из DWH?"})
+	if e1.Data.(map[string]any)["addressee_id"] != "u-orlov" || e2.Data.(map[string]any)["addressee_id"] != "u-orlov" {
+		t.Fatal("эксперт из кэша")
+	}
+	// новая версия базы — новый ключ
+	v1 := kbVersion(c)
+	s.AddPage(mockdata.Page{ID: "kb-99", Space: "space-analytics", Folder: "f-dwh", Status: "Published", Title: "Витрина — что это", Body: "витрина", AuthorID: "u-orlov", UpdatedAt: "2026-11-11"})
+	if kbVersion(c) == v1 {
+		t.Fatal("версия базы меняется")
+	}
+	h2, _ := CacheStats()
+	Run(c, "search_kb", map[string]any{"query": "Что такое витрина?"})
+	if h3, _ := CacheStats(); h3 != h2 {
+		t.Fatal("после публикации — не из кэша")
+	}
+	if kbKey(c, "search", "Что такое витрина?") != kbKey(c, "search", "витрина, что это такое") {
+		t.Fatal("одни и те же основы слов — один ключ")
+	}
+	if kbKey(ctxFor(t, s, "intern.egorova"), "search", "витрина") == kbKey(c, "search", "витрина") {
+		t.Fatal("у другого пользователя — свой ключ")
 	}
 }

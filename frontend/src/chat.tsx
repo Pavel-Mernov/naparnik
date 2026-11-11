@@ -75,9 +75,14 @@ export const describeDraft = (d: Draft, look: Lookup): { title: string; rows: Ar
 
 type DraftState = { status: "new" | "busy" | "done" | "cancelled" | "error"; note?: string; retry?: boolean };
 
+// Статус черновиков живёт дольше карточки: чат закрывают и открывают, а «Подтверждено» должно остаться.
+// Повторное подтверждение сервер и так не выполнит дважды — он вернёт ту же квитанцию.
+const draftMemory = new Map<string, DraftState>();
+
 const DraftCard = ({ draft, login, look, onDone }: { draft: Draft; login: string; look: Lookup; onDone: () => void }) => {
   const { t } = useTheme();
-  const [st, setSt] = useState<DraftState>({ status: "new" });
+  const [st, setStLocal] = useState<DraftState>(() => draftMemory.get(draft.id) ?? { status: "new" });
+  const setSt = (v: DraftState) => { if (v.status !== "busy") draftMemory.set(draft.id, v); setStLocal(v); };
   const view = describeDraft(draft, look);
   const confirm = async () => {
     setSt({ status: "busy" });
@@ -138,7 +143,7 @@ export const ChatDrawer = ({ open, onClose, text, setText, messages, loading, on
   const end = useRef<HTMLDivElement>(null);
   useEffect(() => { end.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, loading, open]);
   return (
-    <Drawer anchor={mobile ? "bottom" : "right"} open={open} onClose={onClose}
+    <Drawer anchor={mobile ? "bottom" : "right"} open={open} onClose={onClose} ModalProps={{ keepMounted: true }}
       slotProps={{ paper: { sx: mobile ? { height: "88dvh", borderTop: `2px solid ${t.line}` } : { width: 440, borderLeft: `2px solid ${t.line}` } } }}>
       <Stack height="100%" sx={{ bgcolor: t.bg }}>
         {mobile && <Box aria-hidden sx={{ width: 40, height: 4, bgcolor: t.line, mx: "auto", mt: 1 }} />}

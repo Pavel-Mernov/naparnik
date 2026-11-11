@@ -34,7 +34,12 @@ func (s *Server) Handler() http.Handler {
 			writeJSON(w, 503, errBody("unavailable", "Хранилище недоступно"))
 			return
 		}
-		writeJSON(w, 200, map[string]string{"status": "ok"})
+		hits, misses := tools.CacheStats()
+		kind := "off"
+		if s.KV != nil {
+			kind = s.KV.Kind()
+		}
+		writeJSON(w, 200, map[string]any{"status": "ok", "cache": map[string]any{"kind": kind, "kb_hits": hits, "kb_misses": misses}})
 	})
 	mux.HandleFunc("GET /api/me", s.auth(s.me))
 	mux.HandleFunc("GET /api/practices", s.auth(s.practices))

@@ -63,7 +63,7 @@
 				
 				<option value="file3">github.com/worker4556/naparnik/backend/internal/agent/practice.go (86.0%)</option>
 				
-				<option value="file4">github.com/worker4556/naparnik/backend/internal/app/app.go (75.9%)</option>
+				<option value="file4">github.com/worker4556/naparnik/backend/internal/app/app.go (76.7%)</option>
 				
 				<option value="file5">github.com/worker4556/naparnik/backend/internal/app/dotenv.go (100.0%)</option>
 				
@@ -73,7 +73,7 @@
 				
 				<option value="file8">github.com/worker4556/naparnik/backend/internal/httpapi/practice.go (95.7%)</option>
 				
-				<option value="file9">github.com/worker4556/naparnik/backend/internal/httpapi/server.go (95.2%)</option>
+				<option value="file9">github.com/worker4556/naparnik/backend/internal/httpapi/server.go (94.7%)</option>
 				
 				<option value="file10">github.com/worker4556/naparnik/backend/internal/llm/anthropic.go (100.0%)</option>
 				
@@ -105,21 +105,23 @@
 				
 				<option value="file24">github.com/worker4556/naparnik/backend/internal/tools/answers.go (91.8%)</option>
 				
-				<option value="file25">github.com/worker4556/naparnik/backend/internal/tools/dashboard.go (100.0%)</option>
+				<option value="file25">github.com/worker4556/naparnik/backend/internal/tools/cache.go (100.0%)</option>
 				
-				<option value="file26">github.com/worker4556/naparnik/backend/internal/tools/kb.go (98.8%)</option>
+				<option value="file26">github.com/worker4556/naparnik/backend/internal/tools/dashboard.go (100.0%)</option>
 				
-				<option value="file27">github.com/worker4556/naparnik/backend/internal/tools/plan.go (98.4%)</option>
+				<option value="file27">github.com/worker4556/naparnik/backend/internal/tools/kb.go (98.8%)</option>
 				
-				<option value="file28">github.com/worker4556/naparnik/backend/internal/tools/practice.go (91.4%)</option>
+				<option value="file28">github.com/worker4556/naparnik/backend/internal/tools/plan.go (98.4%)</option>
 				
-				<option value="file29">github.com/worker4556/naparnik/backend/internal/tools/requests.go (98.7%)</option>
+				<option value="file29">github.com/worker4556/naparnik/backend/internal/tools/practice.go (91.4%)</option>
 				
-				<option value="file30">github.com/worker4556/naparnik/backend/internal/tools/service.go (97.3%)</option>
+				<option value="file30">github.com/worker4556/naparnik/backend/internal/tools/requests.go (98.7%)</option>
 				
-				<option value="file31">github.com/worker4556/naparnik/backend/internal/tools/tools.go (100.0%)</option>
+				<option value="file31">github.com/worker4556/naparnik/backend/internal/tools/service.go (97.3%)</option>
 				
-				<option value="file32">github.com/worker4556/naparnik/backend/internal/tools/transaction.go (77.5%)</option>
+				<option value="file32">github.com/worker4556/naparnik/backend/internal/tools/tools.go (100.0%)</option>
+				
+				<option value="file33">github.com/worker4556/naparnik/backend/internal/tools/transaction.go (77.5%)</option>
 				
 				</select>
 			</div>
@@ -664,6 +666,7 @@ import (
         "github.com/worker4556/naparnik/backend/internal/mockdata"
         "github.com/worker4556/naparnik/backend/internal/store"
         "github.com/worker4556/naparnik/backend/internal/telegram"
+        "github.com/worker4556/naparnik/backend/internal/tools"
 )
 
 type App struct {
@@ -711,7 +714,8 @@ func New() (*App, error) {
         if err != nil </span>{
                 <span class="cov0" title="0">return nil, fmt.Errorf("redis: %w", err)
 </span>        }
-        <span class="cov8" title="1">limit := 20
+        <span class="cov8" title="1">tools.KBCache = kv // кэш поиска по базе и подбора эксперта
+        limit := 20
         if v, err := strconv.Atoi(os.Getenv("LLM_RATE_PER_MIN")); err == nil </span>{
                 <span class="cov0" title="0">limit = v
 </span>        }
@@ -772,6 +776,8 @@ import (
 type KV interface {
         // SetTTL кладёт значение с временем жизни.
         SetTTL(ctx context.Context, key, value string, ttl time.Duration) error
+        // Get возвращает значение, если оно есть и не истекло (кэш поиска по базе).
+        Get(ctx context.Context, key string) (string, bool, error)
         // Take возвращает значение и удаляет его (одноразовый код).
         Take(ctx context.Context, key string) (string, bool, error)
         // Hit увеличивает счётчик окна и возвращает новое значение (лимит запросов).
@@ -805,6 +811,13 @@ func (r *redisKV) Kind() string { <span class="cov8" title="1">return "redis" }<
 func (r *redisKV) SetTTL(ctx context.Context, key, value string, ttl time.Duration) error {
         <span class="cov8" title="1">return r.c.Set(ctx, key, value, ttl).Err()
 </span>}
+func (r *redisKV) Get(ctx context.Context, key string) (string, bool, error) {
+        <span class="cov8" title="1">v, err := r.c.Get(ctx, key).Result()
+        if err == redis.Nil </span>{
+                <span class="cov8" title="1">return "", false, nil
+</span>        }
+        <span class="cov8" title="1">return v, err == nil, err</span>
+}
 func (r *redisKV) Take(ctx context.Context, key string) (string, bool, error) {
         <span class="cov8" title="1">v, err := r.c.GetDel(ctx, key).Result()
         if err == redis.Nil </span>{
@@ -853,6 +866,12 @@ func (m *memory) SetTTL(_ context.Context, key, value string, ttl time.Duration)
         defer m.mu.Unlock()
         m.m[key] = item{v: value, exp: m.now().Add(ttl)}
         return nil
+</span>}
+func (m *memory) Get(_ context.Context, key string) (string, bool, error) {
+        <span class="cov8" title="1">m.mu.Lock()
+        defer m.mu.Unlock()
+        it, ok := m.get(key)
+        return it.v, ok, nil
 </span>}
 func (m *memory) Take(_ context.Context, key string) (string, bool, error) {
         <span class="cov8" title="1">m.mu.Lock()
@@ -1131,7 +1150,12 @@ func (s *Server) Handler() http.Handler {
                         <span class="cov0" title="0">writeJSON(w, 503, errBody("unavailable", "Хранилище недоступно"))
                         return
 </span>                }
-                <span class="cov8" title="1">writeJSON(w, 200, map[string]string{"status": "ok"})</span>
+                <span class="cov8" title="1">hits, misses := tools.CacheStats()
+                kind := "off"
+                if s.KV != nil </span>{
+                        <span class="cov0" title="0">kind = s.KV.Kind()
+</span>                }
+                <span class="cov8" title="1">writeJSON(w, 200, map[string]any{"status": "ok", "cache": map[string]any{"kind": kind, "kb_hits": hits, "kb_misses": misses}})</span>
         })
         <span class="cov8" title="1">mux.HandleFunc("GET /api/me", s.auth(s.me))
         mux.HandleFunc("GET /api/practices", s.auth(s.practices))
@@ -4113,6 +4137,89 @@ func approvePage(c Ctx, pageID, title, body string) (mockdata.Page, *Error) {
 		
 		<pre class="file" id="file25" style="display: none">package tools
 
+import (
+        "context"
+        "crypto/sha256"
+        "encoding/hex"
+        "encoding/json"
+        "sort"
+        "strings"
+        syncatomic "sync/atomic"
+        "time"
+
+        "github.com/worker4556/naparnik/backend/internal/cache"
+)
+
+// Кэш поиска по базе и подбора эксперта (Redis; без него — память процесса).
+// Это самые тяжёлые вызовы агента: каждый раз заново разбираются все страницы базы.
+// Ключ = пользователь + версия базы + запрос. Версия меняется при любой публикации или правке страницы,
+// поэтому кэш не отдаёт устаревший ответ, а ответ не уходит человеку с другими правами (BR-40).
+
+// KBCache задаётся при сборке приложения; nil — без кэша (тесты, CLI).
+var KBCache cache.KV
+
+const kbCacheTTL = 10 * time.Minute
+
+var cacheHits, cacheMisses syncatomic.Int64
+
+// CacheStats — сколько раз кэш сработал (для /api/health).
+func CacheStats() (hits, misses int64) { <span class="cov8" title="1">return cacheHits.Load(), cacheMisses.Load() }</span>
+
+// kbVersion — отпечаток базы, видимой пользователю: id, статус и дата обновления страниц.
+func kbVersion(c Ctx) string {
+        <span class="cov8" title="1">h := sha256.New()
+        for _, p := range readablePages(c) </span>{
+                <span class="cov8" title="1">h.Write([]byte(p.ID + "|" + p.Status + "|" + p.UpdatedAt + "|" + p.Title + "\n"))
+                h.Write([]byte{byte(len(p.Body)), byte(len(p.Body) &gt;&gt; 8)})
+</span>        }
+        <span class="cov8" title="1">return hex.EncodeToString(h.Sum(nil))[:16]</span>
+}
+
+// kbKey — ключ по основам слов, а не по тексту: поиск и подбор эксперта зависят только от них,
+// поэтому «Что такое витрина?» и «витрина что это» — один и тот же ключ.
+func kbKey(c Ctx, kind, query string) string {
+        <span class="cov8" title="1">stems := make([]string, 0)
+        for st := range Stems(query) </span>{
+                <span class="cov8" title="1">stems = append(stems, st)
+</span>        }
+        <span class="cov8" title="1">sort.Strings(stems)
+        q := strings.Join(stems, " ")
+        sum := sha256.Sum256([]byte(q))
+        return "kb:" + kind + ":" + c.User.ID + ":" + kbVersion(c) + ":" + hex.EncodeToString(sum[:8])</span>
+}
+
+// cached достаёт значение из кэша или считает его и кладёт. Сбой кэша не ломает ответ — просто считаем.
+func cached[T any](c Ctx, kind, query string, compute func() T) T {
+        <span class="cov8" title="1">if KBCache == nil </span>{
+                <span class="cov8" title="1">return compute()
+</span>        }
+        <span class="cov8" title="1">ctx, cancel := context.WithTimeout(context.Background(), 300*time.Millisecond)
+        defer cancel()
+        key := kbKey(c, kind, query)
+        if raw, ok, err := KBCache.Get(ctx, key); err == nil &amp;&amp; ok </span>{
+                <span class="cov8" title="1">var v T
+                if json.Unmarshal([]byte(raw), &amp;v) == nil </span>{
+                        <span class="cov8" title="1">cacheHits.Add(1)
+                        return v
+</span>                }
+        }
+        <span class="cov8" title="1">cacheMisses.Add(1)
+        v := compute()
+        if raw, err := json.Marshal(v); err == nil </span>{
+                <span class="cov8" title="1">_ = KBCache.SetTTL(ctx, key, string(raw), kbCacheTTL)
+</span>        }
+        <span class="cov8" title="1">return v</span>
+}
+
+type expertPick struct {
+        ID         string  `json:"id"`
+        Confidence float64 `json:"confidence"`
+        Reason     string  `json:"reason"`
+}
+</pre>
+		
+		<pre class="file" id="file26" style="display: none">package tools
+
 import "github.com/worker4556/naparnik/backend/internal/store"
 
 type internOverview struct {
@@ -4217,7 +4324,7 @@ func TeamDashboard(c Ctx) Result {
 }
 </pre>
 		
-		<pre class="file" id="file26" style="display: none">package tools
+		<pre class="file" id="file27" style="display: none">package tools
 
 import (
         "fmt"
@@ -4353,9 +4460,10 @@ func SearchKB(c Ctx, query string) []Hit {
 }
 
 func searchKB(c Ctx, args map[string]any) Result {
-        <span class="cov8" title="1">hits := SearchKB(c, str(args, "query"))
-        return ok(map[string]any{"found": len(hits) &gt; 0, "hits": hits})
-</span>}
+        <span class="cov8" title="1">query := str(args, "query")
+        hits := cached(c, "search", query, func() []Hit </span>{ <span class="cov8" title="1">return SearchKB(c, query) }</span>)
+        <span class="cov8" title="1">return ok(map[string]any{"found": len(hits) &gt; 0, "hits": hits})</span>
+}
 
 func teamDirectory(c Ctx, _ map[string]any) Result {
         <span class="cov8" title="1">var people []map[string]string
@@ -4464,7 +4572,12 @@ func FindExpert(c Ctx, question string) (id string, confidence float64, reason s
 }
 
 func findExpert(c Ctx, args map[string]any) Result {
-        <span class="cov8" title="1">id, conf, reason := FindExpert(c, str(args, "question"))
+        <span class="cov8" title="1">question := str(args, "question")
+        pick := cached(c, "expert", question, func() expertPick </span>{
+                <span class="cov8" title="1">id, conf, reason := FindExpert(c, question)
+                return expertPick{id, conf, reason}
+</span>        })
+        <span class="cov8" title="1">id, conf, reason := pick.ID, pick.Confidence, pick.Reason
         if id == "" || conf &lt; ExpertThreshold </span>{
                 <span class="cov8" title="1">buddy := c.User.BuddyID
                 return ok(map[string]any{"addressee_id": buddy, "name": c.Store.Name(buddy), "is_buddy": true,
@@ -4576,7 +4689,7 @@ func clip(s string) string {
 }
 </pre>
 		
-		<pre class="file" id="file27" style="display: none">package tools
+		<pre class="file" id="file28" style="display: none">package tools
 
 import (
         "strings"
@@ -4703,7 +4816,7 @@ func containsStr(xs []string, x string) bool {
 }
 </pre>
 		
-		<pre class="file" id="file28" style="display: none">package tools
+		<pre class="file" id="file29" style="display: none">package tools
 
 import (
         "crypto/sha256"
@@ -5159,7 +5272,7 @@ func PracticeHelpDraft(c Ctx, intern, id string) Result {
 }
 </pre>
 		
-		<pre class="file" id="file29" style="display: none">package tools
+		<pre class="file" id="file30" style="display: none">package tools
 
 import (
         "strings"
@@ -5325,7 +5438,7 @@ func requestAccess(c Ctx, args map[string]any) Result {
 }
 </pre>
 		
-		<pre class="file" id="file30" style="display: none">package tools
+		<pre class="file" id="file31" style="display: none">package tools
 
 import (
         "time"
@@ -5497,7 +5610,7 @@ func requestableSystems(c Ctx) []SystemView {
 }
 </pre>
 		
-		<pre class="file" id="file31" style="display: none">// Package tools — инструменты агента AI-buddy.
+		<pre class="file" id="file32" style="display: none">// Package tools — инструменты агента AI-buddy.
 //
 // Правила из docs/03-requirements, которые проверяет код (а не промпт):
 //   - BR-40: права проверяются до вызова; недоступное не показывается и не упоминается;
@@ -5710,7 +5823,7 @@ func Check(c Ctx, name string, args map[string]any) *Error {
 }
 </pre>
 		
-		<pre class="file" id="file32" style="display: none">package tools
+		<pre class="file" id="file33" style="display: none">package tools
 
 import (
         "crypto/sha256"

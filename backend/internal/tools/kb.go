@@ -134,7 +134,8 @@ func SearchKB(c Ctx, query string) []Hit {
 }
 
 func searchKB(c Ctx, args map[string]any) Result {
-	hits := SearchKB(c, str(args, "query"))
+	query := str(args, "query")
+	hits := cached(c, "search", query, func() []Hit { return SearchKB(c, query) })
 	return ok(map[string]any{"found": len(hits) > 0, "hits": hits})
 }
 
@@ -245,7 +246,12 @@ func FindExpert(c Ctx, question string) (id string, confidence float64, reason s
 }
 
 func findExpert(c Ctx, args map[string]any) Result {
-	id, conf, reason := FindExpert(c, str(args, "question"))
+	question := str(args, "question")
+	pick := cached(c, "expert", question, func() expertPick {
+		id, conf, reason := FindExpert(c, question)
+		return expertPick{id, conf, reason}
+	})
+	id, conf, reason := pick.ID, pick.Confidence, pick.Reason
 	if id == "" || conf < ExpertThreshold {
 		buddy := c.User.BuddyID
 		return ok(map[string]any{"addressee_id": buddy, "name": c.Store.Name(buddy), "is_buddy": true,

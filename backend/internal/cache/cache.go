@@ -14,6 +14,8 @@ import (
 type KV interface {
 	// SetTTL кладёт значение с временем жизни.
 	SetTTL(ctx context.Context, key, value string, ttl time.Duration) error
+	// Get возвращает значение, если оно есть и не истекло (кэш поиска по базе).
+	Get(ctx context.Context, key string) (string, bool, error)
 	// Take возвращает значение и удаляет его (одноразовый код).
 	Take(ctx context.Context, key string) (string, bool, error)
 	// Hit увеличивает счётчик окна и возвращает новое значение (лимит запросов).
@@ -46,6 +48,13 @@ type redisKV struct{ c *redis.Client }
 func (r *redisKV) Kind() string { return "redis" }
 func (r *redisKV) SetTTL(ctx context.Context, key, value string, ttl time.Duration) error {
 	return r.c.Set(ctx, key, value, ttl).Err()
+}
+func (r *redisKV) Get(ctx context.Context, key string) (string, bool, error) {
+	v, err := r.c.Get(ctx, key).Result()
+	if err == redis.Nil {
+		return "", false, nil
+	}
+	return v, err == nil, err
 }
 func (r *redisKV) Take(ctx context.Context, key string) (string, bool, error) {
 	v, err := r.c.GetDel(ctx, key).Result()
@@ -95,6 +104,12 @@ func (m *memory) SetTTL(_ context.Context, key, value string, ttl time.Duration)
 	defer m.mu.Unlock()
 	m.m[key] = item{v: value, exp: m.now().Add(ttl)}
 	return nil
+}
+func (m *memory) Get(_ context.Context, key string) (string, bool, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	it, ok := m.get(key)
+	return it.v, ok, nil
 }
 func (m *memory) Take(_ context.Context, key string) (string, bool, error) {
 	m.mu.Lock()

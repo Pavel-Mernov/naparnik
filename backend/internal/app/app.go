@@ -14,6 +14,7 @@ import (
 	"github.com/worker4556/naparnik/backend/internal/mockdata"
 	"github.com/worker4556/naparnik/backend/internal/store"
 	"github.com/worker4556/naparnik/backend/internal/telegram"
+	"github.com/worker4556/naparnik/backend/internal/tools"
 )
 
 type App struct {
@@ -61,6 +62,7 @@ func New() (*App, error) {
 	if err != nil {
 		return nil, fmt.Errorf("redis: %w", err)
 	}
+	tools.KBCache = kv // кэш поиска по базе и подбора эксперта
 	limit := 20
 	if v, err := strconv.Atoi(os.Getenv("LLM_RATE_PER_MIN")); err == nil {
 		limit = v

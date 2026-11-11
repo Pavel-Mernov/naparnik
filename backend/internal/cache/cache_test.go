@@ -83,3 +83,19 @@ func TestRedis(t *testing.T) {
 		t.Fatal("занято")
 	}
 }
+
+func TestGet(t *testing.T) {
+	ctx := context.Background()
+	for _, kv := range []KV{NewMemory(), func() KV { k, _ := New("redis://" + miniredis.RunT(t).Addr()); return k }()} {
+		_ = kv.SetTTL(ctx, "k", "v", time.Minute)
+		if v, ok, _ := kv.Get(ctx, "k"); !ok || v != "v" {
+			t.Fatal(kv.Kind())
+		}
+		if v, ok, _ := kv.Get(ctx, "k"); !ok || v != "v" {
+			t.Fatal("Get не удаляет")
+		}
+		if _, ok, err := kv.Get(ctx, "нет"); ok || err != nil {
+			t.Fatal("нет ключа")
+		}
+	}
+}
