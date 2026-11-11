@@ -78,11 +78,14 @@ type Store struct {
 	requests      []*Request
 	questions     []*Question
 	seq           map[string]int
+	events        []LogEvent
+	notifications []Notification
+	tgLinks       map[string]int64
 }
 
 func New(d *mockdata.Data, today time.Time) *Store {
 	s := &Store{Data: d, Today: today, practices: map[string]practice.State{}, steps: map[string]map[string]*mockdata.TrackerStep{},
-		pages: append([]mockdata.Page(nil), d.KB.Pages...), drafts: map[string]ActionDraft{}, operations: map[string]Operation{},
+		pages: append([]mockdata.Page(nil), d.KB.Pages...), drafts: map[string]ActionDraft{}, operations: map[string]Operation{}, tgLinks: map[string]int64{},
 		seq: map[string]int{"ABS": 1041, "ACC": 2001, "Q": 100, "DRAFT": 0, "kb": 19}}
 	for _, p := range d.Tracker.Plans {
 		m := map[string]*mockdata.TrackerStep{}

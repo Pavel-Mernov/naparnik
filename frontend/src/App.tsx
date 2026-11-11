@@ -18,10 +18,13 @@ import {
   type Question, type RequestItem, type Services, type TeamOverview, type TodayData, type User,
 } from "./api";
 import { makeTheme, tokens, type Mode } from "./theme";
-import { buildNotes, initials, requestTitle, statusOf } from "./helpers";
+import { buildNotes, initials, requestTitle, statusOf, type Note } from "./helpers";
 import { ROLE_RU, primaryRole, viewLabel, viewsFor, type DataState, type View } from "./state";
 import { Block, Empty, Row, StatusTag } from "./components/ui";
 import { MascotBadge } from "./components/Mascot";
+import { TelegramDialog } from "./components/TelegramDialog";
+
+const SERVER_ONLY = ["morning_plan", "event_reminder", "page_stale"];
 import { DayPage, PlanPage } from "./pages/InternPages";
 import { QuestionsPage } from "./pages/QuestionsPage";
 import { KnowledgePage } from "./pages/KnowledgePage";
@@ -67,6 +70,9 @@ function App() {
   const [snack, setSnack] = useState("");
   const [notesAnchor, setNotesAnchor] = useState<HTMLElement | null>(null);
   const [accountAnchor, setAccountAnchor] = useState<HTMLElement | null>(null);
+  const [tgOpen, setTgOpen] = useState(false);
+  // Серверные уведомления: напоминания по времени, утренний план, «страница устарела» — их нельзя вывести из данных экрана
+  const [serverNotes, setServerNotes] = useState<Array<{ id: string; type: string; text: string; view: View; read: boolean }>>([]);
   const role = data ? primaryRole(data.me.roles) : null;
   const views = role ? viewsFor(role) : [];
   const isCurrent = (owner: string, epoch: number) => account.current === owner && generation.current === epoch;
@@ -115,6 +121,14 @@ function App() {
   }, [login]);
 
   useEffect(() => { void load(); return () => { loadController.current?.abort(); }; }, [load]);
+  useEffect(() => {
+    let alive = true;
+    const pull = () => api<{ notifications: Array<{ id: string; type: string; text: string; view: View; read: boolean }> }>(login, "/api/notifications")
+      .then((r) => { if (alive) setServerNotes(r.notifications.filter((n) => SERVER_ONLY.includes(n.type))); }).catch(() => undefined);
+    void pull();
+    const timer = setInterval(pull, 30000); // напоминания появляются по времени — подтягиваем раз в полминуты
+    return () => { alive = false; clearInterval(timer); };
+  }, [login]);
   useEffect(() => () => { actions.current.forEach((c) => c.abort()); }, []);
   // Чат на экране начинается с чистого листа — и разговор с агентом на сервере тоже.
   useEffect(() => { void api(login, "/api/chat/reset", { method: "POST", body: "{}" }).catch(() => undefined); }, [login]);
@@ -185,6 +199,7 @@ function App() {
     meId: data.me.id, today: data.me.today, steps: data.today?.steps ?? data.plan?.steps ?? [], questions: data.questions,
     requests: data.requests, drafts: data.drafts, events: data.today?.events ?? [],
   }) : [];
+  notes.unshift(...serverNotes.filter((n) => !n.read).map((n) => ({ id: n.id, text: n.text.replace(/\s*Открыть →$/, ""), meta: "Напарник", urgent: n.type === "page_stale", go: (n.view === "plan" ? "day" : n.view) as Note["go"] })));
   const urgent = notes.filter((n) => n.urgent).length;
   const waitingForMe = data ? notes.filter((n) => !n.urgent && n.go !== "day") : [];
 
@@ -314,6 +329,9 @@ function App() {
         <Menu open={Boolean(accountAnchor)} anchorEl={accountAnchor} onClose={() => setAccountAnchor(null)}
           anchorOrigin={{ vertical: "bottom", horizontal: "right" }} transformOrigin={{ vertical: "top", horizontal: "right" }}
           slotProps={{ paper: { sx: { minWidth: 320, maxWidth: "calc(100vw - 24px)" } } }}>
+          <MenuItem onClick={() => { setAccountAnchor(null); setTgOpen(true); }}>
+            <ListItemText primary="Уведомления в Telegram" secondary="Подключить или отключить бота" />
+          </MenuItem>
           <Typography variant="caption" color="text.secondary" sx={{ px: 2, pt: 1.5, pb: 1, display: "block" }}>Тестовые учётки · войти как</Typography>
           {others.map((u) => <MenuItem key={u.login} onClick={() => switchUser(u.login)}>
             <Avatar sx={{ width: 28, height: 28, fontSize: 12, bgcolor: t.surface, color: t.text }}>{initials(u.name)}</Avatar>
@@ -321,6 +339,7 @@ function App() {
           </MenuItem>)}
         </Menu>
 
+        <TelegramDialog open={tgOpen} login={login} onClose={() => setTgOpen(false)} onChange={setSnack} />
         <ChatDrawer open={chatOpen} onClose={() => setChatOpen(false)} text={chatText} setText={setChatText} messages={messages} loading={chatLoading}
           onSend={(retry) => void sendChat(retry)} login={login} look={look} onAction={() => void load()} />
         <Snackbar open={Boolean(snack)} autoHideDuration={3000} onClose={() => setSnack("")} message={snack}

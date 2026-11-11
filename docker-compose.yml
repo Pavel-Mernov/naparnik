@@ -19,6 +19,17 @@ services:
       retries: 20
     restart: unless-stopped
 
+  # Кэш и очередь: одноразовые коды Telegram, лимит запросов к модели, блокировка отправки (стек Авито: PostgreSQL + Redis)
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
   backend:
     build:
       context: .
@@ -29,8 +40,11 @@ services:
         required: false
     environment:
       DATABASE_URL: postgres://naparnik:naparnik@postgres:5432/naparnik?sslmode=disable
+      REDIS_URL: redis://redis:6379/0
     depends_on:
       postgres:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     restart: unless-stopped
 

@@ -3,19 +3,26 @@ package app
 
 import (
 	"context"
+	"fmt"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/worker4556/naparnik/backend/internal/agent"
+	"github.com/worker4556/naparnik/backend/internal/cache"
 	"github.com/worker4556/naparnik/backend/internal/llm"
 	"github.com/worker4556/naparnik/backend/internal/mockdata"
 	"github.com/worker4556/naparnik/backend/internal/store"
+	"github.com/worker4556/naparnik/backend/internal/telegram"
 )
 
 type App struct {
-	Store *store.Store
-	Agent *agent.Agent
-	LLM   llm.Config
+	Store     *store.Store
+	Agent     *agent.Agent
+	LLM       llm.Config
+	KV        cache.KV          // Redis (REDIS_URL) или память
+	TG        *telegram.Service // уведомления в Telegram (TG_BOT_TOKEN; без него — режим log)
+	ChatLimit int               // LLM_RATE_PER_MIN, по умолчанию 20
 }
 
 // New: MOCK_DATA_DIR (по умолчанию ../docs/04-mock-data), DEMO_TODAY (по умолчанию из мок-данных), LLM_* — см. .env.example.
@@ -49,5 +56,15 @@ func New() (*App, error) {
 			return nil, err
 		}
 	}
-	return &App{Store: s, Agent: agent.New(s, llm.New(cfg, today), cfg.Timeout), LLM: cfg}, nil
+	// Как и с PostgreSQL: если REDIS_URL задан и недоступен — ошибка запуска, без тихого перехода в память.
+	kv, err := cache.New(os.Getenv("REDIS_URL"))
+	if err != nil {
+		return nil, fmt.Errorf("redis: %w", err)
+	}
+	limit := 20
+	if v, err := strconv.Atoi(os.Getenv("LLM_RATE_PER_MIN")); err == nil {
+		limit = v
+	}
+	return &App{Store: s, Agent: agent.New(s, llm.New(cfg, today), cfg.Timeout), LLM: cfg,
+		KV: kv, TG: telegram.New(telegram.ConfigFromEnv(), s, kv), ChatLimit: limit}, nil
 }

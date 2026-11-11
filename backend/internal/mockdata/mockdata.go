@@ -14,8 +14,9 @@ import (
 )
 
 type Settings struct {
-	Proactivity              string `json:"proactivity"`
-	QuestionTextVisibleBuddy bool   `json:"question_text_visible_to_buddy"`
+	Proactivity              string   `json:"proactivity"`
+	QuestionTextVisibleBuddy bool     `json:"question_text_visible_to_buddy"`
+	Reminders                []string `json:"reminders"` // за сколько напоминать о событии: 1d, 1h (BR-84)
 }
 
 type User struct {

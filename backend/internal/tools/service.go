@@ -25,6 +25,7 @@ func created(c Ctx, r *store.Request) {
 		{At: r.CreatedAt, By: r.ApproverID, Text: "Заявка на согласовании: " + c.Store.Name(r.ApproverID)},
 	}
 	c.Store.AddRequest(r)
+	c.Store.Emit(store.EvRequestCreated, c.User.ID, r.ID, map[string]string{"approver": r.ApproverID, "employee": r.EmployeeID, "kind": r.Kind})
 }
 
 // CreateSelf — стажёр сам оформляет заявку в форме сервиса (BR-42, «сделай сам»).
@@ -121,6 +122,8 @@ func decide(c Ctx, id, decision, reason, comment string) (store.Request, *Error)
 			r.History = append(r.History, store.Event{At: now, By: r.EmployeeID, Text: "Шаг плана можно отметить выполненным — стажёр подтверждает"})
 		}
 	})
+	c.Store.Emit(store.EvRequestDecided, c.User.ID, out.ID, map[string]string{"employee": out.EmployeeID, "status": out.Status,
+		"status_ru": map[string]string{"approved": "согласовано", "granted": "доступ выдан", "rejected": "отклонено"}[out.Status]})
 	return out, nil
 }
 

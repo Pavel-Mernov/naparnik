@@ -110,6 +110,7 @@ func markStepDone(c Ctx, args map[string]any) Result {
 	if !c.Store.SetStepStatus(internID, stepID, "Done") {
 		return fail("not_found", "Такого шага нет в плане.")
 	}
+	c.Store.Emit(store.EvStepDone, c.User.ID, stepID, map[string]string{"intern": internID})
 	return Result{OK: true, Data: map[string]string{"step_id": stepID, "status": "Done"},
 		Receipt: map[string]string{"id": "STEP-" + stepID, "status": "Done"}}
 }

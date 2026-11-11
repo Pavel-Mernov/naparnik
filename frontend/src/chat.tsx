@@ -114,14 +114,14 @@ const DraftCard = ({ draft, login, look, onDone }: { draft: Draft; login: string
 // ---------- окно чата ----------
 
 /** Отметка полезности ответа из базы (SCR-I2). «Не помогло» сразу ведёт к человеку. */
-const Feedback = ({ onNotHelpful }: { onNotHelpful: () => void }) => {
+const Feedback = ({ onNotHelpful, onRate }: { onNotHelpful: () => void; onRate: (value: string) => void }) => {
   const [picked, setPicked] = useState("");
   const options: Array<[string, string]> = [["helped", "Помогло"], ["not", "Не помогло"], ["stale", "Устарело"]];
   const thanks: Record<string, string> = { helped: "Спасибо, учту", not: "Ищу, кто поможет…", stale: "Спасибо, передам владельцу базы" };
   if (picked) return <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.75 }}>{thanks[picked]}</Typography>;
   return <Stack direction="row" gap={0.75} mt={0.75} flexWrap="wrap">
     {options.map(([id, label]) => <Button key={id} variant="outlined" size="small" sx={{ minHeight: 32, py: 0.25, px: 1.25, fontSize: 13 }}
-      onClick={() => { setPicked(id); if (id === "not") onNotHelpful(); }}>{label}</Button>)}
+      onClick={() => { setPicked(id); onRate(id === "not" ? "not_helped" : id); if (id === "not") onNotHelpful(); }}>{label}</Button>)}
   </Stack>;
 };
 
@@ -163,7 +163,8 @@ export const ChatDrawer = ({ open, onClose, text, setText, messages, loading, on
                 </Box>
               ))}
               {m.reply?.drafts.map((d) => <DraftCard key={d.id} draft={d} login={login} look={look} onDone={onAction} />)}
-              {m.reply && m.reply.sources.length > 0 && !m.reply.drafts.length && <Feedback onNotHelpful={() => onSend(`Не помогло, нужен человек: ${messages[index - 1]?.text ?? ""}`)} />}
+              {m.reply && m.reply.sources.length > 0 && !m.reply.drafts.length && <Feedback onNotHelpful={() => onSend(`Не помогло, нужен человек: ${messages[index - 1]?.text ?? ""}`)}
+                onRate={(value) => { void api(login, "/api/feedback", { method: "POST", body: JSON.stringify({ page_id: m.reply?.sources[0]?.page_id, value }) }).catch(() => undefined); }} />}
               {m.retryText && <Button variant="text" size="small" sx={{ mt: 1, minHeight: 36 }} onClick={() => onSend(m.retryText)}>Повторить</Button>}
             </Box>
           ))}

@@ -27,6 +27,10 @@ type snapshot struct {
 	Drafts     map[string]ActionDraft                      `json:"drafts"`
 	Operations map[string]Operation                        `json:"operations"`
 	Practices  map[string]practice.State                   `json:"practices"`
+	// Журнал событий, уведомления и привязки Telegram. В старом сохранённом состоянии их нет — это пустые списки.
+	Events        []LogEvent       `json:"events,omitempty"`
+	Notifications []Notification   `json:"notifications,omitempty"`
+	TGLinks       map[string]int64 `json:"tg_links,omitempty"`
 }
 
 type ActionDraft struct {
@@ -44,7 +48,7 @@ type Operation struct {
 }
 
 func (s *Store) snapshot() snapshot {
-	return snapshot{2, s.steps, s.requests, s.questions, s.pages, s.seq, s.drafts, s.operations, s.practices}
+	return snapshot{2, s.steps, s.requests, s.questions, s.pages, s.seq, s.drafts, s.operations, s.practices, s.events, s.notifications, s.tgLinks}
 }
 
 func (s *Store) restore(v snapshot) error {
@@ -56,6 +60,10 @@ func (s *Store) restore(v snapshot) error {
 	s.practices = v.Practices
 	if s.practices == nil {
 		s.practices = map[string]practice.State{}
+	}
+	s.events, s.notifications, s.tgLinks = v.Events, v.Notifications, v.TGLinks
+	if s.tgLinks == nil {
+		s.tgLinks = map[string]int64{}
 	}
 	return nil
 }

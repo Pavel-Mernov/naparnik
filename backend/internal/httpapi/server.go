@@ -8,17 +8,23 @@ import (
 	"encoding/json"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/worker4556/naparnik/backend/internal/agent"
+	"github.com/worker4556/naparnik/backend/internal/cache"
 	"github.com/worker4556/naparnik/backend/internal/mockdata"
 	"github.com/worker4556/naparnik/backend/internal/store"
+	"github.com/worker4556/naparnik/backend/internal/telegram"
 	"github.com/worker4556/naparnik/backend/internal/tools"
 )
 
 type Server struct {
 	Agent     *agent.Agent
 	Store     *store.Store
-	StaticDir string // каталог фронта; пусто — фронт не отдаётся
+	StaticDir string            // каталог фронта; пусто — фронт не отдаётся
+	TG        *telegram.Service // уведомления в Telegram; nil — только веб
+	KV        cache.KV          // Redis или память: коды привязки, лимит запросов к модели
+	ChatLimit int               // запросов к модели в минуту на пользователя; 0 — без лимита
 }
 
 func (s *Server) Handler() http.Handler {
@@ -53,6 +59,12 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/questions", s.auth(s.questions))
 	mux.HandleFunc("GET /api/today", s.auth(s.today))
 	mux.HandleFunc("GET /api/users", s.users)
+	mux.HandleFunc("GET /api/notifications", s.auth(s.notifications)) // центр уведомлений (BR-50…53)
+	mux.HandleFunc("POST /api/notifications/read", s.auth(s.notificationsRead))
+	mux.HandleFunc("POST /api/telegram/link", s.auth(s.telegramLink)) // BR-50: одноразовый код
+	mux.HandleFunc("DELETE /api/telegram/link", s.auth(s.telegramUnlink))
+	mux.HandleFunc("POST /api/feedback", s.auth(s.feedback)) // «помогло / не помогло / устарело» (M-04, H11)
+	mux.HandleFunc("GET /api/metrics", s.auth(s.metrics))    // метрики из журнала событий (BR-73)
 	mux.HandleFunc("GET /api/kb/pages", s.auth(s.kbPages))
 	mux.HandleFunc("GET /api/kb/drafts", s.auth(s.kbDrafts))
 	mux.HandleFunc("POST /api/kb/pages/{id}/approve", s.auth(s.kbApprove))
@@ -185,10 +197,27 @@ func (s *Server) chat(w http.ResponseWriter, r *http.Request, u *mockdata.User) 
 		writeJSON(w, 422, errBody("validation", "Пустое сообщение"))
 		return
 	}
+	// Лимит запросов к модели: защита от циклов и случайного расхода токенов (общий счётчик в Redis).
+	if s.KV != nil && s.ChatLimit > 0 {
+		if n, err := s.KV.Hit(r.Context(), "rl:chat:"+u.ID, time.Minute); err == nil && n > int64(s.ChatLimit) {
+			writeJSON(w, http.StatusTooManyRequests, errBody("rate_limited", "Слишком много сообщений подряд — подожди минуту и повтори."))
+			return
+		}
+	}
 	reply, err := s.Agent.Ask(r.Context(), u.Login, body.Text)
 	if err != nil {
 		writeJSON(w, 500, errBody("internal", err.Error()))
 		return
+	}
+	if len(reply.Sources) > 0 { // M-09: ответ из базы — событие для метрик
+		ids := make([]string, 0, len(reply.Sources))
+		for _, src := range reply.Sources {
+			ids = append(ids, src.PageID)
+		}
+		_ = s.Store.Transaction(func(st *store.Store) error {
+			st.Emit(store.EvKBAnswer, u.ID, ids[0], map[string]string{"pages": strings.Join(ids, ",")})
+			return nil
+		})
 	}
 	writeJSON(w, 200, reply)
 }

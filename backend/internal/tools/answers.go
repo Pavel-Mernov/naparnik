@@ -70,6 +70,7 @@ func answerQuestion(c Ctx, questionID, text string) (store.Question, mockdata.Pa
 	q, _ = c.Store.UpdateQuestion(q.ID, func(x *store.Question) {
 		x.Status, x.Answer, x.AnsweredBy, x.AnsweredAt, x.PageID = "Answered", text, c.User.ID, time.Now().Format(time.RFC3339), page.ID
 	})
+	c.Store.Emit(store.EvQuestionAnswered, c.User.ID, q.ID, map[string]string{"asker": q.AskedBy, "page": page.ID})
 	return q, page, nil
 }
 
@@ -148,5 +149,6 @@ func approvePage(c Ctx, pageID, title, body string) (mockdata.Page, *Error) {
 		}
 		p.Status, p.UpdatedAt = "Published", c.Store.Today.Format(time.DateOnly)
 	})
+	c.Store.Emit(store.EvPagePublished, c.User.ID, page.ID, map[string]string{"source_question": page.SourceQuestion})
 	return page, nil
 }

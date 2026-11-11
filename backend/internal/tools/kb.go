@@ -266,6 +266,7 @@ func sendQuestion(c Ctx, args map[string]any) Result {
 	q := &store.Question{ID: c.Store.NextID("Q"), AskedBy: c.User.ID, AddresseeID: to.ID, Title: QuestionTitle(str(args, "title"), text), Text: text,
 		Reason: str(args, "reason"), Urgent: boolean(args, "urgent"), Status: "Sent"}
 	c.Store.AddQuestion(q)
+	c.Store.Emit(store.EvQuestionSent, c.User.ID, q.ID, map[string]string{"to": to.ID, "urgent": fmt.Sprint(q.Urgent)})
 	delivery := "в сводке"
 	if q.Urgent {
 		delivery = "сразу (срочно)"
