@@ -10,7 +10,8 @@ import {
   DarkModeOutlined, DescriptionOutlined, ForumOutlined, HomeOutlined, LightModeOutlined, MenuBookOutlined,
   NotificationsNoneOutlined, TaskAltOutlined,
 } from "@mui/icons-material";
-import avitoLogo from "../avito-logo.svg";
+import avitoLogo from "./assets/logo.svg";
+import avitoLogoDark from "./assets/logo-dark.svg";
 import { ChatDrawer, type ChatMessage, type Lookup } from "./chat";
 import {
   api, ApiError, unwrap, type ChatReply, type KbDraft, type KbFolder, type KbPage, type Me, type PlanData, type PlanStep,
@@ -229,25 +230,31 @@ function App() {
       <Box sx={{ minHeight: "100dvh", pb: { xs: 10, md: 0 } }}>
         <Box component="header" sx={{ position: "sticky", top: 0, zIndex: 10, bgcolor: t.bg, borderBottom: `2px solid ${t.line}` }}>
           <Container maxWidth="lg">
-            <Stack direction="row" alignItems="center" gap={{ xs: 1, md: 3 }} sx={{ height: 64 }}>
-              <Stack direction="row" alignItems="center" gap={1.25} component="a" href="#" onClick={(e) => { e.preventDefault(); nav("day"); }} sx={{ color: "inherit", textDecoration: "none", flex: "none" }}>
-                <Box component="img" src={avitoLogo} alt="Avito" sx={{ height: { xs: 32, md: 38 }, width: "auto", filter: mode === "dark" ? "invert(1) hue-rotate(180deg)" : "none" }} />
-                <Typography sx={{ display: { xs: "none", sm: "block" }, fontWeight: 700, fontSize: { xs: 19, md: 22 }, letterSpacing: "-0.025em" }}>Напарник</Typography>
-              </Stack>
-              {!mobile && role && <Stack component="nav" aria-label="Разделы" direction="row" gap={0} sx={{ flex: 1, ml: { md: 0, lg: 2 }, minWidth: 0, overflowX: "auto" }}>
-                {views.map((v) => <Box key={v} component="button" onClick={() => nav(v)} aria-current={view === v ? "page" : undefined} sx={{
-                  font: "inherit", fontSize: 15, border: "none", bgcolor: "transparent", color: view === v ? t.text : t.muted, px: { md: 1, lg: 1.5 }, height: 64, whiteSpace: "nowrap",
-                  borderBottom: `2px solid ${view === v ? t.text : "transparent"}`, mb: "-2px", fontWeight: view === v ? 600 : 400, "&:hover": { color: t.text },
-                }}>{viewLabel(role, v)}</Box>)}
-              </Stack>}
-              <Box flex={1} display={{ md: "none" }} />
-              <Stack direction="row" alignItems="center" gap={0.5}>
+            <Box sx={{ display: "flex", alignItems: "center", height: 64, gap: 0.5 }}>
+              <Box component="a" href="#" onClick={(e) => { e.preventDefault(); nav("day"); }} sx={{ display: "flex", alignItems: "center", flex: "none" }}>
+                <Box component="img" src={mode === "dark" ? avitoLogoDark : avitoLogo} alt="Avito" sx={{ height: 28, width: "auto", display: "block" }} />
+              </Box>
+              {/* Nav hug ровно посередине между лого и кнопкой темы */}
+              <Box sx={{ flex: 1, display: "flex", justifyContent: "center", minWidth: 0, overflow: "hidden" }}>
+                {!mobile && role && <Stack component="nav" aria-label="Разделы" direction="row" gap={0.5} sx={{ flex: "none", maxWidth: "100%", overflowX: "auto", overflowY: "hidden" }}>
+                  {views.map((v) => <Box key={v} component="button" onClick={() => nav(v)} aria-current={view === v ? "page" : undefined} sx={{
+                    font: "inherit", fontSize: 15, border: "none", bgcolor: "transparent", color: t.text,
+                    px: { md: 1.25, lg: 1.75 }, height: 64, whiteSpace: "nowrap",
+                    fontWeight: view === v ? 600 : 500, letterSpacing: "-0.01em",
+                    transition: "color .2s ease", userSelect: "none", WebkitTapHighlightColor: "transparent",
+                    "&:hover": { color: mode === "light" ? "rgba(0,0,0,0.5)" : "rgba(243,243,243,0.5)" },
+                    "&:active, &:focus": { color: t.text, bgcolor: "transparent", outline: "none" },
+                    "&:focus-visible": { outline: `2px solid ${t.link}`, outlineOffset: 2 },
+                  }}>{viewLabel(role, v)}</Box>)}
+                </Stack>}
+              </Box>
+              <Tooltip title={mode === "light" ? "Тёмная тема" : "Светлая тема"}>
+                <IconButton aria-label="Сменить тему" onClick={() => setMode(mode === "light" ? "dark" : "light")}>{mode === "light" ? <DarkModeOutlined /> : <LightModeOutlined />}</IconButton>
+              </Tooltip>
+              <Stack direction="row" alignItems="center" gap={0.5} sx={{ flex: "none" }}>
                 {role && role !== "intern" && !mobile && (wide
                   ? <Button variant="text" onClick={() => openChat()} startIcon={<ForumOutlined />}>Спросить Напарника</Button>
                   : <Tooltip title="Спросить Напарника"><IconButton aria-label="Спросить Напарника" onClick={() => openChat()}><ForumOutlined /></IconButton></Tooltip>)}
-                <Tooltip title={mode === "light" ? "Тёмная тема" : "Светлая тема"}>
-                  <IconButton aria-label="Сменить тему" onClick={() => setMode(mode === "light" ? "dark" : "light")}>{mode === "light" ? <DarkModeOutlined /> : <LightModeOutlined />}</IconButton>
-                </Tooltip>
                 <IconButton aria-label={`Уведомления: ${notes.length}`} onClick={(e) => setNotesAnchor(e.currentTarget)}>
                   <Badge badgeContent={urgent} sx={{ "& .MuiBadge-badge": { bgcolor: "error.main", color: "#000", fontWeight: 700, borderRadius: 0 } }}><NotificationsNoneOutlined /></Badge>
                 </IconButton>
@@ -258,7 +265,7 @@ function App() {
                   {wide && me && <Box textAlign="left"><Typography variant="body2" fontWeight={600} lineHeight={1.2}>{me.name}</Typography><Typography variant="caption" color="text.secondary">{role && ROLE_RU[role]} · демо</Typography></Box>}
                 </Box>
               </Stack>
-            </Stack>
+            </Box>
           </Container>
         </Box>
         {loading && <LinearProgress aria-label="Загрузка" sx={{ position: "fixed", top: 64, left: 0, right: 0, zIndex: 11, height: 2 }} />}
@@ -295,16 +302,20 @@ function App() {
 
         <Popover open={Boolean(notesAnchor)} anchorEl={notesAnchor} onClose={() => setNotesAnchor(null)} anchorOrigin={{ vertical: "bottom", horizontal: "right" }} transformOrigin={{ vertical: "top", horizontal: "right" }}
           slotProps={{ paper: { sx: { width: 360, maxWidth: "calc(100vw - 24px)", maxHeight: 480 } } }}>
-          <Box sx={{ p: 2 }}>
-            <Typography variant="h3" component="h2" mb={1}>Уведомления</Typography>
+          {/* Отступы Akita: снаружи 8, заголовок и строки — 16 внутри */}
+          <Box sx={{ py: 1 }}>
+            <Typography variant="h3" component="h2" sx={{ px: 2, pt: 1, pb: 1.5 }}>Уведомления</Typography>
             {notes.length ? notes.map((n) => <Row key={n.id} title={n.text} sub={n.meta} onClick={() => { setNotesAnchor(null); nav(n.go); }}
-              end={n.urgent ? <StatusTag status="Overdue" label="нужно действие" /> : undefined} />) : <Empty text="Всё спокойно — новых событий нет." variant={2} />}
+              end={n.urgent ? <StatusTag status="Overdue" label="нужно действие" /> : undefined} sx={{ px: 2 }} />)
+              : <Box sx={{ px: 2 }}><Empty text="Всё спокойно — новых событий нет." variant={2} /></Box>}
           </Box>
         </Popover>
 
-        <Menu open={Boolean(accountAnchor)} anchorEl={accountAnchor} onClose={() => setAccountAnchor(null)} anchorOrigin={{ vertical: "bottom", horizontal: "right" }} transformOrigin={{ vertical: "top", horizontal: "right" }}>
-          <Typography variant="caption" color="text.secondary" sx={{ px: 2, py: 1, display: "block" }}>Тестовые учётки · войти как</Typography>
-          {others.map((u) => <MenuItem key={u.login} onClick={() => switchUser(u.login)} sx={{ gap: 1.5, minHeight: 48 }}>
+        <Menu open={Boolean(accountAnchor)} anchorEl={accountAnchor} onClose={() => setAccountAnchor(null)}
+          anchorOrigin={{ vertical: "bottom", horizontal: "right" }} transformOrigin={{ vertical: "top", horizontal: "right" }}
+          slotProps={{ paper: { sx: { minWidth: 320, maxWidth: "calc(100vw - 24px)" } } }}>
+          <Typography variant="caption" color="text.secondary" sx={{ px: 2, pt: 1.5, pb: 1, display: "block" }}>Тестовые учётки · войти как</Typography>
+          {others.map((u) => <MenuItem key={u.login} onClick={() => switchUser(u.login)}>
             <Avatar sx={{ width: 28, height: 28, fontSize: 12, bgcolor: t.surface, color: t.text }}>{initials(u.name)}</Avatar>
             <ListItemText primary={u.name} secondary={`${ROLE_RU[primaryRole(u.roles)]} · ${u.position}`} />
           </MenuItem>)}

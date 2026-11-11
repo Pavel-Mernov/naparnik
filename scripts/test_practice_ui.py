@@ -63,7 +63,7 @@ def main():
             page.reload()
             expect(page.get_by_role("heading", name="К реальной задаче", exact=True)).to_be_visible()
             page.set_viewport_size({"width": 375, "height": 812})
-            assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
+            page.wait_for_function("document.documentElement.scrollWidth <= innerWidth")
             assert not errors, errors
             print("PASS: одобрение → термины → ошибочная и успешная попытки → лучшая попытка → чек-лист; 375 px; без ошибок JS")
         finally:
