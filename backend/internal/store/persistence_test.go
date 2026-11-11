@@ -36,7 +36,7 @@ func TestTransactionRollbackAndCopies(t *testing.T) {
 	if s.Close() != nil || s.Refresh(context.Background()) != nil {
 		t.Fatal("memory store")
 	}
-	if err := s.decode([]byte(`{"version":2}`)); err == nil {
+	if err := s.decode([]byte(`{"version":3}`)); err == nil {
 		t.Fatal("неизвестная версия")
 	}
 	if err := s.decode([]byte(`not json`)); err == nil {

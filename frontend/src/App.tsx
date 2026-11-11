@@ -26,6 +26,7 @@ import { QuestionsPage } from "./pages/QuestionsPage";
 import { KnowledgePage } from "./pages/KnowledgePage";
 import { RequestsPage } from "./pages/RequestsPage";
 import { BuddyPage, TeamPage } from "./pages/TeamPages";
+import { PracticePanel } from "./pages/PracticePanel";
 
 const ICONS: Record<View, ReactElement> = {
   day: <HomeOutlined />, plan: <TaskAltOutlined />, questions: <ForumOutlined />, knowledge: <MenuBookOutlined />, requests: <DescriptionOutlined />,
@@ -59,6 +60,7 @@ function App() {
   const [chatOpen, setChatOpen] = useState(false);
   const [chatText, setChatText] = useState("");
   const [chatLoading, setChatLoading] = useState(false);
+  const [practiceRevision, setPracticeRevision] = useState(0);
   const [messages, setMessages] = useState<ChatMessage[]>([GREETING]);
   const [busy, setBusy] = useState(false);
   const [snack, setSnack] = useState("");
@@ -142,7 +144,7 @@ function App() {
     setMessages((m) => [...m, { role: "user", text }]); setChatLoading(true);
     try {
       const reply = await api<ChatReply>(owner, "/api/chat/messages", { method: "POST", body: JSON.stringify({ text }), signal: controller.signal });
-      if (isCurrent(owner, epoch)) setMessages((m) => [...m, { role: "assistant", text: reply.text, reply, retryText: reply.retry ? text : undefined }]);
+      if (isCurrent(owner, epoch)) { setMessages((m) => [...m, { role: "assistant", text: reply.text, reply, retryText: reply.retry ? text : undefined }]); setPracticeRevision((n) => n + 1); }
     } catch (e) {
       if (isCurrent(owner, epoch)) setMessages((m) => [...m, { role: "assistant", text: e instanceof Error ? e.message : "Не получилось ответить", retryText: text }]);
     } finally {
@@ -230,7 +232,7 @@ function App() {
             <Stack direction="row" alignItems="center" gap={{ xs: 1, md: 3 }} sx={{ height: 64 }}>
               <Stack direction="row" alignItems="center" gap={1.25} component="a" href="#" onClick={(e) => { e.preventDefault(); nav("day"); }} sx={{ color: "inherit", textDecoration: "none", flex: "none" }}>
                 <Box component="img" src={avitoLogo} alt="Avito" sx={{ height: { xs: 32, md: 38 }, width: "auto", filter: mode === "dark" ? "invert(1) hue-rotate(180deg)" : "none" }} />
-                <Typography sx={{ fontWeight: 700, fontSize: { xs: 19, md: 22 }, letterSpacing: "-0.025em" }}>Напарник</Typography>
+                <Typography sx={{ display: { xs: "none", sm: "block" }, fontWeight: 700, fontSize: { xs: 19, md: 22 }, letterSpacing: "-0.025em" }}>Напарник</Typography>
               </Stack>
               {!mobile && role && <Stack component="nav" aria-label="Разделы" direction="row" gap={0} sx={{ flex: 1, ml: { md: 0, lg: 2 }, minWidth: 0, overflowX: "auto" }}>
                 {views.map((v) => <Box key={v} component="button" onClick={() => nav(v)} aria-current={view === v ? "page" : undefined} sx={{
@@ -264,6 +266,7 @@ function App() {
         <Container maxWidth="lg" component="main" sx={{ pt: { xs: 3, md: 5 }, pb: { xs: 10, md: 12 } }}>
           {error && <Alert severity="error" sx={{ mb: 3, borderRadius: 0 }} action={<Button variant="text" onClick={() => void load()}>Повторить</Button>}>Не получилось загрузить данные: {error}</Alert>}
           {data && data.me.login === login ? page() : !error && <Stack gap={2} aria-hidden>{[70, 40, 90, 60].map((w, i) => <Box key={i} sx={{ height: i ? 18 : 40, width: `${w}%`, bgcolor: t.surface }} />)}</Stack>}
+          {data && data.me.login === login && (role === "intern" || role === "buddy") && (view === "day" || view === "plan") && <PracticePanel key={login} login={login} buddy={role === "buddy"} revision={practiceRevision} />}
         </Container>
 
         {mobile && role && <BottomNavigation component="nav" aria-label="Разделы" showLabels value={view} onChange={(_, v: View) => nav(v)} sx={{

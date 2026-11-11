@@ -10,6 +10,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/worker4556/naparnik/backend/internal/practice"
 )
 
 // Stub — заглушка модели без внешнего API (docs/04-mock-data/llm-stub.json):
@@ -29,15 +31,21 @@ var ErrStub = errors.New("stub_error: провайдер вернул HTTP 500")
 
 func NewStub(mode string, today time.Time) *Stub { return &Stub{mode: mode, today: today} }
 
-func (s *Stub) Start(_, _ string, tools []ToolSpec) Session {
+func (s *Stub) Start(_, context string, tools []ToolSpec) Session {
 	allowed := map[string]bool{}
 	for _, t := range tools {
 		allowed[t.Name] = true
 	}
-	return &stubSession{stub: s, allowed: allowed}
+	session := &stubSession{stub: s, allowed: allowed}
+	if allowed["practice_generate"] || allowed["practice_review"] {
+		session.practiceInput = &practice.ModelInput{}
+		_ = json.Unmarshal([]byte(context), session.practiceInput)
+	}
+	return session
 }
 
 type stubSession struct {
+	practiceInput     *practice.ModelInput
 	stub              *Stub
 	allowed           map[string]bool
 	question          string
@@ -114,6 +122,12 @@ func (s *stubSession) SendUser(ctx context.Context, text string) (Step, error) {
 	if err := s.wait(ctx); err != nil {
 		return Step{}, err
 	}
+	if s.practiceInput != nil {
+		if s.allowed["practice_generate"] {
+			return Step{ToolCalls: []ToolCall{s.call("practice_generate", map[string]any{"text": s.practiceInput.Task.Text})}}, nil
+		}
+		return Step{ToolCalls: []ToolCall{s.call("practice_review", stubPracticeReview(*s.practiceInput))}}, nil
+	}
 	s.question = text
 	low := strings.ToLower(strings.TrimSpace(text))
 	s.accessExplanation = ""
@@ -122,6 +136,8 @@ func (s *stubSession) SendUser(ctx context.Context, text string) (Step, error) {
 	s.accessSystem = ""
 	var calls []ToolCall
 	switch {
+	case strings.Contains(low, "сразу к задаче"):
+		calls = append(calls, s.call("advance_practice", map[string]any{"action": "skip_all"}))
 	case previousSystem != "" && accessChoice.MatchString(low):
 		calls = append(calls, s.call("get_access_rules", map[string]any{"system": previousSystem}))
 	case strings.HasPrefix(low, "не помогло"): // BR-03: ответ из базы не помог → сразу ищем человека
@@ -144,6 +160,8 @@ func (s *stubSession) SendUser(ctx context.Context, text string) (Step, error) {
 		if calls == nil {
 			calls = append(calls, s.call("get_required_accesses", map[string]any{}))
 		}
+	case strings.Contains(low, "практик") || strings.Contains(low, "дашборд конверсии") || strings.Contains(low, "первая задача"):
+		calls = append(calls, s.call("get_practice", map[string]any{}))
 	case regexp.MustCompile(`сегодня|что делать|чем заняться`).MatchString(low):
 		calls = append(calls, s.call("get_today", map[string]any{}))
 	case regexp.MustCompile(`план|прогресс|где я`).MatchString(low):
@@ -221,6 +239,17 @@ func (s *stubSession) SendToolResults(ctx context.Context, results []ToolResult)
 // describe — текст по результату инструмента; next — следующий вызов (поиск не дал ответа → ищем человека).
 func (s *stubSession) describe(tool string, raw json.RawMessage) (string, *ToolCall) {
 	switch tool {
+	case "get_practice", "advance_practice":
+		var v struct {
+			Offer     string   `json:"offer"`
+			Stage     string   `json:"stage"`
+			Checklist []string `json:"checklist"`
+		}
+		_ = json.Unmarshal(raw, &v)
+		if v.Stage == "real_task" {
+			return "К реальной задаче:\n• " + strings.Join(v.Checklist, "\n• "), nil
+		}
+		return v.Offer + " Открой блок «Практика перед задачей» в «Мой день» или «Мой план»: там термины, учебное задание и разбор попыток. Задание появится после одобрения бадди.", nil
 	case "get_access_rules":
 		var d struct {
 			Week     int                   `json:"week"`

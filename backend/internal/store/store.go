@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/worker4556/naparnik/backend/internal/mockdata"
+	"github.com/worker4556/naparnik/backend/internal/practice"
 )
 
 const (
@@ -70,6 +71,7 @@ type Store struct {
 	pages         []mockdata.Page
 	drafts        map[string]ActionDraft
 	operations    map[string]Operation
+	practices     map[string]practice.State
 	Data          *mockdata.Data
 	Today         time.Time
 	steps         map[string]map[string]*mockdata.TrackerStep // intern -> step -> статус в трекере
@@ -79,7 +81,7 @@ type Store struct {
 }
 
 func New(d *mockdata.Data, today time.Time) *Store {
-	s := &Store{Data: d, Today: today, steps: map[string]map[string]*mockdata.TrackerStep{},
+	s := &Store{Data: d, Today: today, practices: map[string]practice.State{}, steps: map[string]map[string]*mockdata.TrackerStep{},
 		pages: append([]mockdata.Page(nil), d.KB.Pages...), drafts: map[string]ActionDraft{}, operations: map[string]Operation{},
 		seq: map[string]int{"ABS": 1041, "ACC": 2001, "Q": 100, "DRAFT": 0, "kb": 19}}
 	for _, p := range d.Tracker.Plans {

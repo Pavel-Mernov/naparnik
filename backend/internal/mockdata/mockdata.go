@@ -9,6 +9,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+
+	"github.com/worker4556/naparnik/backend/internal/practice"
 )
 
 type Settings struct {
@@ -189,6 +191,9 @@ type Data struct {
 	Calendar  Calendar
 	Absence   AbsenceService
 	Access    AccessService
+	Practice  struct {
+		Templates []practice.Template `json:"practices"`
+	}
 }
 
 func readJSON(dir, name string, v any) error {
@@ -221,6 +226,7 @@ func Load(dir string) (*Data, error) {
 		{"calendar.json", &d.Calendar},
 		{"absence-service.json", &d.Absence},
 		{"access-service.json", &d.Access},
+		{"practice.json", &d.Practice},
 		{"team.json", &meta},
 	}
 	for _, f := range files {
