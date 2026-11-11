@@ -257,6 +257,27 @@
         "test_instruction_label": true,
         "links_step": "s-04"
       }
+    },
+    {
+      "id": "q-18",
+      "code": "Q18",
+      "asked_by": "u-sokolov",
+      "text": "Планируют ли менять North Star раздела или добавлять метрику качества контактов? Хочу заложить это в дашборд",
+      "context": "Шаг s-13, дашборд конверсии карточки; kb-39 и kb-40 прочитал, про планы там нет",
+      "scenario": [
+        "SC-35"
+      ],
+      "expected": {
+        "branch": "buddy_via_senior",
+        "addressee": "u-belova",
+        "best_candidate": "u-volkov",
+        "best_candidate_level": "director",
+        "reason_for_intern": "тема в зоне руководства направления; вопрос уйдёт бадди, она ответит или подскажет, к кому идти",
+        "hint_for_buddy": "по теме больше всех писал Сергей Волков, директор по аналитике (kb-39, kb-40)",
+        "senior_name_shown_to_intern": false,
+        "not_mine_available": false,
+        "delivery": "digest 16:00"
+      }
     }
   ]
 }
