@@ -1,0 +1,180 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-60 -40 2070 1960" width="2070" height="1960" font-family="-apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif">
+<rect x="-60" y="-40" width="2070" height="1960" fill="#FAFAF7"/>
+<rect x="-20" y="300" width="1994" height="694" rx="14" fill="#F1F2F0" stroke="#D5D8D3"/>
+<text x="-16" y="290.0" font-size="16" font-weight="bold" fill="#57606A" text-anchor="start">AS-IS: как сейчас (интервью Р1–Р4, Б1–Б2, фидбек Авито)</text>
+<rect x="-20" y="1070" width="1994" height="550" rx="14" fill="#F1F2F0" stroke="#D5D8D3"/>
+<text x="-16" y="1060.0" font-size="16" font-weight="bold" fill="#57606A" text-anchor="start">TO-BE: с AI-buddy</text>
+<rect x="-20" y="1700" width="1994" height="190" rx="14" fill="#F1F2F0" stroke="#D5D8D3"/>
+<text x="-16" y="1690.0" font-size="16" font-weight="bold" fill="#57606A" text-anchor="start">Слой «другая роль»: если стажёр — бэкенд-разработчик</text>
+<text x="0" y="48.0" font-size="48" font-weight="normal" fill="#1F2328" text-anchor="start">CJM стажёра-аналитика</text>
+<text x="0" y="100.0" font-size="28" font-weight="normal" fill="#1F2328" text-anchor="start">AI-buddy снимает провал второй недели</text>
+<text x="0" y="138.0" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">Персона: Даниил, стажёр отдела продуктовой аналитики (синтетический). Боли — из интервью, в скобках источник. Кривая эмоций — гипотеза по</text><text x="0" y="156.9" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">интервью, не замер.</text>
+<rect x="1300" y="20" width="160" height="40" rx="10" fill="#DCE9FB" stroke="#7FA6E0"/>
+<text x="1380.0" y="44.5" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="middle">Этап</text>
+<rect x="1484" y="20" width="160" height="40" rx="10" fill="#FCE3D2" stroke="#E9A47A"/>
+<text x="1564.0" y="44.5" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="middle">Боль (AS-IS)</text>
+<rect x="1300" y="76" width="160" height="40" rx="10" fill="#DDF3E2" stroke="#7CC495"/>
+<text x="1380.0" y="100.5" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="middle">AI-buddy (TO-BE)</text>
+<rect x="1484" y="76" width="160" height="40" rx="10" fill="#EBE2FA" stroke="#A98BE0"/>
+<text x="1564.0" y="100.5" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="middle">Слой другой роли</text>
+<rect x="200" y="180" width="230" height="72" rx="36.0" fill="#DCE9FB" stroke="#7FA6E0"/>
+<text x="315.0" y="221.2" font-size="16" font-weight="bold" fill="#1F2328" text-anchor="middle">Оффер → выход</text>
+<rect x="454" y="180" width="230" height="72" rx="36.0" fill="#DCE9FB" stroke="#7FA6E0"/>
+<text x="569.0" y="221.2" font-size="16" font-weight="bold" fill="#1F2328" text-anchor="middle">Первый день</text>
+<rect x="708" y="180" width="230" height="72" rx="36.0" fill="#DCE9FB" stroke="#7FA6E0"/>
+<text x="823.0" y="210.4" font-size="16" font-weight="bold" fill="#1F2328" text-anchor="middle">Неделя 1: знакомство и</text><text x="823.0" y="232.0" font-size="16" font-weight="bold" fill="#1F2328" text-anchor="middle">доступы</text>
+<rect x="962" y="180" width="230" height="72" rx="36.0" fill="#DCE9FB" stroke="#7FA6E0"/>
+<text x="1077.0" y="210.4" font-size="16" font-weight="bold" fill="#1F2328" text-anchor="middle">Неделя 2: инструменты</text><text x="1077.0" y="232.0" font-size="16" font-weight="bold" fill="#1F2328" text-anchor="middle">и данные</text>
+<rect x="1216" y="180" width="230" height="72" rx="36.0" fill="#DCE9FB" stroke="#7FA6E0"/>
+<text x="1331.0" y="221.2" font-size="16" font-weight="bold" fill="#1F2328" text-anchor="middle">Месяц 1: первая задача</text>
+<rect x="1470" y="180" width="230" height="72" rx="36.0" fill="#DCE9FB" stroke="#7FA6E0"/>
+<text x="1585.0" y="210.4" font-size="16" font-weight="bold" fill="#1F2328" text-anchor="middle">Месяцы 2–3:</text><text x="1585.0" y="232.0" font-size="16" font-weight="bold" fill="#1F2328" text-anchor="middle">самостоятельность</text>
+<rect x="1724" y="180" width="230" height="72" rx="36.0" fill="#DCE9FB" stroke="#7FA6E0"/>
+<text x="1839.0" y="221.2" font-size="16" font-weight="bold" fill="#1F2328" text-anchor="middle">Экватор и итог</text>
+<text x="0" y="348.0" font-size="16" font-weight="bold" fill="#1F2328" text-anchor="start">Действия</text>
+<rect x="200" y="324" width="230" height="110" rx="10" fill="#FFFFFF" stroke="#C9CDD3"/>
+<text x="212" y="350.0" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">Ждёт старта, гадает, чем</text><text x="212" y="368.9" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">будет заниматься</text>
+<rect x="454" y="324" width="230" height="110" rx="10" fill="#FFFFFF" stroke="#C9CDD3"/>
+<text x="466" y="350.0" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">Знакомится с бадди,</text><text x="466" y="368.9" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">получает ноутбук, пробует</text><text x="466" y="387.8" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">войти в системы</text>
+<rect x="708" y="324" width="230" height="110" rx="10" fill="#FFFFFF" stroke="#C9CDD3"/>
+<text x="720" y="350.0" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">Запрашивает доступы,</text><text x="720" y="368.9" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">читает разрозненную вики,</text><text x="720" y="387.8" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">знакомится с командой</text>
+<rect x="962" y="324" width="230" height="110" rx="10" fill="#FFFFFF" stroke="#C9CDD3"/>
+<text x="974" y="350.0" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">Ищет ответы в вики, чатах,</text><text x="974" y="368.9" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">внешнем ИИ; пересматривает</text><text x="974" y="387.8" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">записи встреч (Р3)</text>
+<rect x="1216" y="324" width="230" height="110" rx="10" fill="#FFFFFF" stroke="#C9CDD3"/>
+<text x="1228" y="350.0" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">Берёт первую задачу, пишет</text><text x="1228" y="368.9" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">SQL, ждёт ревью</text>
+<rect x="1470" y="324" width="230" height="110" rx="10" fill="#FFFFFF" stroke="#C9CDD3"/>
+<text x="1482" y="350.0" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">Ведёт задачи сам; отгул</text><text x="1482" y="368.9" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">оформляет через HR или</text><text x="1482" y="387.8" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">бадди (Р3, Р4)</text>
+<rect x="1724" y="324" width="230" height="110" rx="10" fill="#FFFFFF" stroke="#C9CDD3"/>
+<text x="1736" y="350.0" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">Готовит экваторную</text><text x="1736" y="368.9" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">презентацию, проходит</text><text x="1736" y="387.8" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">опрос</text>
+<text x="0" y="482.0" font-size="16" font-weight="bold" fill="#1F2328" text-anchor="start">Мысли и</text><text x="0" y="503.6" font-size="16" font-weight="normal" fill="#1F2328" text-anchor="start">вопросы</text>
+<rect x="200" y="458" width="230" height="90" rx="10" fill="#FFFFFF" stroke="#C9CDD3"/>
+<text x="212" y="484.0" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">«Чем я буду заниматься?</text><text x="212" y="502.9" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">Есть ли план?»</text>
+<rect x="454" y="458" width="230" height="90" rx="10" fill="#FFFFFF" stroke="#C9CDD3"/>
+<text x="466" y="484.0" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">«Кто есть кто? Куда идти</text><text x="466" y="502.9" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">за доступами?»</text>
+<rect x="708" y="458" width="230" height="90" rx="10" fill="#FFFFFF" stroke="#C9CDD3"/>
+<text x="720" y="484.0" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">«Что значит этот термин?</text><text x="720" y="502.9" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">Глупо спрашивать?»</text>
+<rect x="962" y="458" width="230" height="90" rx="10" fill="#FFFFFF" stroke="#C9CDD3"/>
+<text x="974" y="484.0" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">«Кого спросить? Где</text><text x="974" y="502.9" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">правильный ответ?»</text>
+<rect x="1216" y="458" width="230" height="90" rx="10" fill="#FFFFFF" stroke="#C9CDD3"/>
+<text x="1228" y="484.0" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">«Так ли у нас пишут</text><text x="1228" y="502.9" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">запросы? Не отвлекаю?»</text>
+<rect x="1470" y="458" width="230" height="90" rx="10" fill="#FFFFFF" stroke="#C9CDD3"/>
+<text x="1482" y="484.0" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">«Где регламент отгула?</text><text x="1482" y="502.9" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">Видят ли мой прогресс?»</text>
+<rect x="1724" y="458" width="230" height="90" rx="10" fill="#FFFFFF" stroke="#C9CDD3"/>
+<text x="1736" y="484.0" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">«Справился ли я? Что</text><text x="1736" y="502.9" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">дальше?»</text>
+<text x="0" y="596.0" font-size="16" font-weight="bold" fill="#1F2328" text-anchor="start">Эмоции</text>
+<path d="M315.0,611.0 C442.0,611.0 442.0,643.5 569.0,643.5 C696.0,643.5 696.0,669.5 823.0,669.5 C950.0,669.5 950.0,691.6 1077.0,691.6 C1204.0,691.6 1204.0,637.0 1331.0,637.0 C1458.0,637.0 1458.0,611.0 1585.0,611.0 C1712.0,611.0 1712.0,617.5 1839.0,617.5" fill="none" stroke="#D2643C" stroke-width="5" stroke-linecap="round"/>
+<circle cx="315.0" cy="611.0" r="6" fill="#D2643C"/>
+<circle cx="569.0" cy="643.5" r="6" fill="#D2643C"/>
+<circle cx="823.0" cy="669.5" r="6" fill="#D2643C"/>
+<circle cx="1077.0" cy="691.6" r="6" fill="#D2643C"/>
+<circle cx="1331.0" cy="637.0" r="6" fill="#D2643C"/>
+<circle cx="1585.0" cy="611.0" r="6" fill="#D2643C"/>
+<circle cx="1839.0" cy="617.5" r="6" fill="#D2643C"/>
+<text x="315.0" y="637.0" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="middle">воодушевление и</text><text x="315.0" y="655.9" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="middle">тревога</text>
+<text x="569.0" y="627.5" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="middle">растерянность</text>
+<text x="823.0" y="653.5" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="middle">стеснение</text>
+<text x="1077.0" y="675.6" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="middle">фрустрация</text>
+<text x="1331.0" y="621.0" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="middle">облегчение</text>
+<text x="1585.0" y="637.0" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="middle">уверенность</text>
+<text x="1839.0" y="601.5" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="middle">волнение</text>
+<text x="0" y="750.0" font-size="16" font-weight="bold" fill="#1F2328" text-anchor="start">Боли</text>
+<rect x="200" y="726" width="230" height="130" rx="10" fill="#FCE3D2" stroke="#E9A47A"/>
+<text x="212" y="752.0" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">Плана адаптации нет у 2 из</text><text x="212" y="770.9" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">4 (Р1, Р3)</text>
+<rect x="454" y="726" width="230" height="130" rx="10" fill="#FCE3D2" stroke="#E9A47A"/>
+<text x="466" y="752.0" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">Доступы ждут 2–3 дня у 3</text><text x="466" y="770.9" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">из 4; «не могу</text><text x="466" y="789.8" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">подключиться к данным»</text><text x="466" y="808.7" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">(Р1)</text>
+<rect x="708" y="726" width="230" height="130" rx="10" fill="#FCE3D2" stroke="#E9A47A"/>
+<text x="720" y="752.0" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">Жаргон команды,</text><text x="720" y="770.9" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">разбросанная документация</text><text x="720" y="789.8" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">(Р3, Авито); стесняются</text><text x="720" y="808.7" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">спрашивать 4 из 4</text>
+<rect x="962" y="726" width="230" height="130" rx="10" fill="#FCE3D2" stroke="#E9A47A"/>
+<text x="974" y="752.0" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">Поиск ответа от 15 мин до</text><text x="974" y="770.9" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">нескольких часов; знание</text><text x="974" y="789.8" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">осталось во встречах (Р3);</text><text x="974" y="808.7" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">корп. ИИ отвечает общо</text><text x="974" y="827.6" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">(Р1, Р2)</text>
+<rect x="1216" y="726" width="230" height="130" rx="10" fill="#FCE3D2" stroke="#E9A47A"/>
+<text x="1228" y="752.0" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">Первая полезная задача</text><text x="1228" y="770.9" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">через 2–3 недели у 4 из 4;</text><text x="1228" y="789.8" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">незнание код-стайла</text><text x="1228" y="808.7" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">(Авито)</text>
+<rect x="1470" y="726" width="230" height="130" rx="10" fill="#FCE3D2" stroke="#E9A47A"/>
+<text x="1482" y="752.0" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">Повторяющиеся орг.</text><text x="1482" y="770.9" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">вопросы; приходится</text><text x="1482" y="789.8" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">отчитываться о прогрессе</text><text x="1482" y="808.7" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">(Р1, Р3)</text>
+<rect x="1724" y="726" width="230" height="130" rx="10" fill="#FCE3D2" stroke="#E9A47A"/>
+<text x="1736" y="752.0" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">Время бадди не учтено;</text><text x="1736" y="770.9" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">знание стажёра уходит</text><text x="1736" y="789.8" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">вместе с ним (Б1, Б2)</text>
+<text x="0" y="904.0" font-size="16" font-weight="bold" fill="#1F2328" text-anchor="start">Бадди</text>
+<rect x="200" y="880" width="230" height="90" rx="10" fill="#FFFFFF" stroke="#C9CDD3"/>
+<text x="212" y="906.0" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">Сам придумывает программу</text><text x="212" y="924.9" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">и задачи (Б2)</text>
+<rect x="454" y="880" width="230" height="90" rx="10" fill="#FFFFFF" stroke="#C9CDD3"/>
+<text x="466" y="906.0" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">Объясняет, где что лежит</text><text x="466" y="924.9" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">(Б1)</text>
+<rect x="708" y="880" width="230" height="90" rx="10" fill="#FFFFFF" stroke="#C9CDD3"/>
+<text x="720" y="906.0" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">Шлёт ссылки на</text><text x="720" y="924.9" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">документацию вместо ответа</text><text x="720" y="943.8" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">(Б2)</text>
+<rect x="962" y="880" width="230" height="90" rx="10" fill="#FFFFFF" stroke="#C9CDD3"/>
+<text x="974" y="906.0" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">Отвечает на одно и то же</text><text x="974" y="924.9" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">(Б1, Б2)</text>
+<rect x="1216" y="880" width="230" height="90" rx="10" fill="#FFFFFF" stroke="#C9CDD3"/>
+<text x="1228" y="906.0" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">Стажёр молчит часами,</text><text x="1228" y="924.9" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">приходится вытягивать (Б1,</text><text x="1228" y="943.8" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">Б2)</text>
+<rect x="1470" y="880" width="230" height="90" rx="10" fill="#FFFFFF" stroke="#C9CDD3"/>
+<text x="1482" y="906.0" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">Забывает про стажёра на</text><text x="1482" y="924.9" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">несколько дней (Б2)</text>
+<rect x="1724" y="880" width="230" height="90" rx="10" fill="#FFFFFF" stroke="#C9CDD3"/>
+<text x="1736" y="906.0" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">Вклад не виден</text><text x="1736" y="924.9" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">руководителю (Б1)</text>
+<text x="0" y="1118.0" font-size="16" font-weight="bold" fill="#1F2328" text-anchor="start">Что делает</text><text x="0" y="1139.6" font-size="16" font-weight="normal" fill="#1F2328" text-anchor="start">AI-buddy</text>
+<rect x="200" y="1094" width="230" height="140" rx="10" fill="#DDF3E2" stroke="#7CC495"/>
+<text x="212" y="1120.0" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">Черновик плана из шаблона</text><text x="212" y="1138.9" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">команды; руководитель</text><text x="212" y="1157.8" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">утверждает</text>
+<rect x="454" y="1094" width="230" height="140" rx="10" fill="#DDF3E2" stroke="#7CC495"/>
+<text x="466" y="1120.0" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">Шаги на сегодня; кто есть</text><text x="466" y="1138.9" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">кто со ссылками; заявки на</text><text x="466" y="1157.8" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">доступ: инструкция или</text><text x="466" y="1176.7" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">«сделаю за тебя»</text>
+<rect x="708" y="1094" width="230" height="140" rx="10" fill="#DDF3E2" stroke="#7CC495"/>
+<text x="720" y="1120.0" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">Ответы из базы с</text><text x="720" y="1138.9" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">источником; общие термины</text><text x="720" y="1157.8" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">+ жаргон команды; нет</text><text x="720" y="1176.7" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">доступа → объяснение и</text><text x="720" y="1195.6" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">заявка</text>
+<rect x="962" y="1094" width="230" height="140" rx="10" fill="#DDF3E2" stroke="#7CC495"/>
+<text x="974" y="1120.0" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">Вопрос эксперту по</text><text x="974" y="1138.9" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">авторству страниц; встреча</text><text x="974" y="1157.8" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">→ транскрипт → страница;</text><text x="974" y="1176.7" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">код-стайл SQL, карта</text><text x="974" y="1195.6" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">данных</text>
+<rect x="1216" y="1094" width="230" height="140" rx="10" fill="#DDF3E2" stroke="#7CC495"/>
+<text x="1228" y="1120.0" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">Практика: термины →</text><text x="1228" y="1138.9" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">термины команды → учебное</text><text x="1228" y="1157.8" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">задание в песочнице →</text><text x="1228" y="1176.7" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">реальная задача</text>
+<rect x="1470" y="1094" width="230" height="140" rx="10" fill="#DDF3E2" stroke="#7CC495"/>
+<text x="1482" y="1120.0" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">Отгул, отпуск: инструкция</text><text x="1482" y="1138.9" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">или «сделаю за тебя»;</text><text x="1482" y="1157.8" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">напоминания; второму</text><text x="1482" y="1176.7" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">стажёру — ответ из базы</text>
+<rect x="1724" y="1094" width="230" height="140" rx="10" fill="#DDF3E2" stroke="#7CC495"/>
+<text x="1736" y="1120.0" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">Подготовка к экватору;</text><text x="1736" y="1138.9" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">отчёт о вкладе бадди;</text><text x="1736" y="1157.8" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">опрос с вопросами про</text><text x="1736" y="1176.7" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">AI-buddy</text>
+<text x="0" y="1282.0" font-size="16" font-weight="bold" fill="#1F2328" text-anchor="start">Эмоции</text>
+<path d="M315.0,1299.6 C442.0,1299.6 442.0,1297.0 569.0,1297.0 C696.0,1297.0 696.0,1290.5 823.0,1290.5 C950.0,1290.5 950.0,1290.5 1077.0,1290.5 C1204.0,1290.5 1204.0,1273.6 1331.0,1273.6 C1458.0,1273.6 1458.0,1277.5 1585.0,1277.5 C1712.0,1277.5 1712.0,1273.6 1839.0,1273.6" fill="none" stroke="#2E9B57" stroke-width="5" stroke-linecap="round"/>
+<circle cx="315.0" cy="1299.6" r="6" fill="#2E9B57"/>
+<circle cx="569.0" cy="1297.0" r="6" fill="#2E9B57"/>
+<circle cx="823.0" cy="1290.5" r="6" fill="#2E9B57"/>
+<circle cx="1077.0" cy="1290.5" r="6" fill="#2E9B57"/>
+<circle cx="1331.0" cy="1273.6" r="6" fill="#2E9B57"/>
+<circle cx="1585.0" cy="1277.5" r="6" fill="#2E9B57"/>
+<circle cx="1839.0" cy="1273.6" r="6" fill="#2E9B57"/>
+<text x="315.0" y="1283.6" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="middle">спокойствие</text>
+<text x="569.0" y="1323.0" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="middle">ясность</text>
+<text x="823.0" y="1316.5" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="middle">безопасно</text><text x="823.0" y="1335.4" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="middle">спросить</text>
+<text x="1077.0" y="1316.5" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="middle">знаю, к кому идти</text>
+<text x="1331.0" y="1299.6" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="middle">гордость</text>
+<text x="1585.0" y="1303.5" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="middle">уверенность</text>
+<text x="1839.0" y="1299.6" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="middle">удовлетворение</text>
+<text x="0" y="1436.0" font-size="16" font-weight="bold" fill="#1F2328" text-anchor="start">Бадди</text>
+<rect x="200" y="1412" width="230" height="90" rx="10" fill="#FFFFFF" stroke="#C9CDD3"/>
+<text x="212" y="1438.0" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">Правит черновик плана, а</text><text x="212" y="1456.9" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">не пишет с нуля</text>
+<rect x="454" y="1412" width="230" height="90" rx="10" fill="#FFFFFF" stroke="#C9CDD3"/>
+<text x="466" y="1438.0" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">Видит статус доступов</text>
+<rect x="708" y="1412" width="230" height="90" rx="10" fill="#FFFFFF" stroke="#C9CDD3"/>
+<text x="720" y="1438.0" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">Получает только вопросы,</text><text x="720" y="1456.9" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">которых нет в базе</text>
+<rect x="962" y="1412" width="230" height="90" rx="10" fill="#FFFFFF" stroke="#C9CDD3"/>
+<text x="974" y="1438.0" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">Видит маршрут вопроса,</text><text x="974" y="1456.9" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">переадресует</text>
+<rect x="1216" y="1412" width="230" height="90" rx="10" fill="#FFFFFF" stroke="#C9CDD3"/>
+<text x="1228" y="1438.0" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">Одобряет учебное задание,</text><text x="1228" y="1456.9" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">видит лучшую попытку</text>
+<rect x="1470" y="1412" width="230" height="90" rx="10" fill="#FFFFFF" stroke="#C9CDD3"/>
+<text x="1482" y="1438.0" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">Видит сигнал «застрял» без</text><text x="1482" y="1456.9" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">опроса</text>
+<rect x="1724" y="1412" width="230" height="90" rx="10" fill="#FFFFFF" stroke="#C9CDD3"/>
+<text x="1736" y="1438.0" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">Время на стажёра посчитано</text>
+<text x="0" y="1550.0" font-size="16" font-weight="bold" fill="#1F2328" text-anchor="start">Метрика этапа</text>
+<rect x="200" y="1526" width="230" height="70" rx="10" fill="#FFFFFF" stroke="#C9CDD3"/>
+<text x="212" y="1552.0" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">M-02 шаги плана в срок</text>
+<rect x="454" y="1526" width="230" height="70" rx="10" fill="#FFFFFF" stroke="#C9CDD3"/>
+<text x="466" y="1552.0" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">Время до доступа; M-03 дни</text><text x="466" y="1570.9" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">простоя</text>
+<rect x="708" y="1526" width="230" height="70" rx="10" fill="#FFFFFF" stroke="#C9CDD3"/>
+<text x="720" y="1552.0" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">M-09 доля вопросов,</text><text x="720" y="1570.9" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">закрытых базой</text>
+<rect x="962" y="1526" width="230" height="70" rx="10" fill="#FFFFFF" stroke="#C9CDD3"/>
+<text x="974" y="1552.0" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">M-01 время до</text><text x="974" y="1570.9" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">разблокировки; M-17</text><text x="974" y="1589.8" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">точность маршрута</text>
+<rect x="1216" y="1526" width="230" height="70" rx="10" fill="#FFFFFF" stroke="#C9CDD3"/>
+<text x="1228" y="1552.0" font-size="14" font-weight="bold" fill="#1F2328" text-anchor="start">Главная: время до</text><text x="1228" y="1570.9" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">первой полезной задачи</text>
+<rect x="1470" y="1526" width="230" height="70" rx="10" fill="#FFFFFF" stroke="#C9CDD3"/>
+<text x="1482" y="1552.0" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">M-05 нагрузка бадди; M-07</text><text x="1482" y="1570.9" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">повторные вопросы</text>
+<rect x="1724" y="1526" width="230" height="70" rx="10" fill="#FFFFFF" stroke="#C9CDD3"/>
+<text x="1736" y="1552.0" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">M-06 время бадди; опрос в</text><text x="1736" y="1570.9" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">конце</text>
+<text x="0" y="1738.0" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">Набор знаний</text><text x="0" y="1756.9" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">собирается под роль:</text><text x="0" y="1775.8" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">аналитику — SQL,</text><text x="0" y="1794.7" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">витрины, дашборды;</text><text x="0" y="1813.6" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">бэкенду — сервисы и</text><text x="0" y="1832.5" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">код; QA и фронту —</text><text x="0" y="1851.4" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">свои</text>
+<rect x="454" y="1724" width="230" height="100" rx="10" fill="#EBE2FA" stroke="#A98BE0"/>
+<text x="466" y="1750.0" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">Локальное окружение,</text><text x="466" y="1768.9" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">репозиторий, CI</text>
+<rect x="708" y="1724" width="230" height="100" rx="10" fill="#EBE2FA" stroke="#A98BE0"/>
+<text x="720" y="1750.0" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">Жаргон и аббревиатуры</text><text x="720" y="1768.9" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">сервисов</text>
+<rect x="962" y="1724" width="230" height="100" rx="10" fill="#EBE2FA" stroke="#A98BE0"/>
+<text x="974" y="1750.0" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">Карта микросервисов:</text><text x="974" y="1768.9" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">владельцы, связи,</text><text x="974" y="1787.8" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">документация</text>
+<rect x="1216" y="1724" width="230" height="100" rx="10" fill="#EBE2FA" stroke="#A98BE0"/>
+<text x="1228" y="1750.0" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">Код-стайл Go/Java,</text><text x="1228" y="1768.9" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">линтеры, частые замечания</text><text x="1228" y="1787.8" font-size="14" font-weight="normal" fill="#1F2328" text-anchor="start">ревью</text>
+</svg>
