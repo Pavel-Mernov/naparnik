@@ -281,7 +281,7 @@ function App() {
           transition: "transform .2s ease", "&:hover, &:focus-visible": { transform: "translateY(-3px)" },
           "&:hover .mascot-label, &:focus-visible .mascot-label": { opacity: 1, transform: "none" },
         }}>
-          <MascotBadge size={mobile ? 72 : 96} float />
+          <MascotBadge size={mobile ? 72 : 96} />
           <Box component="span" className="mascot-label" sx={{
             position: "absolute", right: "100%", top: "30%", mr: 0.5, px: 1.25, py: 0.75, bgcolor: t.inverse, color: t.onInverse, fontSize: 13, fontWeight: 600,
             whiteSpace: "nowrap", opacity: chatLoading ? 1 : 0, transform: chatLoading ? "none" : "translateX(6px)", transition: "opacity .2s, transform .2s", pointerEvents: "none",
