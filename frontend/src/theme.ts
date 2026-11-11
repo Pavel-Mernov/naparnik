@@ -22,7 +22,7 @@ type Tokens = {
 
 export const tokens: Record<Mode, Tokens> = {
   light: {
-    bg: "#F2F2F2", surface: "#FFFFFF", surfaceHover: "#E9E9E9", line: "#DADCD9", text: "#000000", muted: "#626362",
+    bg: "#FFFFFF", surface: "#F4F4F4", surfaceHover: "#EBEBEB", line: "#E7E9E8", text: "#000000", muted: "#626362",
     link: "#0A7BC2", inverse: "#000000", onInverse: "#FFFFFF",
     ai: "#6A35C9", aiSoft: "#EFE7FC", okSoft: "#D9F9E6", badSoft: "#FFE3E6", waitSoft: "#E3EFFD", todaySoft: brand.blueLight,
   },
@@ -58,13 +58,13 @@ export const makeTheme = (mode: Mode): Theme => {
     typography: {
       fontFamily: font,
       fontSize: 15,
-      h1: { fontSize: "clamp(36px, 5vw, 64px)", fontWeight: 700, letterSpacing: "-0.045em", lineHeight: 0.98 },
-      h2: { fontSize: 24, fontWeight: 700, letterSpacing: "-0.025em", lineHeight: 1.15 },
-      h3: { fontSize: 18, fontWeight: 700, lineHeight: 1.25 },
+      h1: { fontSize: "clamp(28px, 4vw, 40px)", fontWeight: 300, letterSpacing: "-0.02em", lineHeight: 1.1 },
+      h2: { fontSize: 22, fontWeight: 600, letterSpacing: "-0.01em", lineHeight: 1.25 },
+      h3: { fontSize: 17, fontWeight: 600, lineHeight: 1.3 },
       body1: { fontSize: 16, lineHeight: 1.5 },
       body2: { fontSize: 14, lineHeight: 1.45 },
       caption: { fontSize: 13, lineHeight: 1.4 },
-      button: { textTransform: "none", fontWeight: 700, fontSize: 15 },
+      button: { textTransform: "none", fontWeight: 600, fontSize: 15 },
     },
     components: {
       MuiCssBaseline: {
@@ -78,7 +78,7 @@ export const makeTheme = (mode: Mode): Theme => {
       MuiButton: {
         defaultProps: { disableElevation: true, disableRipple: true },
         styleOverrides: {
-          root: { borderRadius: 0, minHeight: 46, padding: "11px 20px", transition: "background-color .15s ease, transform .15s ease", "&:active": { transform: "translateY(1px)" } },
+          root: { borderRadius: 0, minHeight: 44, padding: "10px 18px", transition: "background-color .15s ease" },
           containedPrimary: { "&:hover": { backgroundColor: mode === "light" ? "#262626" : "#D9D9D9" } },
           text: { color: t.text, backgroundColor: t.surface, "&:hover": { backgroundColor: t.surfaceHover } },
           outlined: { borderWidth: 2, borderColor: t.line, color: t.text, "&:hover": { borderWidth: 2, borderColor: t.text, backgroundColor: "transparent" } },
@@ -99,8 +99,26 @@ export const makeTheme = (mode: Mode): Theme => {
       MuiLinearProgress: { styleOverrides: { root: { height: 6, borderRadius: 0, backgroundColor: t.surface }, bar: { backgroundColor: brand.green } } },
       MuiSnackbarContent: { styleOverrides: { root: { borderRadius: 0, backgroundColor: t.inverse, color: t.onInverse, fontFamily: font } } },
       MuiTooltip: { styleOverrides: { tooltip: { borderRadius: 0, backgroundColor: t.inverse, color: t.onInverse, fontSize: 13 } } },
-      MuiMenu: { styleOverrides: { paper: { borderRadius: 0, border: `2px solid ${t.line}` } } },
-      MuiPopover: { styleOverrides: { paper: { borderRadius: 0, border: `2px solid ${t.line}` } } },
+      // Выпадающие окна Akita: плоско, без тени, рамка 2 px, padding 8 снаружи / 16 у пунктов
+      MuiMenu: {
+        defaultProps: { elevation: 0 },
+        styleOverrides: {
+          paper: { borderRadius: 0, border: `2px solid ${t.line}`, boxShadow: "none" },
+          list: { padding: "8px 0" },
+        },
+      },
+      MuiMenuItem: {
+        defaultProps: { disableRipple: true },
+        styleOverrides: {
+          root: { minHeight: 48, padding: "12px 16px", gap: 12, "&:hover": { backgroundColor: t.surface } },
+        },
+      },
+      MuiPopover: {
+        defaultProps: { elevation: 0 },
+        styleOverrides: {
+          paper: { borderRadius: 0, border: `2px solid ${t.line}`, boxShadow: "none" },
+        },
+      },
     },
   });
 };
