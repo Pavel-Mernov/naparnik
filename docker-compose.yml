@@ -41,6 +41,8 @@ services:
     environment:
       DATABASE_URL: postgres://naparnik:naparnik@postgres:5432/naparnik?sslmode=disable
       REDIS_URL: redis://redis:6379/0
+      # Демо: уведомления в Telegram сразу, без ожидания рабочих часов и сводок. Для правил BR-20/BR-52 — false в .env
+      NOTIFY_IGNORE_HOURS: ${NOTIFY_IGNORE_HOURS:-true}
     depends_on:
       postgres:
         condition: service_healthy

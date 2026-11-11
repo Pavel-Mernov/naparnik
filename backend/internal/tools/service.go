@@ -25,7 +25,28 @@ func created(c Ctx, r *store.Request) {
 		{At: r.CreatedAt, By: r.ApproverID, Text: "Заявка на согласовании: " + c.Store.Name(r.ApproverID)},
 	}
 	c.Store.AddRequest(r)
-	c.Store.Emit(store.EvRequestCreated, c.User.ID, r.ID, map[string]string{"approver": r.ApproverID, "employee": r.EmployeeID, "kind": r.Kind})
+	c.Store.Emit(store.EvRequestCreated, c.User.ID, r.ID, map[string]string{"approver": r.ApproverID, "employee": r.EmployeeID, "kind": r.Kind,
+		"title": requestHuman(r)})
+}
+
+// requestHuman — заявка по-человечески для уведомлений: «отгул на пятницу, 13 ноября», «доступ к Redash (дашборды)».
+// Причина отгула и комментарии сюда не попадают (BR-51).
+func requestHuman(r *store.Request) string {
+	if r.Kind == "access" {
+		title := r.Title
+		if title == "" {
+			title = r.System
+		}
+		return "доступ к " + title
+	}
+	what := map[string]string{"day_off": "отгул", "vacation": "отпуск", "sick_leave": "больничный"}[r.Type]
+	if what == "" {
+		what = "отсутствие"
+	}
+	if r.Date == "" {
+		return what
+	}
+	return what + " на " + store.RuDay(r.Date)
 }
 
 // CreateSelf — стажёр сам оформляет заявку в форме сервиса (BR-42, «сделай сам»).
@@ -122,8 +143,22 @@ func decide(c Ctx, id, decision, reason, comment string) (store.Request, *Error)
 			r.History = append(r.History, store.Event{At: now, By: r.EmployeeID, Text: "Шаг плана можно отметить выполненным — стажёр подтверждает"})
 		}
 	})
-	c.Store.Emit(store.EvRequestDecided, c.User.ID, out.ID, map[string]string{"employee": out.EmployeeID, "status": out.Status,
-		"status_ru": map[string]string{"approved": "согласовано", "granted": "доступ выдан", "rejected": "отклонено"}[out.Status]})
+	meta := map[string]string{"employee": out.EmployeeID, "status": out.Status, "title": requestHuman(&out),
+		"status_ru": map[string]string{"approved": "согласовано", "granted": "доступ выдан", "rejected": "отклонено"}[out.Status]}
+	if decision == "reject" {
+		meta["reason_code"] = reason
+		for _, x := range reasonCodes(c, out.Kind) {
+			if x.Code == reason {
+				meta["reason_text"] = x.Text
+			}
+		}
+	}
+	if out.StepID != "" { // SC-27: после выдачи доступа — какой шаг отметить
+		if st, ok := c.Store.TemplateStep(out.StepID); ok {
+			meta["step_title"] = st.Title
+		}
+	}
+	c.Store.Emit(store.EvRequestDecided, c.User.ID, out.ID, meta)
 	return out, nil
 }
 

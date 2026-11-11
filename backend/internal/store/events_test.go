@@ -1,6 +1,7 @@
 package store
 
 import (
+	"strings"
 	"testing"
 	"time"
 
@@ -50,8 +51,15 @@ func TestEmitRules(t *testing.T) {
 		t.Fatalf("эксперту: %+v", orlov)
 	}
 	sokolov := s.NotificationsFor("u-sokolov")
-	if len(sokolov) != 2 || sokolov[0].Type != "request_status" || sokolov[1].Type != "answer_ready" {
+	// стажёру: решение по заявке, квитанция «отправлена на согласование», ответ, две квитанции «вопрос отправлен»
+	want := []string{"request_status", "request_sent", "answer_ready", "question_sent", "question_sent"}
+	if len(sokolov) != len(want) {
 		t.Fatalf("стажёру: %+v", sokolov)
+	}
+	for i, typ := range want {
+		if sokolov[i].Type != typ {
+			t.Fatalf("стажёру %d: %s, ожидалось %s", i, sokolov[i].Type, typ)
+		}
 	}
 	if s.NotificationsFor("u-kovalev")[0].Type != "approval_needed" {
 		t.Fatal("руководителю — заявка ждёт решения")
@@ -72,10 +80,10 @@ func TestEmitRules(t *testing.T) {
 		}
 	}
 	// очередь Telegram: срочное — сейчас, сводка — не раньше 16:00
-	if p := s.PendingTelegram(Now()); len(p) != 6 {
+	if p := s.PendingTelegram(Now()); len(p) != 9 {
 		t.Fatalf("сейчас к отправке: %d", len(p))
 	}
-	if p := s.PendingTelegram(time.Date(2026, 11, 11, 16, 0, 1, 0, MSK)); len(p) != 7 {
+	if p := s.PendingTelegram(time.Date(2026, 11, 11, 16, 0, 1, 0, MSK)); len(p) != 10 {
 		t.Fatalf("после 16:00: %d", len(p))
 	}
 	s.SetTelegramStatus([]string{orlov[0].ID}, "sent", "")
@@ -152,5 +160,69 @@ func TestSnapshotKeepsEvents(t *testing.T) {
 	}
 	if _, ok := r.TelegramChat("u-kovalev"); ok {
 		t.Fatal("старое состояние без привязок")
+	}
+}
+
+// Ответ попал в базу — автору вопроса (H5); при подключении бота приходит пропущенное за сутки.
+func TestPublishedAndBacklog(t *testing.T) {
+	s := newTestStore(t)
+	Now = func() time.Time { return time.Date(2026, 11, 11, 12, 0, 0, 0, MSK) }
+	defer func() { Now = time.Now }()
+	s.Emit(EvPagePublished, "u-orlov", "kb-20", map[string]string{"asker": "u-sokolov"})
+	s.Emit(EvPagePublished, "u-orlov", "kb-21", map[string]string{"asker": "u-orlov"}) // сам себе — нет
+	if n := s.NotificationsFor("u-sokolov"); len(n) != 1 || n[0].Type != "answer_published" {
+		t.Fatalf("%+v", n)
+	}
+	s.Notify(Notification{ID: "old", UserID: "u-sokolov", TG: "skipped", At: "2026-11-09T12:00:00+03:00"})
+	s.SetTelegramStatus([]string{s.NotificationsFor("u-sokolov")[1].ID}, "skipped", "")
+	s.LinkTelegram("u-sokolov", 5)
+	for _, n := range s.NotificationsFor("u-sokolov") {
+		if n.ID == "old" && n.TG != "skipped" {
+			t.Fatal("старше суток — не присылаем")
+		}
+		if n.Type == "answer_published" && n.TG != "pending" {
+			t.Fatal("свежее пропущенное — снова в очередь")
+		}
+	}
+}
+
+// Тексты уведомлений: что именно и что сделать дальше; без причины отгула (BR-51).
+func TestFriendlyTexts(t *testing.T) {
+	if RuDay("2026-11-13") != "пятницу, 13 ноября" || RuDay("2026-11-11") != "среду, 11 ноября" || RuDay("bad") != "bad" {
+		t.Fatal(RuDay("2026-11-13"))
+	}
+	cases := []struct {
+		meta map[string]string
+		want []string
+	}{
+		{map[string]string{"status": "approved", "title": "отгул на пятницу, 13 ноября"}, []string{"✅ Отгул на пятницу, 13 ноября — согласовано", "Хорошего отдыха, Даниил"}},
+		{map[string]string{"status": "granted", "title": "доступ к Redash", "step_title": "Запроси доступ к Redash"}, []string{"доступ выдан", "отметь шаг «Запроси доступ к Redash»"}},
+		{map[string]string{"status": "granted", "title": "доступ к Redash"}, []string{"Можно пользоваться"}},
+		{map[string]string{"status": "rejected", "title": "отгул на пятницу, 13 ноября", "reason_code": "DATE_CONFLICT", "reason_text": "В эту дату важное событие"}, []string{"не согласовано", "Причина: В эту дату важное событие.", "выбери другую дату"}},
+		{map[string]string{"status": "rejected", "reason_code": "OTHER"}, []string{"Заявка — не согласовано", "в разделе «Заявки»"}},
+		{map[string]string{"status": "weird"}, []string{"Статус заявки изменился"}},
+	}
+	for _, c := range cases {
+		got := decisionText(c.meta, "Даниил")
+		for _, w := range c.want {
+			if !strings.Contains(got, w) {
+				t.Errorf("%v: %q нет в %q", c.meta, w, got)
+			}
+		}
+	}
+	if capitalize("") != "" {
+		t.Fatal("пустая строка")
+	}
+	s := newTestStore(t)
+	s.Emit(EvRequestCreated, "u-sokolov", "ABS-1", map[string]string{"approver": "u-kovalev", "employee": "u-sokolov", "title": "отгул на пятницу, 13 ноября"})
+	s.Emit(EvAnswerFeedback, "u-sokolov", "kb-03", map[string]string{"value": "stale", "author": "u-orlov", "page_title": "Витрины DWH"})
+	if n := s.NotificationsFor("u-sokolov")[0].Text; !strings.Contains(n, "Заявка отправлена: отгул на пятницу, 13 ноября (ABS-1)") || !strings.Contains(n, "Согласует: Андрей Ковалёв") {
+		t.Fatal(n)
+	}
+	if n := s.NotificationsFor("u-kovalev")[0].Text; !strings.Contains(n, "Даниил Соколов — отгул на пятницу, 13 ноября") {
+		t.Fatal(n)
+	}
+	if n := s.NotificationsFor("u-orlov")[0].Text; !strings.Contains(n, "«Витрины DWH» устарела") {
+		t.Fatal(n)
 	}
 }

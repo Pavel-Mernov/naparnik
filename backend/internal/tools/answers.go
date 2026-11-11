@@ -149,6 +149,12 @@ func approvePage(c Ctx, pageID, title, body string) (mockdata.Page, *Error) {
 		}
 		p.Status, p.UpdatedAt = "Published", c.Store.Today.Format(time.DateOnly)
 	})
-	c.Store.Emit(store.EvPagePublished, c.User.ID, page.ID, map[string]string{"source_question": page.SourceQuestion})
+	asker := ""
+	for _, q := range c.Store.Questions() {
+		if q.ID == page.SourceQuestion {
+			asker = q.AskedBy
+		}
+	}
+	c.Store.Emit(store.EvPagePublished, c.User.ID, page.ID, map[string]string{"source_question": page.SourceQuestion, "asker": asker})
 	return page, nil
 }

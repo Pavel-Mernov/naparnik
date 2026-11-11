@@ -91,7 +91,7 @@
 				
 				<option value="file17">github.com/worker4556/naparnik/backend/internal/store/events.go (100.0%)</option>
 				
-				<option value="file18">github.com/worker4556/naparnik/backend/internal/store/notify_rules.go (94.8%)</option>
+				<option value="file18">github.com/worker4556/naparnik/backend/internal/store/notify_rules.go (98.0%)</option>
 				
 				<option value="file19">github.com/worker4556/naparnik/backend/internal/store/persistence.go (63.5%)</option>
 				
@@ -99,11 +99,11 @@
 				
 				<option value="file21">github.com/worker4556/naparnik/backend/internal/store/store.go (97.2%)</option>
 				
-				<option value="file22">github.com/worker4556/naparnik/backend/internal/telegram/telegram.go (93.8%)</option>
+				<option value="file22">github.com/worker4556/naparnik/backend/internal/telegram/telegram.go (92.3%)</option>
 				
 				<option value="file23">github.com/worker4556/naparnik/backend/internal/tools/access.go (100.0%)</option>
 				
-				<option value="file24">github.com/worker4556/naparnik/backend/internal/tools/answers.go (91.8%)</option>
+				<option value="file24">github.com/worker4556/naparnik/backend/internal/tools/answers.go (92.2%)</option>
 				
 				<option value="file25">github.com/worker4556/naparnik/backend/internal/tools/cache.go (100.0%)</option>
 				
@@ -117,7 +117,7 @@
 				
 				<option value="file30">github.com/worker4556/naparnik/backend/internal/tools/requests.go (98.7%)</option>
 				
-				<option value="file31">github.com/worker4556/naparnik/backend/internal/tools/service.go (97.3%)</option>
+				<option value="file31">github.com/worker4556/naparnik/backend/internal/tools/service.go (97.9%)</option>
 				
 				<option value="file32">github.com/worker4556/naparnik/backend/internal/tools/tools.go (100.0%)</option>
 				
@@ -972,14 +972,14 @@ func (s *Server) feedback(w http.ResponseWriter, r *http.Request, u *mockdata.Us
                 <span class="cov8" title="1">writeJSON(w, 422, errBody("validation", "Оценка: helped, not_helped или stale."))
                 return
 </span>        }
-        <span class="cov8" title="1">author := ""
+        <span class="cov8" title="1">author, title := "", ""
         for _, p := range s.Store.Pages() </span>{
                 <span class="cov8" title="1">if p.ID == body.PageID </span>{
-                        <span class="cov8" title="1">author = p.AuthorID
+                        <span class="cov8" title="1">author, title = p.AuthorID, p.Title
 </span>                }
         }
         <span class="cov8" title="1">err := s.Store.Transaction(func(st *store.Store) error </span>{
-                <span class="cov8" title="1">st.Emit(store.EvAnswerFeedback, u.ID, body.PageID, map[string]string{"value": body.Value, "author": author})
+                <span class="cov8" title="1">st.Emit(store.EvAnswerFeedback, u.ID, body.PageID, map[string]string{"value": body.Value, "author": author, "page_title": title})
                 return nil
 </span>        })
         <span class="cov8" title="1">if err != nil </span>{
@@ -2840,11 +2840,26 @@ func (s *Store) TelegramChat(userID string) (int64, bool) {
         return id, ok
 </span>}
 
+// LinkTelegram привязывает чат и возвращает в очередь пропущенное за последние сутки (не больше 10):
+// человек подключил бота — и сразу видит, что уже произошло.
 func (s *Store) LinkTelegram(userID string, chatID int64) {
         <span class="cov8" title="1">s.mu.Lock()
         defer s.mu.Unlock()
         s.tgLinks[userID] = chatID
-</span>}
+        since := Now().Add(-24 * time.Hour)
+        requeued := 0
+        for i := len(s.notifications) - 1; i &gt;= 0 &amp;&amp; requeued &lt; 10; i-- </span>{
+                <span class="cov8" title="1">n := &amp;s.notifications[i]
+                if n.UserID != userID || n.TG != "skipped" </span>{
+                        <span class="cov8" title="1">continue</span>
+                }
+                <span class="cov8" title="1">if at, err := time.Parse(time.RFC3339, n.At); err == nil &amp;&amp; at.Before(since) </span>{
+                        <span class="cov8" title="1">continue</span>
+                }
+                <span class="cov8" title="1">n.TG = "pending"
+                requeued++</span>
+        }
+}
 
 func (s *Store) UnlinkTelegram(userID string) {
         <span class="cov8" title="1">s.mu.Lock()
@@ -2868,6 +2883,7 @@ func (s *Store) UserByTelegram(chatID int64) (string, bool) {
 		<pre class="file" id="file18" style="display: none">package store
 
 import (
+        "fmt"
         "strings"
         "time"
 )
@@ -2884,41 +2900,127 @@ var DigestSlots = []int{11, 16}
 func (s *Store) notificationsFor(e LogEvent) []Notification {
         <span class="cov8" title="1">m := e.Meta
         name := func(id string) string </span>{ <span class="cov8" title="1">return s.Name(id) }</span>
+        <span class="cov8" title="1">first := func(id string) string </span>{ <span class="cov8" title="1">return strings.Split(s.Name(id), " ")[0] }</span>
+        // Тексты дружелюбные и конкретные: что произошло и что сделать дальше. Имена — в именительном падеже
+        // (склонять имена кодом ненадёжно). Без текстов вопросов, ответов и причины отгула (BR-51).
         <span class="cov8" title="1">switch e.Type </span>{
         case EvQuestionSent:
                 <span class="cov8" title="1">to := m["to"]
                 if to == "" || to == e.Actor </span>{
                         <span class="cov8" title="1">return nil
 </span>                }
-                <span class="cov8" title="1">if m["urgent"] == "true" </span>{ // BR-21: срочный — сразу
-                        <span class="cov8" title="1">return []Notification{{UserID: to, Type: "urgent_question", Text: "Новый срочный вопрос · " + name(e.Actor) + ". Открыть →", View: "questions", Urgent: true, TG: "pending"}}
+                // Квитанция автору: вопрос ушёл человеку (H3: стажёр видит маршрут)
+                <span class="cov8" title="1">receipt := Notification{UserID: e.Actor, Type: "question_sent", View: "questions", TG: "pending",
+                        Text: "✉️ Отправил твой вопрос. Отвечает: " + name(to) + ".\nКак только придёт ответ — сразу напишу. А пока можно заняться другими шагами плана."}
+                if m["urgent"] == "true" </span>{ // BR-21: срочный — сразу
+                        <span class="cov8" title="1">receipt.Text = "🔥 Отправил твой срочный вопрос. Отвечает: " + name(to) + ".\nПометил, что без ответа работа стоит, — он придёт адресату сразу."
+                        return []Notification{receipt, {UserID: to, Type: "urgent_question", View: "questions", Urgent: true, TG: "pending",
+                                Text: "🔥 Срочный вопрос от стажёра · " + name(e.Actor) + ".\nБез ответа у него стоит работа. Ответить можно прямо в карточке вопроса — пары строк хватит."}}
 </span>                }
                 // BR-20: обычный — в веб сразу, в Telegram — сводкой в 11:00 или 16:00
-                <span class="cov8" title="1">return []Notification{{UserID: to, Type: "question_new", Text: "Новый вопрос · " + name(e.Actor) + ". Открыть →", View: "questions", TG: "pending",
-                        DeliverAt: NextDigest(Now()).Format(time.RFC3339)}}</span>
+                <span class="cov8" title="1">return []Notification{receipt, {UserID: to, Type: "question_new", View: "questions", TG: "pending",
+                        DeliverAt: NextDigest(Now()).Format(time.RFC3339),
+                        Text:      "❓ Новый вопрос от стажёра · " + name(e.Actor) + "."}}</span>
         case EvQuestionAnswered:
                 <span class="cov8" title="1">var out []Notification
                 if asker := m["asker"]; asker != "" </span>{
-                        <span class="cov8" title="1">out = append(out, Notification{UserID: asker, Type: "answer_ready", Text: name(e.Actor) + " ответил(а) на твой вопрос. Открыть →", View: "questions", TG: "pending"})
+                        <span class="cov8" title="1">out = append(out, Notification{UserID: asker, Type: "answer_ready", View: "questions", TG: "pending",
+                                Text: "💬 Пришёл ответ на твой вопрос · " + name(e.Actor) + ".\nОткрой раздел «Вопросы» в Напарнике. Если что-то непонятно — уточни там же."})
 </span>                }
                 <span class="cov8" title="1">if m["page"] != "" </span>{
-                        <span class="cov8" title="1">out = append(out, Notification{UserID: e.Actor, Type: "draft_review", Text: "Черновик страницы по вашему ответу ждёт проверки. Открыть →", View: "questions", TG: "pending"})
+                        <span class="cov8" title="1">out = append(out, Notification{UserID: e.Actor, Type: "draft_review", View: "questions", TG: "pending",
+                                Text: "📄 Спасибо за ответ! Я оформил его страницей для базы знаний.\nПроверь текст и нажми «Ок, опубликовать» — тогда следующий стажёр получит ответ сразу, без тебя."})
 </span>                }
                 <span class="cov8" title="1">return out</span>
         case EvRequestCreated:
-                <span class="cov8" title="1">if m["approver"] == "" </span>{
-                        <span class="cov0" title="0">return nil
+                <span class="cov8" title="1">what, out := m["title"], []Notification{}
+                if what == "" </span>{
+                        <span class="cov8" title="1">what = "заявка " + e.Object
 </span>                }
-                <span class="cov8" title="1">return []Notification{{UserID: m["approver"], Type: "approval_needed", Text: "Заявка " + e.Object + " ждёт вашего решения · " + name(m["employee"]) + ". Открыть →", View: "requests", TG: "pending"}}</span>
+                <span class="cov8" title="1">if emp := m["employee"]; emp != "" </span>{ // квитанция автору (BR-43): что, номер и кто согласует
+                        <span class="cov8" title="1">out = append(out, Notification{UserID: emp, Type: "request_sent", View: "requests", TG: "pending",
+                                Text: "📝 Заявка отправлена: " + what + " (" + e.Object + ").\nСогласует: " + name(m["approver"]) + ". Как только будет решение — напишу."})
+</span>                }
+                <span class="cov8" title="1">if m["approver"] != "" &amp;&amp; m["approver"] != m["employee"] </span>{
+                        <span class="cov8" title="1">out = append(out, Notification{UserID: m["approver"], Type: "approval_needed", View: "requests", TG: "pending",
+                                Text: "🗂 Нужно ваше решение: " + name(m["employee"]) + " — " + what + " (" + e.Object + ").\nСогласовать или отклонить можно в разделе «Согласование»."})
+</span>                }
+                <span class="cov8" title="1">return out</span>
+        case EvPagePublished:
+                // H5: ответ стал знанием команды — автору вопроса
+                <span class="cov8" title="1">if asker := m["asker"]; asker != "" &amp;&amp; asker != e.Actor </span>{
+                        <span class="cov8" title="1">return []Notification{{UserID: asker, Type: "answer_published", View: "knowledge", TG: "pending",
+                                Text: "📚 Ответ на твой вопрос теперь в базе знаний (автор — " + name(e.Actor) + ").\nСледующий стажёр получит его сразу, без ожидания. Твой вопрос помог команде!"}}
+</span>                }
         case EvRequestDecided:
-                <span class="cov8" title="1">return []Notification{{UserID: m["employee"], Type: "request_status", Text: "Статус заявки " + e.Object + " изменился: " + m["status_ru"] + ". Открыть →", View: "requests", TG: "pending"}}</span>
+                <span class="cov8" title="1">return []Notification{{UserID: m["employee"], Type: "request_status", View: "requests", TG: "pending", Text: decisionText(m, first(m["employee"]))}}</span>
         case EvAnswerFeedback:
-                // H11: «устарело» → владельцу страницы. Название страницы в Telegram не уходит.
+                // H11: «устарело» → владельцу страницы
                 <span class="cov8" title="1">if m["value"] == "stale" &amp;&amp; m["author"] != "" &amp;&amp; m["author"] != e.Actor </span>{
-                        <span class="cov8" title="1">return []Notification{{UserID: m["author"], Type: "page_stale", Text: "Одну из ваших страниц в базе отметили как устаревшую. Открыть →", View: "knowledge", TG: "pending"}}
-</span>                }
+                        <span class="cov8" title="1">title := m["page_title"]
+                        if title == "" </span>{
+                                <span class="cov8" title="1">title = "одна из твоих страниц"
+</span>                        } else {
+                                <span class="cov8" title="1">title = "«" + title + "»"
+</span>                        }
+                        <span class="cov8" title="1">return []Notification{{UserID: m["author"], Type: "page_stale", View: "knowledge", TG: "pending",
+                                Text: "🕰 Стажёр отметил, что страница " + title + " устарела.\nЗагляни, когда будет минутка: может, стоит обновить пару строк."}}</span>
+                }
         }
         <span class="cov8" title="1">return nil</span>
+}
+
+// decisionText — решение по заявке: что именно и что делать дальше.
+func decisionText(m map[string]string, firstName string) string {
+        <span class="cov8" title="1">what := m["title"]
+        if what == "" </span>{
+                <span class="cov8" title="1">what = "заявка"
+</span>        }
+        <span class="cov8" title="1">switch m["status"] </span>{
+        case "approved":
+                <span class="cov8" title="1">return "✅ " + capitalize(what) + " — согласовано!\nНичего больше делать не нужно. Хорошего отдыха, " + firstName + "!"</span>
+        case "granted":
+                <span class="cov8" title="1">text := "✅ " + capitalize(what) + " — доступ выдан!"
+                if step := m["step_title"]; step != "" </span>{
+                        <span class="cov8" title="1">return text + "\nЧто дальше: отметь шаг «" + step + "» выполненным в плане — один клик в Напарнике."
+</span>                }
+                <span class="cov8" title="1">return text + "\nМожно пользоваться."</span>
+        case "rejected":
+                <span class="cov8" title="1">text := "❌ " + capitalize(what) + " — не согласовано."
+                if r := m["reason_text"]; r != "" </span>{
+                        <span class="cov8" title="1">text += "\nПричина: " + strings.TrimSuffix(r, ".") + "."
+</span>                }
+                <span class="cov8" title="1">next := map[string]string{
+                        "DATE_CONFLICT":  "выбери другую дату и подай снова — я помогу оформить.",
+                        "TOO_LATE":       "в следующий раз подавай не позже чем за 2 рабочих дня. Можно выбрать другую дату.",
+                        "NEED_INFO":      "посмотри комментарий руководителя в Напарнике, дополни и подай снова.",
+                        "NOT_NEEDED_YET": "этот доступ понадобится позже по плану — я напомню, когда придёт время.",
+                }[m["reason_code"]]
+                if next == "" </span>{
+                        <span class="cov8" title="1">next = "подробности и комментарий — в разделе «Заявки»."
+</span>                }
+                <span class="cov8" title="1">return text + "\nЧто сделать: " + next</span>
+        }
+        <span class="cov8" title="1">return "Статус заявки изменился — посмотри в разделе «Заявки»."</span>
+}
+
+func capitalize(s string) string {
+        <span class="cov8" title="1">r := []rune(s)
+        if len(r) == 0 </span>{
+                <span class="cov8" title="1">return s
+</span>        }
+        <span class="cov8" title="1">return strings.ToUpper(string(r[0])) + string(r[1:])</span>
+}
+
+// RuDay — «пятницу, 13 ноября» для «на …» (винительный падеж дня недели).
+func RuDay(date string) string {
+        <span class="cov8" title="1">d, err := time.Parse(time.DateOnly, date)
+        if err != nil </span>{
+                <span class="cov8" title="1">return date
+</span>        }
+        <span class="cov8" title="1">days := []string{"воскресенье", "понедельник", "вторник", "среду", "четверг", "пятницу", "субботу"}
+        months := []string{"января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря"}
+        return fmt.Sprintf("%s, %d %s", days[d.Weekday()], d.Day(), months[d.Month()-1])</span>
 }
 
 // NextDigest — ближайший слот сводки (11:00 / 16:00 МСК, по будням).
@@ -3748,8 +3850,12 @@ func (t *Service) Flush(ctx context.Context) error {
                 <span class="cov0" title="0">return err
 </span>        }
         <span class="cov8" title="1">now := t.now()
-        byUser := map[string][]store.Notification{}
-        for _, n := range t.store.PendingTelegram(now) </span>{
+        due := now
+        if t.cfg.IgnoreHours </span>{ // демо: всё сразу — без ожидания рабочих часов и сводок 11:00/16:00
+                <span class="cov8" title="1">due = now.AddDate(1, 0, 0)
+</span>        }
+        <span class="cov8" title="1">byUser := map[string][]store.Notification{}
+        for _, n := range t.store.PendingTelegram(due) </span>{
                 <span class="cov8" title="1">byUser[n.UserID] = append(byUser[n.UserID], n)
 </span>        }
         <span class="cov8" title="1">for userID, list := range byUser </span>{
@@ -3783,7 +3889,7 @@ func (t *Service) Flush(ctx context.Context) error {
                         <span class="cov8" title="1">t.deliver(ctx, chatID, []store.Notification{n}, n.Text)
 </span>                }
                 <span class="cov8" title="1">if len(digest) &gt; 0 </span>{
-                        <span class="cov8" title="1">t.deliver(ctx, chatID, digest, fmt.Sprintf("Сводка вопросов: %d. Открыть →", len(digest)))
+                        <span class="cov8" title="1">t.deliver(ctx, chatID, digest, fmt.Sprintf("📬 Сводка: новых вопросов от стажёров — %d.\nОтветить можно прямо в карточке вопроса, пары строк хватит.", len(digest)))
 </span>                }
         }
         <span class="cov8" title="1">return nil</span>
@@ -3794,7 +3900,7 @@ func (t *Service) deliver(ctx context.Context, chatID int64, list []store.Notifi
         for i, n := range list </span>{
                 <span class="cov8" title="1">ids[i] = n.ID
 </span>        }
-        <span class="cov8" title="1">if err := t.send(ctx, chatID, text+"\n"+t.cfg.WebURL); err != nil </span>{
+        <span class="cov8" title="1">if err := t.send(ctx, chatID, text+"\n\n👉 Открыть Напарник: "+t.cfg.WebURL); err != nil </span>{
                 <span class="cov8" title="1">log.Printf("telegram: %v — уведомление осталось в вебе", err)
                 t.mark(ids, "failed", "")
                 return
@@ -3815,21 +3921,33 @@ func (t *Service) Schedule() error {
                         // Утренний план — стажёрам с режимом «план на день», в начале рабочего дня.
                         <span class="cov8" title="1">if u.Settings != nil &amp;&amp; u.Settings.Proactivity == "daily_plan" </span>{
                                 <span class="cov8" title="1">if start, end, ok := store.WorkingWindow(u.WorkingHours, now); ok &amp;&amp; !now.Before(start) &amp;&amp; now.Before(end) </span>{
-                                        <span class="cov8" title="1">open, overdue := 0, 0
+                                        <span class="cov8" title="1">open, overdue, firstStep := 0, 0, ""
                                         for _, st := range s.PlanSteps(u.ID) </span>{
-                                                <span class="cov8" title="1">if st.Status == "Today" || st.Status == "Overdue" </span>{
-                                                        <span class="cov8" title="1">open++
+                                                <span class="cov8" title="1">if st.Status != "Today" &amp;&amp; st.Status != "Overdue" </span>{
+                                                        <span class="cov8" title="1">continue</span>
+                                                }
+                                                <span class="cov8" title="1">open++
+                                                title := st.StepID
+                                                if ts, ok := s.TemplateStep(st.StepID); ok </span>{
+                                                        <span class="cov8" title="1">title = ts.Title
 </span>                                                }
                                                 <span class="cov8" title="1">if st.Status == "Overdue" </span>{
                                                         <span class="cov8" title="1">overdue++
+                                                        if overdue == 1 </span>{
+                                                                <span class="cov8" title="1">firstStep = title // начинаем с просроченного
+</span>                                                        }
+                                                } else <span class="cov8" title="1">if firstStep == "" </span>{
+                                                        <span class="cov8" title="1">firstStep = title
 </span>                                                }
                                         }
                                         <span class="cov8" title="1">if open &gt; 0 </span>{
-                                                <span class="cov8" title="1">text := fmt.Sprintf("Доброе утро! На сегодня шагов в плане: %d", open)
+                                                <span class="cov8" title="1">text := fmt.Sprintf("☀️ Доброе утро, %s! На сегодня по плану шагов: %d.", firstName(u.Name), open)
                                                 if overdue &gt; 0 </span>{
-                                                        <span class="cov8" title="1">text += fmt.Sprintf(", просрочено: %d", overdue)
+                                                        <span class="cov8" title="1">text += fmt.Sprintf("\nОдин уже ждёт со вчера — начни с него: «%s».", firstStep)
+</span>                                                } else {
+                                                        <span class="cov0" title="0">text += fmt.Sprintf("\nНачни с «%s». Застрянешь — спроси меня в Напарнике.", firstStep)
 </span>                                                }
-                                                <span class="cov8" title="1">s.Notify(store.Notification{ID: "plan:" + u.ID + ":" + date, UserID: u.ID, Type: "morning_plan", Text: text + ". Открыть →", View: "day", TG: "pending"})</span>
+                                                <span class="cov8" title="1">s.Notify(store.Notification{ID: "plan:" + u.ID + ":" + date, UserID: u.ID, Type: "morning_plan", Text: text, View: "day", TG: "pending"})</span>
                                         }
                                 }
                         }
@@ -3846,21 +3964,39 @@ func (t *Service) Schedule() error {
                                         <span class="cov0" title="0">continue</span>
                                 }
                                 <span class="cov8" title="1">for _, r := range reminders </span>{
-                                        <span class="cov8" title="1">lead, label := time.Hour, "Через час"
+                                        <span class="cov8" title="1">lead, label := time.Hour, "⏰ Через час, в %s — %s."
                                         if r == "1d" </span>{
-                                                <span class="cov8" title="1">lead, label = 24*time.Hour, "Завтра"
+                                                <span class="cov8" title="1">lead, label = 24*time.Hour, "📅 Завтра в %s — %s."
 </span>                                        }
                                         // «Завтра» — только если событие и правда завтра по календарю, а не через 24 часа.
                                         <span class="cov8" title="1">tomorrow := start.In(store.MSK).Format(time.DateOnly) == now.AddDate(0, 0, 1).Format(time.DateOnly)
                                         if !now.Before(start.Add(-lead)) &amp;&amp; now.Before(start) &amp;&amp; (r != "1d" || (tomorrow &amp;&amp; now.Before(start.Add(-time.Hour)))) </span>{
                                                 <span class="cov8" title="1">s.Notify(store.Notification{ID: "rem:" + e.ID + ":" + u.ID + ":" + r, UserID: u.ID, Type: "event_reminder",
-                                                        Text: fmt.Sprintf("%s: %s, %s. Открыть →", label, e.Title, start.In(store.MSK).Format("15:04")), View: "day", TG: "pending"})
+                                                        Text: fmt.Sprintf(label, start.In(store.MSK).Format("15:04"), e.Title) + "\n" + eventTip(e.Type, store.HasRole(&amp;u, store.RoleBuddy)), View: "day", TG: "pending"})
 </span>                                        }
                                 }
                         }
                 }
                 <span class="cov8" title="1">return nil</span>
         })
+}
+
+// eventTip — что сделать перед событием: короткая подсказка по его типу.
+func eventTip(kind string, isBuddy bool) string {
+        <span class="cov8" title="1">switch kind </span>{
+        case "one_on_one":
+                <span class="cov8" title="1">if isBuddy </span>{
+                        <span class="cov8" title="1">return "Что сделать: посмотри, где стажёр застрял, — это видно в его плане."
+</span>                }
+                <span class="cov8" title="1">return "Что сделать: запиши 2–3 вопроса, которые хочешь обсудить. Мелких вопросов не бывает."</span>
+        case "program":
+                <span class="cov8" title="1">return "Что сделать: подготовь вопросы — на мастер-классах их всегда не хватает."</span>
+        case "team":
+                <span class="cov0" title="0">return "Что сделать: продумай одну фразу — что сделал и где нужна помощь."</span>
+        case "deadline":
+                <span class="cov0" title="0">return "Что сделать: если не успеваешь — напиши бадди заранее, это нормально."</span>
+        }
+        <span class="cov0" title="0">return "Открой Напарник — там все детали."</span>
 }
 
 func contains(xs []string, x string) bool {
@@ -4130,7 +4266,13 @@ func approvePage(c Ctx, pageID, title, body string) (mockdata.Page, *Error) {
 </span>                }
                 <span class="cov8" title="1">p.Status, p.UpdatedAt = "Published", c.Store.Today.Format(time.DateOnly)</span>
         })
-        <span class="cov8" title="1">c.Store.Emit(store.EvPagePublished, c.User.ID, page.ID, map[string]string{"source_question": page.SourceQuestion})
+        <span class="cov8" title="1">asker := ""
+        for _, q := range c.Store.Questions() </span>{
+                <span class="cov8" title="1">if q.ID == page.SourceQuestion </span>{
+                        <span class="cov8" title="1">asker = q.AskedBy
+</span>                }
+        }
+        <span class="cov8" title="1">c.Store.Emit(store.EvPagePublished, c.User.ID, page.ID, map[string]string{"source_question": page.SourceQuestion, "asker": asker})
         return page, nil</span>
 }
 </pre>
@@ -5465,8 +5607,29 @@ func created(c Ctx, r *store.Request) {
                 {At: r.CreatedAt, By: r.ApproverID, Text: "Заявка на согласовании: " + c.Store.Name(r.ApproverID)},
 </span>        }
         <span class="cov8" title="1">c.Store.AddRequest(r)
-        c.Store.Emit(store.EvRequestCreated, c.User.ID, r.ID, map[string]string{"approver": r.ApproverID, "employee": r.EmployeeID, "kind": r.Kind})
+        c.Store.Emit(store.EvRequestCreated, c.User.ID, r.ID, map[string]string{"approver": r.ApproverID, "employee": r.EmployeeID, "kind": r.Kind,
+                "title": requestHuman(r)})
 </span>}
+
+// requestHuman — заявка по-человечески для уведомлений: «отгул на пятницу, 13 ноября», «доступ к Redash (дашборды)».
+// Причина отгула и комментарии сюда не попадают (BR-51).
+func requestHuman(r *store.Request) string {
+        <span class="cov8" title="1">if r.Kind == "access" </span>{
+                <span class="cov8" title="1">title := r.Title
+                if title == "" </span>{
+                        <span class="cov8" title="1">title = r.System
+</span>                }
+                <span class="cov8" title="1">return "доступ к " + title</span>
+        }
+        <span class="cov8" title="1">what := map[string]string{"day_off": "отгул", "vacation": "отпуск", "sick_leave": "больничный"}[r.Type]
+        if what == "" </span>{
+                <span class="cov8" title="1">what = "отсутствие"
+</span>        }
+        <span class="cov8" title="1">if r.Date == "" </span>{
+                <span class="cov8" title="1">return what
+</span>        }
+        <span class="cov8" title="1">return what + " на " + store.RuDay(r.Date)</span>
+}
 
 // CreateSelf — стажёр сам оформляет заявку в форме сервиса (BR-42, «сделай сам»).
 // Нажатие «Отправить» в форме — и есть подтверждение человека, черновик не нужен.
@@ -5562,8 +5725,22 @@ func decide(c Ctx, id, decision, reason, comment string) (store.Request, *Error)
                         <span class="cov8" title="1">r.History = append(r.History, store.Event{At: now, By: r.EmployeeID, Text: "Шаг плана можно отметить выполненным — стажёр подтверждает"})
 </span>                }
         })
-        <span class="cov8" title="1">c.Store.Emit(store.EvRequestDecided, c.User.ID, out.ID, map[string]string{"employee": out.EmployeeID, "status": out.Status,
-                "status_ru": map[string]string{"approved": "согласовано", "granted": "доступ выдан", "rejected": "отклонено"}[out.Status]})
+        <span class="cov8" title="1">meta := map[string]string{"employee": out.EmployeeID, "status": out.Status, "title": requestHuman(&amp;out),
+                "status_ru": map[string]string{"approved": "согласовано", "granted": "доступ выдан", "rejected": "отклонено"}[out.Status]}
+        if decision == "reject" </span>{
+                <span class="cov8" title="1">meta["reason_code"] = reason
+                for _, x := range reasonCodes(c, out.Kind) </span>{
+                        <span class="cov8" title="1">if x.Code == reason </span>{
+                                <span class="cov8" title="1">meta["reason_text"] = x.Text
+</span>                        }
+                }
+        }
+        <span class="cov8" title="1">if out.StepID != "" </span>{ // SC-27: после выдачи доступа — какой шаг отметить
+                <span class="cov8" title="1">if st, ok := c.Store.TemplateStep(out.StepID); ok </span>{
+                        <span class="cov8" title="1">meta["step_title"] = st.Title
+</span>                }
+        }
+        <span class="cov8" title="1">c.Store.Emit(store.EvRequestDecided, c.User.ID, out.ID, meta)
         return out, nil</span>
 }
 

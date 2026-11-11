@@ -128,7 +128,7 @@ func TestFlush(t *testing.T) {
 	if err := svc.Flush(ctx); err != nil {
 		t.Fatal(err)
 	}
-	if len(api.sent) != 1 || !strings.Contains(api.sent[0]["text"].(string), "срочный вопрос · Даниил Соколов") {
+	if len(api.sent) != 1 || !strings.Contains(api.sent[0]["text"].(string), "Срочный вопрос от стажёра · Даниил Соколов") {
 		t.Fatalf("сразу только срочное: %+v", api.sent)
 	}
 	for _, x := range api.sent {
@@ -143,7 +143,7 @@ func TestFlush(t *testing.T) {
 	svc.now = func() time.Time { return at(16, 1) }
 	svc.kv = cache.NewMemory()
 	_ = svc.Flush(ctx)
-	if len(api.sent) != 2 || !strings.Contains(api.sent[1]["text"].(string), "Сводка вопросов: 2") {
+	if len(api.sent) != 2 || !strings.Contains(api.sent[1]["text"].(string), "новых вопросов от стажёров — 2") {
 		t.Fatalf("сводка: %+v", api.sent)
 	}
 	// вне рабочих часов — откладываем до начала рабочего дня (BR-52)
@@ -158,18 +158,12 @@ func TestFlush(t *testing.T) {
 	if n.TG != "pending" || n.DeliverAt != "2026-11-12T11:00:00+03:00" {
 		t.Fatalf("отложено до утра: %+v", n)
 	}
-	// демо-режим без рабочих часов
+	// демо-режим: всё сразу — и отложенное до утра, и сводки
 	svc.cfg.IgnoreHours = true
 	svc.kv = cache.NewMemory()
 	_ = svc.Flush(ctx)
-	if len(api.sent) != 2 { // ещё не наступило время доставки
-		t.Fatal("время доставки соблюдается")
-	}
-	svc.now = func() time.Time { return at(23, 59).Add(12 * time.Hour) }
-	svc.kv = cache.NewMemory()
-	_ = svc.Flush(ctx)
-	if len(api.sent) != 3 {
-		t.Fatalf("после наступления — отправлено: %d", len(api.sent))
+	if len(api.sent) != 3 || !strings.Contains(api.sent[2]["text"].(string), "Пришёл ответ на твой вопрос") {
+		t.Fatalf("демо — сразу: %+v", api.sent)
 	}
 	// сбой Telegram — помечаем failed, веб не страдает (BR-53)
 	api.fail = true
@@ -207,13 +201,13 @@ func TestSchedule(t *testing.T) {
 		t.Fatal("Полина выбрала «только дедлайны и встречи» и не участвует в событиях сегодня")
 	}
 	belova := s.NotificationsFor("u-belova")
-	if len(belova) != 1 || !strings.HasPrefix(belova[0].Text, "Через час: 1:1") {
+	if len(belova) != 1 || !strings.HasPrefix(belova[0].Text, "⏰ Через час, в 15:00 — 1:1") || !strings.Contains(belova[0].Text, "где стажёр застрял") {
 		t.Fatalf("бадди — за час по умолчанию: %+v", belova)
 	}
 	// за день: мастер-класс 12 ноября в 17:00 → напоминание 11-го после 17:00
 	svc.now = func() time.Time { return at(17, 30) }
 	_ = svc.Schedule()
-	if n := s.NotificationsFor("u-sokolov")[0]; !strings.HasPrefix(n.Text, "Завтра: Мастер-класс") {
+	if n := s.NotificationsFor("u-sokolov")[0]; !strings.HasPrefix(n.Text, "📅 Завтра в 17:00 — Мастер-класс") || !strings.Contains(n.Text, "подготовь вопросы") {
 		t.Fatalf("за день: %s", n.Text)
 	}
 	svc.now = func() time.Time { return at(8, 0) } // до рабочего дня — плана нет

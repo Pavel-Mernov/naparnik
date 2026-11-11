@@ -199,7 +199,7 @@ function App() {
     meId: data.me.id, today: data.me.today, steps: data.today?.steps ?? data.plan?.steps ?? [], questions: data.questions,
     requests: data.requests, drafts: data.drafts, events: data.today?.events ?? [],
   }) : [];
-  notes.unshift(...serverNotes.filter((n) => !n.read).map((n) => ({ id: n.id, text: n.text.replace(/\s*Открыть →$/, ""), meta: "Напарник", urgent: n.type === "page_stale", go: (n.view === "plan" ? "day" : n.view) as Note["go"] })));
+  notes.unshift(...serverNotes.filter((n) => !n.read).map((n) => ({ id: n.id, text: n.text.split("\n")[0], meta: n.text.split("\n").slice(1).join(" ") || "Напарник", urgent: n.type === "page_stale", go: (n.view === "plan" ? "day" : n.view) as Note["go"] })));
   const urgent = notes.filter((n) => n.urgent).length;
   const waitingForMe = data ? notes.filter((n) => !n.urgent && n.go !== "day") : [];
 

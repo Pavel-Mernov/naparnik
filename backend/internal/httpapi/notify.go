@@ -68,14 +68,14 @@ func (s *Server) feedback(w http.ResponseWriter, r *http.Request, u *mockdata.Us
 		writeJSON(w, 422, errBody("validation", "Оценка: helped, not_helped или stale."))
 		return
 	}
-	author := ""
+	author, title := "", ""
 	for _, p := range s.Store.Pages() {
 		if p.ID == body.PageID {
-			author = p.AuthorID
+			author, title = p.AuthorID, p.Title
 		}
 	}
 	err := s.Store.Transaction(func(st *store.Store) error {
-		st.Emit(store.EvAnswerFeedback, u.ID, body.PageID, map[string]string{"value": body.Value, "author": author})
+		st.Emit(store.EvAnswerFeedback, u.ID, body.PageID, map[string]string{"value": body.Value, "author": author, "page_title": title})
 		return nil
 	})
 	if err != nil {

@@ -194,3 +194,18 @@ func TestKBCache(t *testing.T) {
 		t.Fatal("у другого пользователя — свой ключ")
 	}
 }
+
+func TestRequestHuman(t *testing.T) {
+	cases := map[string]store.Request{
+		"отгул на пятницу, 13 ноября":      {Kind: "absence", Type: "day_off", Date: "2026-11-13"},
+		"отпуск на понедельник, 16 ноября": {Kind: "absence", Type: "vacation", Date: "2026-11-16"},
+		"отсутствие":                       {Kind: "absence"},
+		"доступ к Redash (дашборды)":       {Kind: "access", Title: "Redash (дашборды)"},
+		"доступ к sys-x":                   {Kind: "access", System: "sys-x"},
+	}
+	for want, r := range cases {
+		if got := requestHuman(&r); got != want {
+			t.Errorf("%q, ожидалось %q", got, want)
+		}
+	}
+}

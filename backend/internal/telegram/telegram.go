@@ -184,8 +184,12 @@ func (t *Service) Flush(ctx context.Context) error {
 		return err
 	}
 	now := t.now()
+	due := now
+	if t.cfg.IgnoreHours { // демо: всё сразу — без ожидания рабочих часов и сводок 11:00/16:00
+		due = now.AddDate(1, 0, 0)
+	}
 	byUser := map[string][]store.Notification{}
-	for _, n := range t.store.PendingTelegram(now) {
+	for _, n := range t.store.PendingTelegram(due) {
 		byUser[n.UserID] = append(byUser[n.UserID], n)
 	}
 	for userID, list := range byUser {
@@ -219,7 +223,7 @@ func (t *Service) Flush(ctx context.Context) error {
 			t.deliver(ctx, chatID, []store.Notification{n}, n.Text)
 		}
 		if len(digest) > 0 {
-			t.deliver(ctx, chatID, digest, fmt.Sprintf("Сводка вопросов: %d. Открыть →", len(digest)))
+			t.deliver(ctx, chatID, digest, fmt.Sprintf("📬 Сводка: новых вопросов от стажёров — %d.\nОтветить можно прямо в карточке вопроса, пары строк хватит.", len(digest)))
 		}
 	}
 	return nil
@@ -230,7 +234,7 @@ func (t *Service) deliver(ctx context.Context, chatID int64, list []store.Notifi
 	for i, n := range list {
 		ids[i] = n.ID
 	}
-	if err := t.send(ctx, chatID, text+"\n"+t.cfg.WebURL); err != nil {
+	if err := t.send(ctx, chatID, text+"\n\n👉 Открыть Напарник: "+t.cfg.WebURL); err != nil {
 		log.Printf("telegram: %v — уведомление осталось в вебе", err)
 		t.mark(ids, "failed", "")
 		return
@@ -251,21 +255,33 @@ func (t *Service) Schedule() error {
 			// Утренний план — стажёрам с режимом «план на день», в начале рабочего дня.
 			if u.Settings != nil && u.Settings.Proactivity == "daily_plan" {
 				if start, end, ok := store.WorkingWindow(u.WorkingHours, now); ok && !now.Before(start) && now.Before(end) {
-					open, overdue := 0, 0
+					open, overdue, firstStep := 0, 0, ""
 					for _, st := range s.PlanSteps(u.ID) {
-						if st.Status == "Today" || st.Status == "Overdue" {
-							open++
+						if st.Status != "Today" && st.Status != "Overdue" {
+							continue
+						}
+						open++
+						title := st.StepID
+						if ts, ok := s.TemplateStep(st.StepID); ok {
+							title = ts.Title
 						}
 						if st.Status == "Overdue" {
 							overdue++
+							if overdue == 1 {
+								firstStep = title // начинаем с просроченного
+							}
+						} else if firstStep == "" {
+							firstStep = title
 						}
 					}
 					if open > 0 {
-						text := fmt.Sprintf("Доброе утро! На сегодня шагов в плане: %d", open)
+						text := fmt.Sprintf("☀️ Доброе утро, %s! На сегодня по плану шагов: %d.", firstName(u.Name), open)
 						if overdue > 0 {
-							text += fmt.Sprintf(", просрочено: %d", overdue)
+							text += fmt.Sprintf("\nОдин уже ждёт со вчера — начни с него: «%s».", firstStep)
+						} else {
+							text += fmt.Sprintf("\nНачни с «%s». Застрянешь — спроси меня в Напарнике.", firstStep)
 						}
-						s.Notify(store.Notification{ID: "plan:" + u.ID + ":" + date, UserID: u.ID, Type: "morning_plan", Text: text + ". Открыть →", View: "day", TG: "pending"})
+						s.Notify(store.Notification{ID: "plan:" + u.ID + ":" + date, UserID: u.ID, Type: "morning_plan", Text: text, View: "day", TG: "pending"})
 					}
 				}
 			}
@@ -282,21 +298,39 @@ func (t *Service) Schedule() error {
 					continue
 				}
 				for _, r := range reminders {
-					lead, label := time.Hour, "Через час"
+					lead, label := time.Hour, "⏰ Через час, в %s — %s."
 					if r == "1d" {
-						lead, label = 24*time.Hour, "Завтра"
+						lead, label = 24*time.Hour, "📅 Завтра в %s — %s."
 					}
 					// «Завтра» — только если событие и правда завтра по календарю, а не через 24 часа.
 					tomorrow := start.In(store.MSK).Format(time.DateOnly) == now.AddDate(0, 0, 1).Format(time.DateOnly)
 					if !now.Before(start.Add(-lead)) && now.Before(start) && (r != "1d" || (tomorrow && now.Before(start.Add(-time.Hour)))) {
 						s.Notify(store.Notification{ID: "rem:" + e.ID + ":" + u.ID + ":" + r, UserID: u.ID, Type: "event_reminder",
-							Text: fmt.Sprintf("%s: %s, %s. Открыть →", label, e.Title, start.In(store.MSK).Format("15:04")), View: "day", TG: "pending"})
+							Text: fmt.Sprintf(label, start.In(store.MSK).Format("15:04"), e.Title) + "\n" + eventTip(e.Type, store.HasRole(&u, store.RoleBuddy)), View: "day", TG: "pending"})
 					}
 				}
 			}
 		}
 		return nil
 	})
+}
+
+// eventTip — что сделать перед событием: короткая подсказка по его типу.
+func eventTip(kind string, isBuddy bool) string {
+	switch kind {
+	case "one_on_one":
+		if isBuddy {
+			return "Что сделать: посмотри, где стажёр застрял, — это видно в его плане."
+		}
+		return "Что сделать: запиши 2–3 вопроса, которые хочешь обсудить. Мелких вопросов не бывает."
+	case "program":
+		return "Что сделать: подготовь вопросы — на мастер-классах их всегда не хватает."
+	case "team":
+		return "Что сделать: продумай одну фразу — что сделал и где нужна помощь."
+	case "deadline":
+		return "Что сделать: если не успеваешь — напиши бадди заранее, это нормально."
+	}
+	return "Открой Напарник — там все детали."
 }
 
 func contains(xs []string, x string) bool {

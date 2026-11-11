@@ -1,6 +1,7 @@
 package store
 
 import (
+	"fmt"
 	"strings"
 	"time"
 )
@@ -17,41 +18,127 @@ var DigestSlots = []int{11, 16}
 func (s *Store) notificationsFor(e LogEvent) []Notification {
 	m := e.Meta
 	name := func(id string) string { return s.Name(id) }
+	first := func(id string) string { return strings.Split(s.Name(id), " ")[0] }
+	// Тексты дружелюбные и конкретные: что произошло и что сделать дальше. Имена — в именительном падеже
+	// (склонять имена кодом ненадёжно). Без текстов вопросов, ответов и причины отгула (BR-51).
 	switch e.Type {
 	case EvQuestionSent:
 		to := m["to"]
 		if to == "" || to == e.Actor {
 			return nil
 		}
+		// Квитанция автору: вопрос ушёл человеку (H3: стажёр видит маршрут)
+		receipt := Notification{UserID: e.Actor, Type: "question_sent", View: "questions", TG: "pending",
+			Text: "✉️ Отправил твой вопрос. Отвечает: " + name(to) + ".\nКак только придёт ответ — сразу напишу. А пока можно заняться другими шагами плана."}
 		if m["urgent"] == "true" { // BR-21: срочный — сразу
-			return []Notification{{UserID: to, Type: "urgent_question", Text: "Новый срочный вопрос · " + name(e.Actor) + ". Открыть →", View: "questions", Urgent: true, TG: "pending"}}
+			receipt.Text = "🔥 Отправил твой срочный вопрос. Отвечает: " + name(to) + ".\nПометил, что без ответа работа стоит, — он придёт адресату сразу."
+			return []Notification{receipt, {UserID: to, Type: "urgent_question", View: "questions", Urgent: true, TG: "pending",
+				Text: "🔥 Срочный вопрос от стажёра · " + name(e.Actor) + ".\nБез ответа у него стоит работа. Ответить можно прямо в карточке вопроса — пары строк хватит."}}
 		}
 		// BR-20: обычный — в веб сразу, в Telegram — сводкой в 11:00 или 16:00
-		return []Notification{{UserID: to, Type: "question_new", Text: "Новый вопрос · " + name(e.Actor) + ". Открыть →", View: "questions", TG: "pending",
-			DeliverAt: NextDigest(Now()).Format(time.RFC3339)}}
+		return []Notification{receipt, {UserID: to, Type: "question_new", View: "questions", TG: "pending",
+			DeliverAt: NextDigest(Now()).Format(time.RFC3339),
+			Text:      "❓ Новый вопрос от стажёра · " + name(e.Actor) + "."}}
 	case EvQuestionAnswered:
 		var out []Notification
 		if asker := m["asker"]; asker != "" {
-			out = append(out, Notification{UserID: asker, Type: "answer_ready", Text: name(e.Actor) + " ответил(а) на твой вопрос. Открыть →", View: "questions", TG: "pending"})
+			out = append(out, Notification{UserID: asker, Type: "answer_ready", View: "questions", TG: "pending",
+				Text: "💬 Пришёл ответ на твой вопрос · " + name(e.Actor) + ".\nОткрой раздел «Вопросы» в Напарнике. Если что-то непонятно — уточни там же."})
 		}
 		if m["page"] != "" {
-			out = append(out, Notification{UserID: e.Actor, Type: "draft_review", Text: "Черновик страницы по вашему ответу ждёт проверки. Открыть →", View: "questions", TG: "pending"})
+			out = append(out, Notification{UserID: e.Actor, Type: "draft_review", View: "questions", TG: "pending",
+				Text: "📄 Спасибо за ответ! Я оформил его страницей для базы знаний.\nПроверь текст и нажми «Ок, опубликовать» — тогда следующий стажёр получит ответ сразу, без тебя."})
 		}
 		return out
 	case EvRequestCreated:
-		if m["approver"] == "" {
-			return nil
+		what, out := m["title"], []Notification{}
+		if what == "" {
+			what = "заявка " + e.Object
 		}
-		return []Notification{{UserID: m["approver"], Type: "approval_needed", Text: "Заявка " + e.Object + " ждёт вашего решения · " + name(m["employee"]) + ". Открыть →", View: "requests", TG: "pending"}}
+		if emp := m["employee"]; emp != "" { // квитанция автору (BR-43): что, номер и кто согласует
+			out = append(out, Notification{UserID: emp, Type: "request_sent", View: "requests", TG: "pending",
+				Text: "📝 Заявка отправлена: " + what + " (" + e.Object + ").\nСогласует: " + name(m["approver"]) + ". Как только будет решение — напишу."})
+		}
+		if m["approver"] != "" && m["approver"] != m["employee"] {
+			out = append(out, Notification{UserID: m["approver"], Type: "approval_needed", View: "requests", TG: "pending",
+				Text: "🗂 Нужно ваше решение: " + name(m["employee"]) + " — " + what + " (" + e.Object + ").\nСогласовать или отклонить можно в разделе «Согласование»."})
+		}
+		return out
+	case EvPagePublished:
+		// H5: ответ стал знанием команды — автору вопроса
+		if asker := m["asker"]; asker != "" && asker != e.Actor {
+			return []Notification{{UserID: asker, Type: "answer_published", View: "knowledge", TG: "pending",
+				Text: "📚 Ответ на твой вопрос теперь в базе знаний (автор — " + name(e.Actor) + ").\nСледующий стажёр получит его сразу, без ожидания. Твой вопрос помог команде!"}}
+		}
 	case EvRequestDecided:
-		return []Notification{{UserID: m["employee"], Type: "request_status", Text: "Статус заявки " + e.Object + " изменился: " + m["status_ru"] + ". Открыть →", View: "requests", TG: "pending"}}
+		return []Notification{{UserID: m["employee"], Type: "request_status", View: "requests", TG: "pending", Text: decisionText(m, first(m["employee"]))}}
 	case EvAnswerFeedback:
-		// H11: «устарело» → владельцу страницы. Название страницы в Telegram не уходит.
+		// H11: «устарело» → владельцу страницы
 		if m["value"] == "stale" && m["author"] != "" && m["author"] != e.Actor {
-			return []Notification{{UserID: m["author"], Type: "page_stale", Text: "Одну из ваших страниц в базе отметили как устаревшую. Открыть →", View: "knowledge", TG: "pending"}}
+			title := m["page_title"]
+			if title == "" {
+				title = "одна из твоих страниц"
+			} else {
+				title = "«" + title + "»"
+			}
+			return []Notification{{UserID: m["author"], Type: "page_stale", View: "knowledge", TG: "pending",
+				Text: "🕰 Стажёр отметил, что страница " + title + " устарела.\nЗагляни, когда будет минутка: может, стоит обновить пару строк."}}
 		}
 	}
 	return nil
+}
+
+// decisionText — решение по заявке: что именно и что делать дальше.
+func decisionText(m map[string]string, firstName string) string {
+	what := m["title"]
+	if what == "" {
+		what = "заявка"
+	}
+	switch m["status"] {
+	case "approved":
+		return "✅ " + capitalize(what) + " — согласовано!\nНичего больше делать не нужно. Хорошего отдыха, " + firstName + "!"
+	case "granted":
+		text := "✅ " + capitalize(what) + " — доступ выдан!"
+		if step := m["step_title"]; step != "" {
+			return text + "\nЧто дальше: отметь шаг «" + step + "» выполненным в плане — один клик в Напарнике."
+		}
+		return text + "\nМожно пользоваться."
+	case "rejected":
+		text := "❌ " + capitalize(what) + " — не согласовано."
+		if r := m["reason_text"]; r != "" {
+			text += "\nПричина: " + strings.TrimSuffix(r, ".") + "."
+		}
+		next := map[string]string{
+			"DATE_CONFLICT":  "выбери другую дату и подай снова — я помогу оформить.",
+			"TOO_LATE":       "в следующий раз подавай не позже чем за 2 рабочих дня. Можно выбрать другую дату.",
+			"NEED_INFO":      "посмотри комментарий руководителя в Напарнике, дополни и подай снова.",
+			"NOT_NEEDED_YET": "этот доступ понадобится позже по плану — я напомню, когда придёт время.",
+		}[m["reason_code"]]
+		if next == "" {
+			next = "подробности и комментарий — в разделе «Заявки»."
+		}
+		return text + "\nЧто сделать: " + next
+	}
+	return "Статус заявки изменился — посмотри в разделе «Заявки»."
+}
+
+func capitalize(s string) string {
+	r := []rune(s)
+	if len(r) == 0 {
+		return s
+	}
+	return strings.ToUpper(string(r[0])) + string(r[1:])
+}
+
+// RuDay — «пятницу, 13 ноября» для «на …» (винительный падеж дня недели).
+func RuDay(date string) string {
+	d, err := time.Parse(time.DateOnly, date)
+	if err != nil {
+		return date
+	}
+	days := []string{"воскресенье", "понедельник", "вторник", "среду", "четверг", "пятницу", "субботу"}
+	months := []string{"января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря"}
+	return fmt.Sprintf("%s, %d %s", days[d.Weekday()], d.Day(), months[d.Month()-1])
 }
 
 // NextDigest — ближайший слот сводки (11:00 / 16:00 МСК, по будням).
