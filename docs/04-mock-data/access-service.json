@@ -39,5 +39,6 @@
     { "code": "NOT_NEEDED_YET", "text": "Доступ понадобится позже, на другом этапе" },
     { "code": "NEED_INFO", "text": "Не хватает данных — уточни и подай снова" },
     { "code": "OTHER", "text": "Другое — с комментарием" }
-  ]
+  ],
+  "not_yet_available_variant": {"scenario": "SC-33", "question_code": "Q16", "asked_by": "u-sokolov", "text": "Хочу сам посмотреть данные в витринах DWH, как туда попасть?", "precondition": "1-я неделя, sys-dwh-marts-ro в статусе not_requested", "expected": {"system": "sys-dwh-marts-ro", "explain": "Нужен доступ «Витрины DWH отдела, только чтение». По плану его выдают со 2-й недели (шаг s-10), согласует руководитель отдела.", "offer": ["сделай сам", "сделаю за тебя"], "links_step": "s-10", "approver_id": "u-kovalev", "must_not_mention": ["kb-R1", "space-dwh-pii", "Витрина клиентов с контактными данными", "sys-dwh-pii"]}}
 }

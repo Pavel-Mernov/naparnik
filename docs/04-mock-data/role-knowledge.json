@@ -1,0 +1,44 @@
+{
+  "_meta": {
+    "description": "Наборы знаний по ролям стажёра (BR-87). Набор — данные, логика ИИ от роли не зависит. MVP: заполнен набор аналитика, набор бэкенда — пример для показа, что для разных ролей собирается разная информация. Карта сервисов синтетическая: есть ли у Авито каталог сервисов, нам неизвестно.",
+    "used_by": ["SC-34", "SC-30"]
+  },
+  "role_sets": [
+    {
+      "id": "analyst",
+      "title": "Стажёр-аналитик",
+      "glossary": ["kb-05"],
+      "code_style": ["kb-30", "kb-31", "kb-35"],
+      "review": ["kb-32", "kb-33"],
+      "data_map": [
+        { "name": "ads_mart", "what": "Объявления: просмотры, контакты по дням", "owner_id": "u-orlov", "sources": ["kb-04"] },
+        { "name": "user_cohorts", "what": "Когорты пользователей, MAU", "owner_id": "u-orlov", "sources": ["kb-16"] },
+        { "name": "Redash: папка «Объявления»", "what": "Основные продуктовые дашборды", "owner_id": "u-lebedeva", "sources": ["kb-10"] },
+        { "name": "A/B-платформа", "what": "Эксперименты и гардрейлы", "owner_id": "u-smirnova", "sources": ["kb-08", "kb-09"] }
+      ],
+      "practices": ["pr-01"]
+    },
+    {
+      "id": "backend",
+      "title": "Стажёр-бэкенд (пример)",
+      "is_example": true,
+      "glossary_terms": [
+        { "term": "Раскатка", "definition": "Постепенное включение релиза на долю трафика" },
+        { "term": "Фича-флаг", "definition": "Переключатель, который включает код без нового релиза" },
+        { "term": "Ручка", "definition": "Эндпоинт API сервиса" }
+      ],
+      "code_style": [
+        "Go: gofmt и golangci-lint в CI, ошибки оборачиваются с контекстом",
+        "Одна ручка — один обработчик, бизнес-логика вне HTTP-слоя",
+        "Тесты рядом с кодом, табличные тесты"
+      ],
+      "service_map": [
+        { "service": "item-service", "what": "Карточки объявлений", "depends_on": ["media-service", "search-indexer"], "owner_team": "Объявления" },
+        { "service": "search-indexer", "what": "Индексация объявлений для поиска", "depends_on": ["item-service"], "owner_team": "Поиск" },
+        { "service": "messenger-api", "what": "Сообщения между покупателем и продавцом", "depends_on": ["user-service"], "owner_team": "Мессенджер" },
+        { "service": "media-service", "what": "Хранение и обработка фото", "depends_on": [], "owner_team": "Платформа" }
+      ],
+      "practice_example": "Учебное задание: добавить поле в ответ ручки item-service в песочном репозитории, пройти линтер и тесты"
+    }
+  ]
+}
