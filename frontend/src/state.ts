@@ -1,4 +1,4 @@
-import type { KbDraft, KbFolder, KbPage, Me, PlanData, Question, RequestItem, Services, TeamOverview, TodayData, User } from "./api";
+import type { Meeting, KbDraft, KbFolder, KbPage, Me, PlanData, Question, RequestItem, Services, TeamOverview, TodayData, User } from "./api";
 
 export type View = "day" | "plan" | "questions" | "knowledge" | "requests";
 export type Role = "lead" | "buddy" | "intern" | "expert";
@@ -13,6 +13,7 @@ export type DataState = {
   pages: KbPage[];
   folders: KbFolder[];
   drafts: KbDraft[];
+  meetings: Meeting[];
   overview?: TeamOverview;
   managedPlans: Array<{ id: string; name: string; plan?: PlanData }>;
   services?: Services;

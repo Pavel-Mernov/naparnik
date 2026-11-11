@@ -47,6 +47,7 @@ export type Question = {
   text_hidden?: boolean;
   answer?: string;
   page_id?: string;
+  hint?: string; // BR-10a: подсказка только адресату-бадди
   reason?: string;
   urgent: boolean;
   status: string;
@@ -101,6 +102,7 @@ export type KbPage = {
   test_instruction: boolean;
 };
 
+export type Meeting = { id: string; question_id: string; organizer_id: string; participants: string[]; start: string; end: string; status: string; page_id?: string; recording_url?: string };
 export type KbDraft = { id: string; title: string; body: string; folder: string; similar_page_id?: string; source_question?: string };
 export type AbsenceType = { type: string; title: string };
 export type SystemOption = { system: string; title: string; status: string; week_from: number; now: boolean };

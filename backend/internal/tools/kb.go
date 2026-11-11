@@ -252,12 +252,43 @@ func findExpert(c Ctx, args map[string]any) Result {
 		return expertPick{id, conf, reason}
 	})
 	id, conf, reason := pick.ID, pick.Confidence, pick.Reason
+	// BR-10a: топ-руководителя стажёру напрямую не предлагаем — вопрос уходит бадди. Имя руководителя
+	// в ответ инструменту не попадает, чтобы модель не назвала его стажёру; подсказку бадди добавит send_question.
+	if id != "" && isSenior(c, id) {
+		buddy := c.User.BuddyID
+		return ok(map[string]any{"addressee_id": buddy, "name": c.Store.Name(buddy), "is_buddy": true,
+			"reason": "по этой теме лучше начать с бадди — он подскажет, к кому идти", "confidence": conf})
+	}
 	if id == "" || conf < ExpertThreshold {
 		buddy := c.User.BuddyID
 		return ok(map[string]any{"addressee_id": buddy, "name": c.Store.Name(buddy), "is_buddy": true,
 			"reason": "уверенного эксперта нет — спросим бадди", "confidence": conf})
 	}
 	return ok(map[string]any{"addressee_id": id, "name": c.Store.Name(id), "is_buddy": false, "reason": reason, "confidence": conf})
+}
+
+// isSenior — руководитель уровня из конфига отдела (BR-10a: директора, руководители руководителей).
+func isSenior(c Ctx, userID string) bool {
+	u, ok := c.Store.User(userID)
+	return ok && u.ManagementLevel != "" && containsStr(c.Store.Data.Team.Department.Routing.SeniorManagementLevels, u.ManagementLevel)
+}
+
+// seniorBlock — стажёр не пишет топ-руководителю напрямую, даже если модель выбрала его в обход подбора (BR-10a).
+func seniorBlock(c Ctx, addressee string) *Error {
+	if store.HasRole(c.User, store.RoleIntern) && isSenior(c, addressee) {
+		return &Error{Code: "validation", Message: "Стажёр не отправляет вопрос этому руководителю напрямую (BR-10a). Отправь вопрос бадди: addressee_id=" +
+			c.User.BuddyID + ", имя руководителя стажёру не называй."}
+	}
+	return nil
+}
+
+// seniorHint — подсказка бадди, если лучший кандидат по теме — топ-руководитель (BR-10a).
+func seniorHint(c Ctx, text string) string {
+	if id, _, _ := FindExpert(c, text); id != "" && isSenior(c, id) {
+		u, _ := c.Store.User(id)
+		return "По теме больше всех писал " + u.Name + ", " + strings.ToLower(strings.Split(u.Position, " (")[0]) + ". Ответь сам или переадресуй, если считаешь нужным."
+	}
+	return ""
 }
 
 func sendQuestion(c Ctx, args map[string]any) Result {
@@ -269,8 +300,14 @@ func sendQuestion(c Ctx, args map[string]any) Result {
 	if text == "" {
 		return fail("validation", "Пустой вопрос.")
 	}
+	if e := seniorBlock(c, to.ID); e != nil {
+		return Result{Error: e}
+	}
 	q := &store.Question{ID: c.Store.NextID("Q"), AskedBy: c.User.ID, AddresseeID: to.ID, Title: QuestionTitle(str(args, "title"), text), Text: text,
 		Reason: str(args, "reason"), Urgent: boolean(args, "urgent"), Status: "Sent"}
+	if to.ID == c.User.BuddyID { // BR-10a: подсказка видна только бадди
+		q.Hint = seniorHint(c, q.Title+" "+text)
+	}
 	c.Store.AddQuestion(q)
 	c.Store.Emit(store.EvQuestionSent, c.User.ID, q.ID, map[string]string{"to": to.ID, "urgent": fmt.Sprint(q.Urgent)})
 	delivery := "в сводке"

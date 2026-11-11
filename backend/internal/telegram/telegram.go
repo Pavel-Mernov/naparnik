@@ -311,6 +311,35 @@ func (t *Service) Schedule() error {
 				}
 			}
 		}
+		// Встречи по вопросам (US-14, US-15): за час — участникам; организатору — включить запись за 5 минут и в начале (BR-35)
+		for _, m := range s.Meetings() {
+			if m.Status != "scheduled" {
+				continue
+			}
+			start, err := time.Parse(time.RFC3339, m.Start)
+			if err != nil {
+				continue
+			}
+			hm := start.In(store.MSK).Format("15:04")
+			for _, p := range m.Participants {
+				if !now.Before(start.Add(-time.Hour)) && now.Before(start) {
+					tip := "Что сделать: запиши, что уже пробовал и где застрял, — так встреча займёт меньше времени."
+					if p == m.OrganizerID {
+						tip = "Что сделать: пролистай вопрос стажёра в карточке — там суть и контекст."
+					}
+					s.Notify(store.Notification{ID: "rem:" + m.ID + ":" + p + ":1h", UserID: p, Type: "event_reminder", View: "questions", TG: "pending",
+						Text: fmt.Sprintf("⏰ Через час, в %s — встреча по вопросу · %s.\n%s", hm, s.Name(m.OrganizerID), tip)})
+				}
+			}
+			if !now.Before(start.Add(-5*time.Minute)) && now.Before(start) {
+				s.Notify(store.Notification{ID: "rec5:" + m.ID, UserID: m.OrganizerID, Type: "enable_recording", View: "questions", TG: "pending", Urgent: true,
+					Text: fmt.Sprintf("🔴 Через 5 минут, в %s, — встреча по вопросу стажёра.\nВключи запись: из неё я соберу ответ для базы знаний.", hm)})
+			}
+			if !now.Before(start) && now.Before(start.Add(10*time.Minute)) {
+				s.Notify(store.Notification{ID: "rec0:" + m.ID, UserID: m.OrganizerID, Type: "enable_recording", View: "questions", TG: "pending", Urgent: true,
+					Text: "▶️ Встреча началась — запись включена?\nПосле встречи отметь в карточке вопроса, была ли запись, а ответ я оформлю сам."})
+			}
+		}
 		return nil
 	})
 }

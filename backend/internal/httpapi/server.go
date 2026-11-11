@@ -74,6 +74,11 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/kb/drafts", s.auth(s.kbDrafts))
 	mux.HandleFunc("POST /api/kb/pages/{id}/approve", s.auth(s.kbApprove))
 	mux.HandleFunc("POST /api/questions/{id}/answer", s.auth(s.answer))
+	mux.HandleFunc("GET /api/questions/{id}/meeting-slots", s.auth(s.meetingSlots)) // US-14: 3 слота в рабочие часы обоих
+	mux.HandleFunc("POST /api/questions/{id}/meeting", s.auth(s.scheduleMeeting))
+	mux.HandleFunc("POST /api/questions/{id}/leave-open", s.auth(s.leaveOpen)) // BR-37
+	mux.HandleFunc("GET /api/meetings", s.auth(s.meetings))
+	mux.HandleFunc("POST /api/meetings/{id}/finish", s.auth(s.finishMeeting)) // в проде — сигнал ВКС
 	if s.StaticDir != "" {
 		files := http.FileServer(http.Dir(s.StaticDir))
 		mux.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) {
@@ -319,6 +324,7 @@ type questionView struct {
 	Status      string `json:"status"`
 	Answer      string `json:"answer,omitempty"`
 	PageID      string `json:"page_id,omitempty"`
+	Hint        string `json:"hint,omitempty"` // BR-10a: только адресату
 }
 
 // questions — видимость по 02-ROLES:
@@ -329,7 +335,10 @@ func (s *Server) questions(w http.ResponseWriter, _ *http.Request, u *mockdata.U
 	count := 0
 	for _, q := range s.Store.Questions() {
 		asker, _ := s.Store.User(q.AskedBy)
-		v := questionView{q.ID, q.AskedBy, q.AddresseeID, s.Store.Name(q.AddresseeID), q.Title, q.Text, false, q.Reason, q.Urgent, q.Status, q.Answer, q.PageID}
+		v := questionView{q.ID, q.AskedBy, q.AddresseeID, s.Store.Name(q.AddresseeID), q.Title, q.Text, false, q.Reason, q.Urgent, q.Status, q.Answer, q.PageID, ""}
+		if q.AddresseeID == u.ID {
+			v.Hint = q.Hint
+		}
 		switch {
 		case q.AskedBy == u.ID || q.AddresseeID == u.ID:
 			out = append(out, v)
@@ -338,6 +347,8 @@ func (s *Server) questions(w http.ResponseWriter, _ *http.Request, u *mockdata.U
 				v.Title, v.Text, v.Answer, v.Reason, v.TextHidden = "", "", "", "", true // BR-86: скрыт и текст, и ответ
 			}
 			out = append(out, v)
+		case q.Status == "Open" && u.ID == s.Store.Data.Team.Department.KBOwnerID:
+			out = append(out, v) // BR-37: открытые вопросы видит владелец базы, чтобы назначить, кто ответит
 		case asker != nil && asker.LeadID == u.ID:
 			count++
 		}

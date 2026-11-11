@@ -285,3 +285,31 @@ func TestConfigFromEnv(t *testing.T) {
 		t.Fatalf("%+v", c)
 	}
 }
+
+// BR-35: организатору — включить запись за 5 минут и в начале; участникам — за час.
+func TestMeetingReminders(t *testing.T) {
+	svc, s := newService(t, nil, "log")
+	s.AddMeeting(&store.Meeting{ID: "MTG-9", OrganizerID: "u-smirnova", Participants: []string{"u-smirnova", "u-sokolov"},
+		Start: "2026-11-12T14:00:00+03:00", End: "2026-11-12T14:30:00+03:00", Status: "scheduled"})
+	day := func(h, m int) time.Time { return time.Date(2026, 11, 12, h, m, 0, 0, store.MSK) }
+	for _, now := range []time.Time{day(13, 10), day(13, 56), day(14, 1)} {
+		svc.now = func() time.Time { return now }
+		_ = svc.Schedule()
+	}
+	olga := map[string]int{}
+	for _, n := range s.NotificationsFor("u-smirnova") {
+		olga[n.Type]++
+	}
+	if olga["enable_recording"] != 2 || olga["event_reminder"] != 1 {
+		t.Fatalf("Ольга: %v", olga)
+	}
+	var daniil string
+	for _, n := range s.NotificationsFor("u-sokolov") {
+		if strings.Contains(n.Text, "встреча по вопросу · Ольга Смирнова") {
+			daniil = n.Text
+		}
+	}
+	if !strings.Contains(daniil, "что уже пробовал") {
+		t.Fatalf("Даниил: %q", daniil)
+	}
+}

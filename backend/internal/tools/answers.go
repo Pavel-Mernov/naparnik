@@ -53,7 +53,7 @@ func answerQuestion(c Ctx, questionID, text string) (store.Question, mockdata.Pa
 			}
 		}
 	}
-	if q.Status != "Sent" {
+	if q.Status != "Sent" && q.Status != "NoRecording" { // после встречи без записи — ответ текстом (BR-37)
 		return store.Question{}, mockdata.Page{}, &Error{Code: "validation", Message: "На вопрос уже ответили."}
 	}
 	title := q.Title

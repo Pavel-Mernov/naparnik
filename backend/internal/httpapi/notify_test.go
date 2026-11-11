@@ -7,6 +7,7 @@ import (
 	"github.com/worker4556/naparnik/backend/internal/cache"
 	"github.com/worker4556/naparnik/backend/internal/store"
 	"github.com/worker4556/naparnik/backend/internal/telegram"
+	"github.com/worker4556/naparnik/backend/internal/tools"
 )
 
 // Сквозной путь: действие → событие в журнале → уведомление в центре → метрики у руководителя.
@@ -108,5 +109,60 @@ func TestMetricsMath(t *testing.T) {
 	})
 	if m["median_answer_minutes"].(float64) != 30 || m["kb_share"].(float64) != 0.75 || m["csat"].(float64) != 0 {
 		t.Fatalf("%v", m)
+	}
+}
+
+// BR-10a: подсказка про директора видна только адресату-бадди, стажёру — нет.
+func TestSeniorHintVisibility(t *testing.T) {
+	srv, h := newServer(t)
+	u, _ := srv.Store.UserByLogin("intern.sokolov")
+	tools.Run(tools.Ctx{Store: srv.Store, User: u}, "send_question", map[string]any{"addressee_id": "u-belova",
+		"text": "Планируют ли менять North Star раздела или добавлять метрику качества контактов?"})
+	_, intern := call(t, h, "GET", "/api/questions", "intern.sokolov", "")
+	_, buddy := call(t, h, "GET", "/api/questions", "buddy.belova", "")
+	if intern["questions"].([]any)[0].(map[string]any)["hint"] != nil {
+		t.Fatal("стажёр не видит подсказку")
+	}
+	if !strings.Contains(buddy["questions"].([]any)[0].(map[string]any)["hint"].(string), "Сергей Волков") {
+		t.Fatal("бадди видит подсказку")
+	}
+}
+
+// Встреча через API: слоты → назначение → «записи нет» → оставить открытым; владелец базы видит вопрос.
+func TestMeetingAPI(t *testing.T) {
+	srv, h := newServer(t)
+	u, _ := srv.Store.UserByLogin("intern.sokolov")
+	q := tools.Run(tools.Ctx{Store: srv.Store, User: u}, "send_question", map[string]any{"addressee_id": "u-smirnova",
+		"text": "Можно ли смотреть результаты эксперимента по регионам?"}).Data.(*store.Question)
+	if code, _ := call(t, h, "GET", "/api/questions/"+q.ID+"/meeting-slots", "expert.orlov", ""); code != 403 {
+		t.Fatal("чужой вопрос")
+	}
+	_, slots := call(t, h, "GET", "/api/questions/"+q.ID+"/meeting-slots", "expert.smirnova", "")
+	slot := slots["slots"].([]any)[0].(string)
+	if code, _ := call(t, h, "POST", "/api/questions/"+q.ID+"/meeting", "expert.smirnova", `{"slot":"bad"}`); code != 422 {
+		t.Fatal("кривой слот")
+	}
+	_, m := call(t, h, "POST", "/api/questions/"+q.ID+"/meeting", "expert.smirnova", `{"slot":"`+slot+`"}`)
+	id := m["meeting"].(map[string]any)["id"].(string)
+	_, mine := call(t, h, "GET", "/api/meetings", "intern.sokolov", "")
+	if len(mine["meetings"].([]any)) != 1 {
+		t.Fatal("встреча у стажёра")
+	}
+	if _, other := call(t, h, "GET", "/api/meetings", "expert.orlov", ""); len(other["meetings"].([]any)) != 0 {
+		t.Fatal("чужие встречи не видны")
+	}
+	if code, _ := call(t, h, "POST", "/api/meetings/"+id+"/finish", "intern.sokolov", `{"recorded":false}`); code != 403 {
+		t.Fatal("итог — организатор")
+	}
+	call(t, h, "POST", "/api/meetings/"+id+"/finish", "expert.smirnova", `{"recorded":false}`)
+	if code, r := call(t, h, "POST", "/api/questions/"+q.ID+"/leave-open", "expert.smirnova", ""); code != 200 || r["status"] != "Open" {
+		t.Fatalf("открыт: %v", r)
+	}
+	if code, _ := call(t, h, "POST", "/api/questions/"+q.ID+"/leave-open", "expert.smirnova", ""); code != 422 {
+		t.Fatal("повтор")
+	}
+	_, lead := call(t, h, "GET", "/api/questions", "lead.kovalev", "")
+	if len(lead["questions"].([]any)) != 1 || lead["questions"].([]any)[0].(map[string]any)["status"] != "Open" {
+		t.Fatalf("владелец базы видит открытый вопрос: %v", lead)
 	}
 }

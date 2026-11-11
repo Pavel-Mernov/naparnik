@@ -1,6 +1,7 @@
 package tools
 
 import (
+	"encoding/json"
 	"strings"
 	"testing"
 
@@ -207,5 +208,43 @@ func TestRequestHuman(t *testing.T) {
 		if got := requestHuman(&r); got != want {
 			t.Errorf("%q, ожидалось %q", got, want)
 		}
+	}
+}
+
+// SC-35, BR-10a: вопрос по теме директора уходит бадди; имя директора стажёр не видит, бадди — видит подсказку.
+func TestSeniorRoutesToBuddy(t *testing.T) {
+	s := newStore(t)
+	c := ctxFor(t, s, "intern.sokolov")
+	q18 := "Планируют ли менять North Star раздела или добавлять метрику качества контактов? Хочу заложить это в дашборд"
+	if id, _, _ := FindExpert(c, q18); id != "u-volkov" {
+		t.Fatalf("по авторству лучший — директор: %s", id)
+	}
+	r := Run(c, "find_expert", map[string]any{"question": q18})
+	raw, _ := json.Marshal(r)
+	if d := r.Data.(map[string]any); d["addressee_id"] != "u-belova" || d["is_buddy"] != true || strings.Contains(string(raw), "Волков") {
+		t.Fatalf("стажёру — бадди, без имени директора: %s", raw)
+	}
+	// напрямую директору — нельзя, ни черновиком, ни отправкой
+	if e := Check(c, "send_question", map[string]any{"addressee_id": "u-volkov", "text": q18}); e == nil || e.Code != "validation" {
+		t.Fatal("черновик директору")
+	}
+	if res := sendQuestion(c, map[string]any{"addressee_id": "u-volkov", "text": q18}); res.Error == nil {
+		t.Fatal("отправка директору")
+	}
+	res := Run(c, "send_question", map[string]any{"addressee_id": "u-belova", "text": q18})
+	q := res.Data.(*store.Question)
+	if !strings.Contains(q.Hint, "Сергей Волков, директор по аналитике") {
+		t.Fatalf("подсказка бадди: %q", q.Hint)
+	}
+	// обычный вопрос бадди — без подсказки; руководитель отдела не «старший» — ему можно
+	if q2 := Run(c, "send_question", map[string]any{"addressee_id": "u-belova", "text": "Где шаблон презентации к экватору?"}).Data.(*store.Question); q2.Hint != "" {
+		t.Fatal(q2.Hint)
+	}
+	if isSenior(c, "u-kovalev") || !isSenior(c, "u-volkov") || isSenior(c, "u-nobody") {
+		t.Fatal("уровни руководства")
+	}
+	// не стажёр может писать директору
+	if e := seniorBlock(ctxFor(t, s, "buddy.belova"), "u-volkov"); e != nil {
+		t.Fatal("бадди переадресует директору сам")
 	}
 }

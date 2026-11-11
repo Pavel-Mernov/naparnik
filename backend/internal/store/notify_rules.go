@@ -72,6 +72,26 @@ func (s *Store) notificationsFor(e LogEvent) []Notification {
 		}
 	case EvRequestDecided:
 		return []Notification{{UserID: m["employee"], Type: "request_status", View: "requests", TG: "pending", Text: decisionText(m, first(m["employee"]))}}
+	case EvMeetingScheduled:
+		start, _ := time.Parse(time.RFC3339, m["start"])
+		when := RuDay(start.In(MSK).Format(time.DateOnly)) + ", " + start.In(MSK).Format("15:04")
+		return []Notification{{UserID: m["asker"], Type: "meeting_scheduled", View: "day", TG: "pending",
+			Text: "📅 Встреча по твоему вопросу: " + when + " · " + name(e.Actor) + ".\nЧто сделать: запиши, что уже пробовал и где застрял, — так встреча займёт меньше времени."}}
+	case EvMeetingNoRecording:
+		// BR-37: один раз предлагаем ответить текстом
+		return []Notification{{UserID: e.Actor, Type: "meeting_no_recording", View: "questions", TG: "pending",
+			Text: "🎙 Записи встречи нет — ответ не попадёт в базу знаний.\nОтветишь текстом? Пары строк хватит, остальное я оформлю."}}
+	case EvQuestionOpen:
+		var out []Notification
+		if asker := m["asker"]; asker != "" {
+			out = append(out, Notification{UserID: asker, Type: "question_open", View: "questions", TG: "pending",
+				Text: "📂 Ответ текстом по твоему вопросу не получится — я передал его владельцу базы знаний.\nОн найдёт, кто ответит. Если вопрос блокирует работу — напиши бадди."})
+		}
+		if owner := m["owner"]; owner != "" && owner != e.Actor {
+			out = append(out, Notification{UserID: owner, Type: "open_question", View: "day", TG: "pending",
+				Text: "📂 Новый открытый вопрос в базе знаний · " + name(m["asker"]) + ".\nВстреча прошла без записи, ответа текстом не будет. Назначь, кто ответит."})
+		}
+		return out
 	case EvAnswerFeedback:
 		// H11: «устарело» → владельцу страницы
 		if m["value"] == "stale" && m["author"] != "" && m["author"] != e.Actor {

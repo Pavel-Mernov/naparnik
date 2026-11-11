@@ -15,6 +15,9 @@ export const STATUS: Record<string, { label: string; tone: Tone }> = {
   rejected: { label: "Отклонено", tone: "bad" },
   Sent: { label: "Ждёт ответа", tone: "wait" },
   Answered: { label: "Есть ответ", tone: "ok" },
+  MeetingScheduled: { label: "Встреча назначена", tone: "wait" },
+  NoRecording: { label: "Встреча без записи", tone: "wait" },
+  Open: { label: "Открыт · у владельца базы", tone: "neutral" },
   Draft: { label: "Черновик", tone: "neutral" },
 };
 export const statusOf = (s: string) => STATUS[s] ?? { label: s, tone: "neutral" as Tone };

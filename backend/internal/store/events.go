@@ -35,15 +35,18 @@ type Notification struct {
 
 // Event types — словарь журнала: по ним считаются метрики 09-METRICS.
 const (
-	EvQuestionSent     = "question_sent"
-	EvQuestionAnswered = "question_answered"
-	EvPagePublished    = "page_published"
-	EvRequestCreated   = "request_created"
-	EvRequestDecided   = "request_decided"
-	EvStepDone         = "step_done"
-	EvKBAnswer         = "kb_answer"
-	EvAnswerFeedback   = "answer_feedback"
-	EvDraftConfirmed   = "draft_confirmed"
+	EvQuestionSent       = "question_sent"
+	EvQuestionAnswered   = "question_answered"
+	EvPagePublished      = "page_published"
+	EvRequestCreated     = "request_created"
+	EvRequestDecided     = "request_decided"
+	EvStepDone           = "step_done"
+	EvKBAnswer           = "kb_answer"
+	EvAnswerFeedback     = "answer_feedback"
+	EvDraftConfirmed     = "draft_confirmed"
+	EvMeetingScheduled   = "meeting_scheduled"
+	EvMeetingNoRecording = "meeting_no_recording"
+	EvQuestionOpen       = "question_open"
 )
 
 // Now — часы для журнала; в тестах подменяются.

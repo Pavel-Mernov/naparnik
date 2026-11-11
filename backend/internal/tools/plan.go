@@ -92,6 +92,11 @@ func getToday(c Ctx, _ map[string]any) Result {
 			events = append(events, map[string]string{"title": e.Title, "start": e.Start[11:16]})
 		}
 	}
+	for _, m := range c.Store.Meetings() { // встречи по вопросам — тоже в «Ближайшем» (US-14)
+		if m.Status == "scheduled" && strings.HasPrefix(m.Start, day) && containsStr(m.Participants, c.User.ID) {
+			events = append(events, map[string]string{"title": "Встреча по вопросу · " + c.Store.Name(m.OrganizerID), "start": m.Start[11:16]})
+		}
+	}
 	return ok(map[string]any{"week": c.Store.Week(c.User), "steps": steps, "events": events})
 }
 

@@ -193,6 +193,9 @@ func Check(c Ctx, name string, args map[string]any) *Error {
 		if _, ok := c.Store.User(str(args, "addressee_id")); !ok {
 			return &Error{Code: "not_found", Message: "Адресат не найден в команде."}
 		}
+		if e := seniorBlock(c, str(args, "addressee_id")); e != nil { // до черновика: имя директора стажёр не увидит
+			return e
+		}
 	case "create_absence_request":
 		if _, ok := requestType(c, str(args, "type")); !ok {
 			return &Error{Code: "validation", Message: "Неизвестный тип отсутствия."}

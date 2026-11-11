@@ -57,11 +57,14 @@ type Question struct {
 	Text        string `json:"text"`  // полный сформулированный вопрос (BR-14)
 	Reason      string `json:"reason"`
 	Urgent      bool   `json:"urgent"`
-	Status      string `json:"status"` // Sent | Answered
+	Status      string `json:"status"` // Sent | MeetingScheduled | NoRecording | Answered | Open (BR-37)
 	Answer      string `json:"answer,omitempty"`
 	AnsweredBy  string `json:"answered_by,omitempty"`
 	AnsweredAt  string `json:"answered_at,omitempty"`
 	PageID      string `json:"page_id,omitempty"` // черновик или страница базы из ответа (P2)
+	// Hint — подсказка только адресату (BR-10a): «по теме больше всех писал …». Стажёру не показывается.
+	Hint      string `json:"hint,omitempty"`
+	MeetingID string `json:"meeting_id,omitempty"` // встреча по вопросу (US-14)
 }
 
 type Store struct {
@@ -81,12 +84,13 @@ type Store struct {
 	events        []LogEvent
 	notifications []Notification
 	tgLinks       map[string]int64
+	meetings      []*Meeting
 }
 
 func New(d *mockdata.Data, today time.Time) *Store {
 	s := &Store{Data: d, Today: today, practices: map[string]practice.State{}, steps: map[string]map[string]*mockdata.TrackerStep{},
 		pages: append([]mockdata.Page(nil), d.KB.Pages...), drafts: map[string]ActionDraft{}, operations: map[string]Operation{}, tgLinks: map[string]int64{},
-		seq: map[string]int{"ABS": 1041, "ACC": 2001, "Q": 100, "DRAFT": 0, "kb": 19}}
+		seq: map[string]int{"ABS": 1041, "ACC": 2001, "MTG": 302, "Q": 100, "DRAFT": 0, "kb": 19}}
 	for _, p := range d.Tracker.Plans {
 		m := map[string]*mockdata.TrackerStep{}
 		for i := range p.Steps {

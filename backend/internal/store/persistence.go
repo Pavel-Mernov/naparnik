@@ -31,6 +31,7 @@ type snapshot struct {
 	Events        []LogEvent       `json:"events,omitempty"`
 	Notifications []Notification   `json:"notifications,omitempty"`
 	TGLinks       map[string]int64 `json:"tg_links,omitempty"`
+	Meetings      []*Meeting       `json:"meetings,omitempty"`
 }
 
 type ActionDraft struct {
@@ -48,7 +49,7 @@ type Operation struct {
 }
 
 func (s *Store) snapshot() snapshot {
-	return snapshot{2, s.steps, s.requests, s.questions, s.pages, s.seq, s.drafts, s.operations, s.practices, s.events, s.notifications, s.tgLinks}
+	return snapshot{2, s.steps, s.requests, s.questions, s.pages, s.seq, s.drafts, s.operations, s.practices, s.events, s.notifications, s.tgLinks, s.meetings}
 }
 
 func (s *Store) restore(v snapshot) error {
@@ -61,7 +62,7 @@ func (s *Store) restore(v snapshot) error {
 	if s.practices == nil {
 		s.practices = map[string]practice.State{}
 	}
-	s.events, s.notifications, s.tgLinks = v.Events, v.Notifications, v.TGLinks
+	s.events, s.notifications, s.tgLinks, s.meetings = v.Events, v.Notifications, v.TGLinks, v.Meetings
 	if s.tgLinks == nil {
 		s.tgLinks = map[string]int64{}
 	}

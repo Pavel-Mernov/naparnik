@@ -20,26 +20,34 @@ type Settings struct {
 }
 
 type User struct {
-	ID             string    `json:"id"`
-	Login          string    `json:"login"`
-	Name           string    `json:"name"`
-	Position       string    `json:"position"`
-	Roles          []string  `json:"roles"`
-	Responsibility string    `json:"responsibility"`
-	WorkingHours   string    `json:"working_hours"`
-	BuddyFor       []string  `json:"buddy_for"`
-	BuddyID        string    `json:"buddy_id"`
-	LeadID         string    `json:"lead_id"`
-	StartDate      string    `json:"start_date"`
-	Settings       *Settings `json:"settings"`
-	TGConnected    bool      `json:"tg_connected"`
+	ID              string    `json:"id"`
+	Login           string    `json:"login"`
+	Name            string    `json:"name"`
+	Position        string    `json:"position"`
+	Roles           []string  `json:"roles"`
+	Responsibility  string    `json:"responsibility"`
+	ManagementLevel string    `json:"management_level"` // none | department_lead | head_of_heads | director (BR-10a, атрибут ABAC)
+	WorkingHours    string    `json:"working_hours"`
+	BuddyFor        []string  `json:"buddy_for"`
+	BuddyID         string    `json:"buddy_id"`
+	LeadID          string    `json:"lead_id"`
+	StartDate       string    `json:"start_date"`
+	Settings        *Settings `json:"settings"`
+	TGConnected     bool      `json:"tg_connected"`
 }
 
 type Department struct {
-	ID        string `json:"id"`
-	Name      string `json:"name"`
-	KBSpaceID string `json:"kb_space_id"`
-	LeadID    string `json:"lead_id"`
+	ID        string  `json:"id"`
+	Name      string  `json:"name"`
+	KBSpaceID string  `json:"kb_space_id"`
+	LeadID    string  `json:"lead_id"`
+	KBOwnerID string  `json:"kb_owner_id"` // владелец базы (BR-34): получает открытые вопросы (BR-37)
+	Routing   Routing `json:"routing"`
+}
+
+// Routing — настройки маршрутизации отдела (BR-10a): уровни руководства, которые не предлагаются стажёру как эксперты.
+type Routing struct {
+	SeniorManagementLevels []string `json:"senior_management_levels"`
 }
 
 type Team struct {
@@ -132,7 +140,35 @@ type Event struct {
 }
 
 type Calendar struct {
-	Events []Event `json:"events"`
+	Events []Event                `json:"events"`
+	Busy   map[string][]TimeRange `json:"busy"` // занятость людей сверх событий (для слотов встречи, BR-41)
+}
+
+type TimeRange struct {
+	Start string `json:"start"`
+	End   string `json:"end"`
+}
+
+// MeetingFixture — запись встречи из заглушки ВКС (meetings.json): транскрипт и ожидаемая выжимка.
+// Реального распознавания речи в MVP нет: транскрипт — готовая фикстура (docs/04-mock-data/meetings.json).
+type MeetingFixture struct {
+	ID              string `json:"id"`
+	QuestionID      string `json:"question_id"`
+	Title           string `json:"title"`
+	Description     string `json:"description"`
+	RecordingStatus string `json:"recording_status"`
+	Recording       *struct {
+		URL         string `json:"url"`
+		DurationSec int    `json:"duration_sec"`
+	} `json:"recording"`
+	TranscriptFile  string `json:"transcript_file"`
+	Transcript      string `json:"-"`
+	ExpectedSummary *struct {
+		AnswerTimecodes []string `json:"answer_timecodes"`
+		DraftTitle      string   `json:"draft_title"`
+		DraftBody       string   `json:"draft_body"`
+		Excluded        string   `json:"excluded"`
+	} `json:"expected_summary"`
 }
 
 type RequestType struct {
@@ -195,6 +231,15 @@ type Data struct {
 	Practice  struct {
 		Templates []practice.Template `json:"practices"`
 	}
+	Meetings struct {
+		Meetings []MeetingFixture `json:"meetings"`
+	}
+	Questions struct {
+		Questions []struct {
+			ID   string `json:"id"`
+			Text string `json:"text"`
+		} `json:"questions"`
+	}
 }
 
 func readJSON(dir, name string, v any) error {
@@ -228,6 +273,8 @@ func Load(dir string) (*Data, error) {
 		{"absence-service.json", &d.Absence},
 		{"access-service.json", &d.Access},
 		{"practice.json", &d.Practice},
+		{"meetings.json", &d.Meetings},
+		{"questions.json", &d.Questions},
 		{"team.json", &meta},
 	}
 	for _, f := range files {
@@ -236,5 +283,15 @@ func Load(dir string) (*Data, error) {
 		}
 	}
 	d.DemoToday = meta.Meta.DemoToday
+	for i, m := range d.Meetings.Meetings {
+		if m.TranscriptFile == "" {
+			continue
+		}
+		raw, err := os.ReadFile(filepath.Join(dir, m.TranscriptFile))
+		if err != nil {
+			return nil, err
+		}
+		d.Meetings.Meetings[i].Transcript = string(raw)
+	}
 	return d, nil
 }

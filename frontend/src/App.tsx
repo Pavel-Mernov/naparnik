@@ -14,7 +14,7 @@ import avitoLogo from "./assets/logo.svg";
 import avitoLogoDark from "./assets/logo-dark.svg";
 import { ChatDrawer, type ChatMessage, type Lookup } from "./chat";
 import {
-  api, ApiError, unwrap, type ChatReply, type KbDraft, type KbFolder, type KbPage, type Me, type PlanData, type PlanStep,
+  api, ApiError, unwrap, type ChatReply, type KbDraft, type Meeting, type KbFolder, type KbPage, type Me, type PlanData, type PlanStep,
   type Question, type RequestItem, type Services, type TeamOverview, type TodayData, type User,
 } from "./api";
 import { makeTheme, tokens, type Mode } from "./theme";
@@ -98,7 +98,7 @@ function App() {
       if (!current()) return;
       setUsers(usersPayload.users);
       const r = primaryRole(me.roles);
-      const [today, plan, questions, kb, requests, overview, managedPlans, services, drafts] = await Promise.all([
+      const [today, plan, questions, kb, requests, overview, managedPlans, services, drafts, meetings] = await Promise.all([
         r === "intern" ? api<{ ok: boolean; data: TodayData }>(login, "/api/today", options).then(unwrap) : undefined,
         r === "intern" ? optionalPlan(me.id) : undefined,
         api<{ questions: Question[] }>(login, "/api/questions", options),
@@ -108,10 +108,11 @@ function App() {
         r === "buddy" ? Promise.all(me.interns.map(async (i) => ({ ...i, plan: await optionalPlan(i.id) }))) : [],
         r === "lead" || r === "intern" ? api<Services>(login, "/api/services", options) : undefined,
         api<{ drafts: KbDraft[] }>(login, "/api/kb/drafts", options).then((x) => x.drafts).catch(() => []),
+        api<{ meetings: Meeting[] }>(login, "/api/meetings", options).then((x) => x.meetings).catch(() => []),
       ]);
       if (!current()) return;
       setData({ me, users: usersPayload.users, today, plan, questions: questions.questions, folders: kb.folders, pages: kb.pages,
-        requests: requests?.requests ?? [], overview, managedPlans, services, drafts });
+        requests: requests?.requests ?? [], overview, managedPlans, services, drafts, meetings });
       setSelectedIntern((prev) => me.interns.some((i) => i.id === prev) ? prev : me.interns[0]?.id ?? "");
     } catch (e) {
       if (current()) setError(e instanceof Error ? e.message : "Не удалось загрузить данные");
@@ -222,7 +223,7 @@ function App() {
         picker={data.managedPlans.length > 1 && <TextField select size="small" label="Стажёр" value={selectedIntern} onChange={(e) => setSelectedIntern(e.target.value)} sx={{ minWidth: 220 }}>
           {data.managedPlans.map((i) => <MenuItem key={i.id} value={i.id}>{i.name}</MenuItem>)}</TextField>} />;
     }
-    if (view === "questions" || (view === "day" && role === "expert")) return <QuestionsPage data={data} role={role} onAsk={() => openChat()}
+    if (view === "questions" || (view === "day" && role === "expert")) return <QuestionsPage data={data} role={role} login={login} onAsk={() => openChat()} onAction={perform}
       onAnswer={(q, text) => perform(`/api/questions/${q.id}/answer`, "POST", { text }, "Ответ ушёл стажёру. Проверь страницу для базы")}
       onApprove={async (d, title, body) => { await perform(`/api/kb/pages/${d.id}/approve`, "POST", { title, body }, "Страница опубликована в базе знаний"); }} />;
     if (view === "knowledge") return <KnowledgePage data={data} onAsk={openChat} />;
