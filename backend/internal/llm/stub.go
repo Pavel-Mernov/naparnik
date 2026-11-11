@@ -38,10 +38,13 @@ func (s *Stub) Start(_, _ string, tools []ToolSpec) Session {
 }
 
 type stubSession struct {
-	stub     *Stub
-	allowed  map[string]bool
-	question string
-	seq      int
+	stub              *Stub
+	allowed           map[string]bool
+	question          string
+	seq               int
+	accessSystem      string // последний разрешённый доступ, чтобы понять «сделай за меня»
+	accessCreate      bool
+	accessExplanation string
 }
 
 func (s *stubSession) wait(ctx context.Context) error {
@@ -98,17 +101,29 @@ func ParseDay(text string, today time.Time) string {
 
 var systemKeywords = []struct{ word, system string }{
 	{"персональн", "sys-dwh-pii"}, {"пдн", "sys-dwh-pii"}, {"redash", "sys-redash"}, {"витрин", "sys-dwh-marts-ro"},
-	{"a/b", "sys-ab-platform-ro"}, {"база знаний", "sys-kb-analytics"},
+	{"dwh", "sys-dwh-marts-ro"}, {"a/b", "sys-ab-platform-ro"}, {"база знаний", "sys-kb-analytics"},
 }
+
+// Только сценарные фразы заглушки. Реальная модель выбирает инструмент по system.md.
+var accessIntent = regexp.MustCompile(`доступ|нет прав|как (туда )?попасть|как (подключиться|войти|зайти)`)
+var accessOrder = regexp.MustCompile(`(^|\s)(оформи|запроси|подай|создай)(\s|$)|сделай за меня|сделаю за тебя|нужен доступ`)
+var accessNoOrder = regexp.MustCompile(`(^|\s)не (оформ|запраш|созда|пода)|сделай сам|оформлю сам|самостоятельно|хочу сам|только (объясни|расскажи)|как (его |туда )?(оформить|получить|попасть)|кто согласует|с какой недели|когда`)
+var accessChoice = regexp.MustCompile(`^(сделай за меня|сделаю за тебя|оформлю сам|сделай сам|самостоятельно|оформи заявку|подай заявку|создай заявку|оформи доступ|запроси доступ|нужен доступ|как получить доступ)[.!?]*$`)
 
 func (s *stubSession) SendUser(ctx context.Context, text string) (Step, error) {
 	if err := s.wait(ctx); err != nil {
 		return Step{}, err
 	}
 	s.question = text
-	low := strings.ToLower(text)
+	low := strings.ToLower(strings.TrimSpace(text))
+	s.accessExplanation = ""
+	s.accessCreate = accessOrder.MatchString(low) && !accessNoOrder.MatchString(low)
+	previousSystem := s.accessSystem
+	s.accessSystem = ""
 	var calls []ToolCall
 	switch {
+	case previousSystem != "" && accessChoice.MatchString(low):
+		calls = append(calls, s.call("get_access_rules", map[string]any{"system": previousSystem}))
 	case strings.HasPrefix(low, "не помогло"): // BR-03: ответ из базы не помог → сразу ищем человека
 		calls = append(calls, s.call("find_expert", map[string]any{"question": text}))
 	case strings.Contains(low, "отгул"):
@@ -119,10 +134,10 @@ func (s *stubSession) SendUser(ctx context.Context, text string) (Step, error) {
 		calls = append(calls, s.call("get_absence_rules", map[string]any{"type": "day_off"}),
 			s.call("precheck_absence", map[string]any{"type": "day_off", "date": day}),
 			s.call("create_absence_request", map[string]any{"type": "day_off", "date": day}))
-	case strings.Contains(low, "доступ"):
+	case accessIntent.MatchString(low):
 		for _, k := range systemKeywords {
 			if strings.Contains(low, k.word) {
-				calls = append(calls, s.call("request_access", map[string]any{"system": k.system, "reason": "Шаг плана адаптации"}))
+				calls = append(calls, s.call("get_access_rules", map[string]any{"system": k.system}))
 				break
 			}
 		}
@@ -175,12 +190,17 @@ func (s *stubSession) SendToolResults(ctx context.Context, results []ToolResult)
 		if !res.OK && res.Error != nil {
 			msg := res.Error.Message
 			if res.Error.WhoCan != "" {
-				msg += " Могу подготовить запрос: " + res.Error.WhoCan + "."
+				msg += " Контакт: " + res.Error.WhoCan + "."
 			}
 			parts = append(parts, msg)
 			continue
 		}
 		if res.Status == "needs_confirmation" {
+			if s.accessExplanation != "" {
+				parts = append(parts, s.accessExplanation)
+				s.accessExplanation = ""
+			}
+			s.accessSystem = ""
 			parts = append(parts, "Подготовил черновик — проверь и подтверди, тогда отправлю.")
 			continue
 		}
@@ -201,6 +221,53 @@ func (s *stubSession) SendToolResults(ctx context.Context, results []ToolResult)
 // describe — текст по результату инструмента; next — следующий вызов (поиск не дал ответа → ищем человека).
 func (s *stubSession) describe(tool string, raw json.RawMessage) (string, *ToolCall) {
 	switch tool {
+	case "get_access_rules":
+		var d struct {
+			Week     int                   `json:"week"`
+			Approver struct{ Name string } `json:"approver"`
+			Systems  []struct {
+				System   string                  `json:"system"`
+				Title    string                  `json:"title"`
+				Status   string                  `json:"status"`
+				WeekFrom int                     `json:"week_from"`
+				Step     *struct{ Title string } `json:"step"`
+			} `json:"systems"`
+			SelfService string `json:"self_service_in_app"`
+			Label       string `json:"label"`
+		}
+		_ = json.Unmarshal(raw, &d)
+		var lines []string
+		for _, sys := range d.Systems {
+			line := fmt.Sprintf("«%s»: по плану со %d-й недели; сейчас у тебя %d-я неделя. Согласует %s.", sys.Title, sys.WeekFrom, d.Week, d.Approver.Name)
+			if sys.Step != nil {
+				line += " Шаг плана: «" + sys.Step.Title + "»."
+			}
+			switch sys.Status {
+			case "granted":
+				line += " Доступ уже выдан. Если система не открывается, обсуди проблему с бадди."
+			case "pending":
+				line += " Заявка уже на согласовании; повторная не нужна."
+			default:
+				line += " Можешь выбрать «сделай сам» — " + d.SelfService + " → вкладка «Доступ», выбери систему — или «сделаю за тебя»."
+				if sys.WeekFrom > d.Week {
+					line += " Можно подать заявку заранее, но руководитель может отклонить её как преждевременную."
+				}
+				if len(d.Systems) == 1 {
+					s.accessSystem = sys.System
+				}
+			}
+			lines = append(lines, line)
+		}
+		if len(lines) == 0 {
+			return "Разрешённых для запроса систем не нашёл. Обсуди задачу с бадди.", nil
+		}
+		text := strings.Join(lines, "\n") + "\nИсточник: каталог сервиса доступов · " + d.Label + "."
+		if s.accessCreate && s.accessSystem != "" {
+			s.accessExplanation = text
+			call := s.call("request_access", map[string]any{"system": s.accessSystem, "reason": "Доступ по плану адаптации"})
+			return "", &call
+		}
+		return text, nil
 	case "search_kb":
 		var d struct {
 			Found bool `json:"found"`
