@@ -110,6 +110,8 @@ func All() []Tool {
 		{"list_my_requests", "Мои заявки и их статусы.", schema(map[string]any{}), []string{store.RoleIntern}, false, listMyRequests},
 		{"get_required_accesses", "Какие доступы нужны на текущей неделе и их статусы.",
 			schema(map[string]any{}), []string{store.RoleIntern}, false, getRequiredAccesses},
+		{"get_access_rules", "Как попасть в систему: каталог разрешённых доступов, статус, с какой недели положен, свой шаг плана и кто согласует. Включает будущие недели. Без system — весь разрешённый каталог. Не создаёт заявку.",
+			schema(map[string]any{"system": prop("string", "необязательно: id системы из каталога")}), []string{store.RoleIntern}, false, getAccessRules},
 		{"request_access", "Создать заявку на доступ к системе (после подтверждения).",
 			schema(map[string]any{"system": prop("string", "id системы, например sys-redash"), "reason": prop("string", "зачем")}, "system", "reason"),
 			[]string{store.RoleIntern}, true, requestAccess},

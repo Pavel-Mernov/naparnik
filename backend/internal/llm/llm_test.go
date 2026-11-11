@@ -83,13 +83,15 @@ func send(t *testing.T, s Session, text string) Step {
 func TestStubRoutesToTools(t *testing.T) {
 	all := []ToolSpec{}
 	for _, n := range []string{"get_today", "get_plan", "search_kb", "team_directory", "find_expert", "send_question",
-		"get_absence_rules", "precheck_absence", "create_absence_request", "get_required_accesses", "request_access"} {
+		"get_absence_rules", "precheck_absence", "create_absence_request", "get_required_accesses", "get_access_rules", "request_access"} {
 		all = append(all, ToolSpec{Name: n})
 	}
 	stub := NewStub("stub_ok", today)
 	cases := map[string]string{
-		"мне нужен отгул в пятницу": "get_absence_rules", "нужен доступ к Redash": "request_access",
-		"какие доступы нужны": "get_required_accesses", "что мне сегодня делать": "get_today",
+		"мне нужен отгул в пятницу": "get_absence_rules", "нужен доступ к Redash": "get_access_rules",
+		"Хочу сам посмотреть данные в витринах DWH, как туда попасть?": "get_access_rules",
+		"Как оформить доступ к DWH?":                                   "get_access_rules",
+		"какие доступы нужны":                                          "get_required_accesses", "что мне сегодня делать": "get_today",
 		"покажи мой план": "get_plan", "кто есть кто": "team_directory", "что такое витрина": "search_kb",
 		"Не помогло, нужен человек: что такое витрина": "find_expert",
 	}

@@ -45,6 +45,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /api/requests/{id}/decision", s.auth(s.decide))     // согласование руководителем
 	mux.HandleFunc("GET /api/services", s.auth(s.services))                  // справочник сервиса заявок
 	mux.HandleFunc("GET /api/services/absence/precheck", s.auth(s.precheck)) // предупреждения формы отгула
+	mux.HandleFunc("GET /api/services/access/rules", s.auth(s.accessRules))  // SC-33: объяснение доступа, включая будущие недели
 	mux.HandleFunc("GET /api/questions", s.auth(s.questions))
 	mux.HandleFunc("GET /api/today", s.auth(s.today))
 	mux.HandleFunc("GET /api/users", s.users)
@@ -256,6 +257,10 @@ func (s *Server) decide(w http.ResponseWriter, r *http.Request, u *mockdata.User
 
 func (s *Server) services(w http.ResponseWriter, _ *http.Request, u *mockdata.User) {
 	writeJSON(w, 200, tools.Catalog(tools.Ctx{Store: s.Store, User: u}))
+}
+
+func (s *Server) accessRules(w http.ResponseWriter, r *http.Request, u *mockdata.User) {
+	writeResult(w, tools.Run(tools.Ctx{Store: s.Store, User: u}, "get_access_rules", map[string]any{"system": r.URL.Query().Get("system")}))
 }
 
 func (s *Server) precheck(w http.ResponseWriter, r *http.Request, u *mockdata.User) {

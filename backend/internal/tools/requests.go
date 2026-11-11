@@ -116,18 +116,11 @@ func accessStatus(c Ctx) map[string]string {
 
 func getRequiredAccesses(c Ctx, _ map[string]any) Result {
 	week := c.Store.Week(c.User)
-	status := accessStatus(c)
 	var out []map[string]string
-	for _, s := range c.Store.Data.Access.Systems {
-		// BR-40: системы чужих отделов стажёру не показываются вовсе
-		if s.Department != c.Store.Data.Team.Department.ID || s.WeekFrom == nil || *s.WeekFrom > week {
-			continue
+	for _, s := range requestableSystems(c) {
+		if s.Now {
+			out = append(out, map[string]string{"system": s.System, "title": s.Title, "status": s.Status})
 		}
-		st := status[s.ID]
-		if st == "" {
-			st = "not_requested"
-		}
-		out = append(out, map[string]string{"system": s.ID, "title": s.Title, "status": st})
 	}
 	return ok(map[string]any{"week": week, "systems": out, "self_service_in_app": SelfServiceHint})
 }
@@ -146,9 +139,9 @@ func checkAccess(c Ctx, id string) *Error {
 	if sys == nil {
 		return &Error{Code: "not_found", Message: "Такой системы нет."}
 	}
-	if sys.Department != c.Store.Data.Team.Department.ID || (sys.RequestableByIntern != nil && !*sys.RequestableByIntern) {
-		// BR-44: объяснить и предложить запрос тому, у кого есть право
-		return &Error{Code: "forbidden", Message: "Эта система вне зоны отдела.", WhoCan: c.Store.Name(c.User.LeadID)}
+	if sys.Department != c.Store.Data.Team.Department.ID || sys.WeekFrom == nil || *sys.WeekFrom < 1 || (sys.RequestableByIntern != nil && !*sys.RequestableByIntern) {
+		// BR-40, BR-45: без названия закрытой системы и без предложения заявки на неё.
+		return &Error{Code: "forbidden", Message: "Этот доступ стажёру недоступен. Обсуди задачу с бадди или руководителем.", WhoCan: c.Store.Name(c.User.LeadID)}
 	}
 	return nil
 }
@@ -163,10 +156,8 @@ func requestAccess(c Ctx, args map[string]any) Result {
 	}
 	r := &store.Request{ID: c.Store.NextID("ACC"), Kind: "access", System: sys.ID, Title: sys.Title, Comment: str(args, "reason"),
 		EmployeeID: c.User.ID, ApproverID: c.User.LeadID, Status: "pending", CreatedAt: time.Now().Format(time.RFC3339)}
-	for _, st := range c.Store.Data.Access.CurrentState[c.User.ID] {
-		if st.System == sys.ID {
-			r.StepID = st.RelatedStep // SC-27: после выдачи доступа шаг предлагается отметить
-		}
+	if step := relatedAccessStep(c, sys.ID); step != nil {
+		r.StepID = step.ID // SC-27: после выдачи доступа шаг предлагается отметить
 	}
 	created(c, r)
 	return Result{OK: true, Data: r, Receipt: map[string]string{"id": r.ID, "status": "pending", "approver": c.Store.Name(r.ApproverID)}}
