@@ -14,7 +14,8 @@
       "SC-20",
       "SC-21",
       "SC-23",
-      "SC-13"
+      "SC-13",
+      "SC-35"
     ]
   },
   "department": {
@@ -27,7 +28,15 @@
     "digest_times": [
       "11:00",
       "16:00"
-    ]
+    ],
+    "routing": {
+      "senior_management_levels": [
+        "head_of_heads",
+        "director"
+      ],
+      "senior_candidate_route": "buddy",
+      "note": "BR-10a: руководители этих уровней не предлагаются стажёру как эксперты; вопрос уходит бадди с подсказкой, имя видит только бадди"
+    }
   },
   "users": [
     {
@@ -40,6 +49,21 @@
         "expert"
       ],
       "responsibility": "Приоритеты отдела, планы адаптации, найм стажёров",
+      "working_hours": "10:00-19:00",
+      "digest_mode": "digest",
+      "tg_connected": false,
+      "management_level": "department_lead"
+    },
+    {
+      "id": "u-volkov",
+      "login": "director.volkov",
+      "name": "Сергей Волков",
+      "position": "Директор по аналитике (руководитель руководителей)",
+      "roles": [
+        "expert"
+      ],
+      "management_level": "director",
+      "responsibility": "Стратегия аналитики, метрики верхнего уровня, приоритизация направлений",
       "working_hours": "10:00-19:00",
       "digest_mode": "digest",
       "tg_connected": false
@@ -60,7 +84,8 @@
       "responsibility": "Регулярная отчётность, онбординг, процессы отдела",
       "working_hours": "10:00-19:00",
       "digest_mode": "digest",
-      "tg_connected": true
+      "tg_connected": true,
+      "management_level": "none"
     },
     {
       "id": "u-orlov",
@@ -73,7 +98,8 @@
       "responsibility": "Витрины DWH, качество данных, расхождения метрик",
       "working_hours": "11:00-20:00",
       "digest_mode": "digest",
-      "tg_connected": true
+      "tg_connected": true,
+      "management_level": "none"
     },
     {
       "id": "u-smirnova",
@@ -86,7 +112,8 @@
       "responsibility": "A/B-платформа, дизайн и разбор экспериментов",
       "working_hours": "09:00-18:00",
       "digest_mode": "digest",
-      "tg_connected": true
+      "tg_connected": true,
+      "management_level": "none"
     },
     {
       "id": "u-lebedeva",
@@ -99,7 +126,8 @@
       "responsibility": "Дашборды и продуктовые метрики раздела «Объявления»",
       "working_hours": "10:00-19:00",
       "digest_mode": "instant",
-      "tg_connected": false
+      "tg_connected": false,
+      "management_level": "none"
     },
     {
       "id": "u-sokolov",
@@ -121,7 +149,8 @@
           "1h"
         ]
       },
-      "tg_connected": true
+      "tg_connected": true,
+      "management_level": "none"
     },
     {
       "id": "u-egorova",
@@ -143,7 +172,8 @@
         ],
         "note": "SC-13: текст вопросов скрыт от бадди, адресат и статус видны"
       },
-      "tg_connected": false
+      "tg_connected": false,
+      "management_level": "none"
     }
   ],
   "other_teams": [
