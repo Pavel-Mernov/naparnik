@@ -229,8 +229,8 @@ function App() {
           <Container maxWidth="lg">
             <Stack direction="row" alignItems="center" gap={{ xs: 1, md: 3 }} sx={{ height: 64 }}>
               <Stack direction="row" alignItems="center" gap={1.25} component="a" href="#" onClick={(e) => { e.preventDefault(); nav("day"); }} sx={{ color: "inherit", textDecoration: "none", flex: "none" }}>
-                <Box component="img" src={avitoLogo} alt="Avito" sx={{ height: 26, filter: mode === "dark" ? "invert(1) hue-rotate(180deg)" : "none" }} />
-                <Typography sx={{ fontWeight: 600, fontSize: 18 }}>Напарник</Typography>
+                <Box component="img" src={avitoLogo} alt="Avito" sx={{ height: { xs: 32, md: 38 }, width: "auto", filter: mode === "dark" ? "invert(1) hue-rotate(180deg)" : "none" }} />
+                <Typography sx={{ fontWeight: 700, fontSize: { xs: 19, md: 22 }, letterSpacing: "-0.025em" }}>Напарник</Typography>
               </Stack>
               {!mobile && role && <Stack component="nav" aria-label="Разделы" direction="row" gap={0} sx={{ flex: 1, ml: { md: 0, lg: 2 }, minWidth: 0, overflowX: "auto" }}>
                 {views.map((v) => <Box key={v} component="button" onClick={() => nav(v)} aria-current={view === v ? "page" : undefined} sx={{

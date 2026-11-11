@@ -20,12 +20,16 @@ export const StatusTag = ({ status, label }: { status: string; label?: string })
 
 /** Заголовок экрана: строка контекста + одна фраза о главном. Без гигантских приветствий. */
 export const PageHead = ({ context, title, action }: { context?: string; title: string; action?: ReactNode }) => (
-  <Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" alignItems={{ sm: "flex-end" }} gap={2} sx={{ mb: { xs: 3, md: 4 } }}>
-    <Box>
-      {context && <Typography variant="body2" color="text.secondary" sx={{ mb: 0.75, "&::first-letter": { textTransform: "uppercase" } }}>{context}</Typography>}
-      <Typography variant="h1" component="h1" sx={{ textWrap: "balance" }}>{title}</Typography>
+  <Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" alignItems={{ sm: "flex-end" }} gap={2} sx={{
+    mb: { xs: 4, md: 6 }, position: "relative", overflow: "hidden", p: { xs: 2.5, md: 4 }, pr: { md: 10 }, bgcolor: "background.paper",
+    borderLeft: `10px solid ${brand.green}`, boxShadow: "8px 8px 0 rgba(0, 0, 0, 0.12)",
+    "&::after": { content: '""', position: "absolute", width: { xs: 56, md: 84 }, height: { xs: 56, md: 84 }, right: { xs: -20, md: -16 }, top: { xs: -22, md: -28 }, bgcolor: brand.blueLight, transform: "rotate(18deg)" },
+  }}>
+    <Box sx={{ position: "relative", zIndex: 1 }}>
+      {context && <Typography variant="body2" sx={{ mb: 1.25, fontWeight: 700, "&::first-letter": { textTransform: "uppercase" } }}>{context}</Typography>}
+      <Typography variant="h1" component="h1" sx={{ textWrap: "balance", maxWidth: 850 }}>{title}</Typography>
     </Box>
-    {action && <Stack direction="row" gap={1} flexWrap="wrap">{action}</Stack>}
+    {action && <Stack direction="row" gap={1} flexWrap="wrap" sx={{ position: "relative", zIndex: 1 }}>{action}</Stack>}
   </Stack>
 );
 
@@ -33,9 +37,13 @@ export const PageHead = ({ context, title, action }: { context?: string; title: 
 export const Block = ({ title, aside, children, tone }: { title: string; aside?: ReactNode; children: ReactNode; tone?: "surface" }) => {
   const { t } = useTheme();
   return (
-    <Box component="section" sx={{ borderTop: `2px solid ${t.text}`, pt: 2, ...(tone === "surface" ? { bgcolor: t.surface, borderTop: "none", p: 2.5 } : {}) }}>
+    <Box component="section" sx={{
+      borderTop: `3px solid ${t.text}`, bgcolor: t.surface, p: { xs: 2, md: 2.5 },
+      boxShadow: "6px 6px 0 rgba(0, 0, 0, 0.10)",
+      ...(tone === "surface" ? { borderTop: `8px solid ${brand.blue}` } : {}),
+    }}>
       <Stack direction="row" justifyContent="space-between" alignItems="baseline" gap={2} mb={1.5}>
-        <Typography variant="h2" component="h2">{title}</Typography>
+        <Typography variant="h2" component="h2" sx={{ fontWeight: 700 }}>{title}</Typography>
         {aside}
       </Stack>
       {children}
@@ -53,7 +61,7 @@ export const Row = ({ start, title, sub, end, onClick }: { start?: ReactNode; ti
       sx={{ py: 1.5, borderBottom: `1px solid ${t.line}`, ...(onClick ? { cursor: "pointer", "&:hover": { bgcolor: t.surface } } : {}) }}>
       {start}
       <Box flex={1} minWidth={0}>
-        <Typography fontWeight={500} sx={{ overflowWrap: "anywhere" }}>{title}</Typography>
+        <Typography fontWeight={600} sx={{ overflowWrap: "anywhere" }}>{title}</Typography>
         {sub && <Typography variant="body2" color="text.secondary">{sub}</Typography>}
       </Box>
       {end && <Stack direction="row" alignItems="center" gap={1} flex="none">{end}</Stack>}

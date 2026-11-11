@@ -1,6 +1,7 @@
 // Стажёр: «Мой день» и «Мой план». Главное за 3 секунды — сколько шагов сегодня и что горит.
 import type { ReactNode } from "react";
-import { Box, Button, Checkbox, Stack, Typography, useTheme } from "@mui/material";
+import { Box, Button, Checkbox, Link, Stack, Typography, useTheme } from "@mui/material";
+import { VideocamOutlined } from "@mui/icons-material";
 import { brand } from "../theme";
 import type { PlanData, PlanStep } from "../api";
 import { dueText, longDate, plural } from "../helpers";
@@ -44,8 +45,10 @@ const StageBars = ({ plan }: { plan: PlanData }) => {
 export const Progress = ({ plan, onOpen }: { plan?: PlanData; onOpen?: () => void }) => (
   <Block title="Путь адаптации" aside={onOpen && <Button variant="text" size="small" sx={{ minHeight: 36 }} onClick={onOpen}>Весь план</Button>}>
     {!plan ? <Empty text="План ещё готовится — бадди и руководитель его утвердят." variant={2} /> : <>
-      <Stack direction="row" alignItems="baseline" gap={1.5}>
-        <Typography sx={{ fontSize: 44, fontWeight: 300, lineHeight: 1 }}>{plan.progress_pct}%</Typography>
+      <Stack direction="row" alignItems="center" gap={1.5}>
+        <Box sx={{ display: "inline-flex", alignItems: "center", justifyContent: "center", minWidth: 104, px: 2, py: 1.25, border: "3px solid", borderColor: "text.primary", bgcolor: brand.green, boxShadow: "5px 5px 0 rgba(0, 0, 0, 0.16)" }}>
+          <Typography sx={{ fontSize: 44, fontWeight: 800, letterSpacing: "-0.045em", lineHeight: 1 }}>{plan.progress_pct}%</Typography>
+        </Box>
         <Typography color="text.secondary">{plan.steps.filter((s) => s.status === "Done").length} из {plan.steps.length} шагов</Typography>
       </Stack>
       <StageBars plan={plan} />
@@ -73,11 +76,16 @@ export const DayPage = ({ data, onMarkDone, onAsk, onOpenPlan, onOpenQuestions, 
         <Progress plan={data.plan} onOpen={onOpenPlan} />
       </Stack>
       <Stack gap={5}>
-        <Block title="Ближайшее" tone="surface">
+        <Block title="Ближайшие события" tone="surface">
           {events.length ? events.map((e) => (
-            <Stack key={`${e.start}-${e.title}`} direction="row" gap={2} alignItems="baseline" py={0.75}>
-              <Typography sx={{ fontSize: 22, fontWeight: 300, minWidth: 64 }}>{e.start}</Typography>
-              <Typography>{e.title}</Typography>
+            <Stack key={`${e.start}-${e.title}`} direction="row" gap={2} alignItems="center" py={1.25} sx={{ borderBottom: "1px solid", borderColor: "divider", "&:last-child": { borderBottom: 0 } }}>
+              <Typography sx={{ fontSize: 24, fontWeight: 700, minWidth: 68 }}>{e.start}</Typography>
+              <Typography sx={{ flex: 1, fontWeight: 600 }}>{e.title}</Typography>
+              <Link href="https://zoom.us/" target="_blank" rel="noreferrer" underline="none" aria-label={`Подключиться к событию ${e.title} в Zoom`}
+                sx={{ display: "inline-flex", alignItems: "center", gap: 0.75, bgcolor: brand.green, color: "#000", px: 1.5, py: 1, fontWeight: 700, whiteSpace: "nowrap", "&:hover": { bgcolor: "#00c853" } }}>
+                <VideocamOutlined fontSize="small" />
+                <Box component="span" sx={{ display: { xs: "none", sm: "inline" } }}>В Zoom</Box>
+              </Link>
             </Stack>)) : <Typography color="text.secondary">Сегодня без встреч.</Typography>}
         </Block>
         <Block title="Мои вопросы" aside={onOpenQuestions && <Button variant="text" size="small" sx={{ minHeight: 36 }} onClick={onOpenQuestions}>Все</Button>}>
