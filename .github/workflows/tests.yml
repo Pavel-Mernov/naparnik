@@ -41,10 +41,11 @@ jobs:
         run: test -z "$(gofmt -l .)" || (gofmt -l . && exit 1)
       - run: go vet ./...
       - name: Конкурентные операции и PostgreSQL
-        run: go test -race ./...
+        # Мок-данные находятся вне backend: Go не отслеживает их в кеше тестов.
+        run: go test -race -count=1 ./...
       - name: Тесты и покрытие
         run: |
-          go test ./... -coverprofile=coverage.out -coverpkg=./internal/...,./cmd/buddy
+          go test -count=1 ./... -coverprofile=coverage.out -coverpkg=./internal/...,./cmd/buddy
           go tool cover -func=coverage.out | tail -1
           total=$(go tool cover -func=coverage.out | tail -1 | awk '{print substr($3, 1, length($3)-1)}')
           awk -v t="$total" 'BEGIN { if (t < 80) { print "Покрытие " t "% < 80%"; exit 1 } }'

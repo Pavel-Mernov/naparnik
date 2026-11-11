@@ -6,7 +6,7 @@
 set -eu
 cd "$(dirname "$0")/../backend"
 export LLM_PROVIDER= LLM_MODE=stub_ok MOCK_FAIL=
-go test ./... -coverprofile=coverage.out -coverpkg=./internal/...,./cmd/buddy
+go test -count=1 ./... -coverprofile=coverage.out -coverpkg=./internal/...,./cmd/buddy
 mkdir -p ../docs/coverage
 go tool cover -func=coverage.out | sed "s#github.com/worker4556/naparnik/backend/##" > ../docs/coverage/coverage.txt
 go tool cover -html=coverage.out -o ../docs/coverage/coverage.html

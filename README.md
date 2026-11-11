@@ -116,7 +116,7 @@ npm run dev
 ## Тесты и покрытие
 
 ```bash
-(cd backend && go test ./...)          # PostgreSQL-тесты требуют TEST_DATABASE_URL
+(cd backend && go test -count=1 ./...) # PostgreSQL-тесты требуют TEST_DATABASE_URL
 ./scripts/coverage.sh                  # из корня: отчёт о покрытии
 npm --prefix frontend run build        # TypeScript и сборка React
 ```
