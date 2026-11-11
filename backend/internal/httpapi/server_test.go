@@ -183,7 +183,7 @@ func TestTodayUsersAndStatic(t *testing.T) {
 	if code, _ := call(t, h, "GET", "/api/today", "lead.kovalev", ""); code != 403 {
 		t.Fatal("шаги на сегодня — только стажёру")
 	}
-	if _, r := call(t, h, "GET", "/api/users", "", ""); len(r["users"].([]any)) != 7 {
+	if _, r := call(t, h, "GET", "/api/users", "", ""); len(r["users"].([]any)) != len(srv.Store.Data.Team.Users) {
 		t.Fatal("учётки для переключателя")
 	}
 	if _, me := call(t, h, "GET", "/api/me", "buddy.belova", ""); len(me["interns"].([]any)) != 2 {
@@ -198,13 +198,24 @@ func TestTodayUsersAndStatic(t *testing.T) {
 
 // BR-02, BR-40: в списке базы — только своё пространство.
 func TestKBPages(t *testing.T) {
-	_, h := newServer(t)
+	srv, h := newServer(t)
 	_, r := call(t, h, "GET", "/api/kb/pages", "intern.sokolov", "")
 	pages := r["pages"].([]any)
-	if len(pages) != 28 || len(r["folders"].([]any)) != 7 {
+	want := map[string]bool{}
+	for _, p := range srv.Store.Data.KB.Pages {
+		if p.Space == "space-analytics" && p.Status == "Published" {
+			want[p.ID] = true
+		}
+	}
+	if len(pages) != len(want) || len(r["folders"].([]any)) != 7 {
 		t.Fatalf("страниц %d, папок %d", len(pages), len(r["folders"].([]any)))
 	}
 	for _, p := range pages {
+		id := p.(map[string]any)["id"].(string)
+		if !want[id] {
+			t.Fatalf("лишняя или повторная страница: %s", id)
+		}
+		delete(want, id)
 		if p := p.(map[string]any); p["id"] == "kb-30" && !strings.Contains(p["body"].(string), "партиции") {
 			t.Fatal("полный текст страницы, а не только начало")
 		}
@@ -224,6 +235,8 @@ func TestChatReset(t *testing.T) {
 // P2 через API: вопрос → ответ адресата → черновик у автора → «Ок» → страница в базе; видимость ответа (BR-86).
 func TestAnswerFlowAPI(t *testing.T) {
 	srv, h := newServer(t)
+	_, initialKB := call(t, h, "GET", "/api/kb/pages", "intern.egorova", "")
+	initialPages := len(initialKB["pages"].([]any))
 	for _, login := range []string{"intern.sokolov", "intern.egorova"} {
 		u, _ := srv.Store.UserByLogin(login)
 		tools.Run(tools.Ctx{Store: srv.Store, User: u}, "send_question", map[string]any{"text": "Вопрос " + login, "addressee_id": "u-orlov"})
@@ -259,7 +272,7 @@ func TestAnswerFlowAPI(t *testing.T) {
 		t.Fatalf("публикация: %d %v", code, p)
 	}
 	_, kb := call(t, h, "GET", "/api/kb/pages", "intern.egorova", "")
-	if len(kb["pages"].([]any)) != 29 {
+	if len(kb["pages"].([]any)) != initialPages+1 {
 		t.Fatal("опубликованная страница в базе, черновик — нет")
 	}
 }

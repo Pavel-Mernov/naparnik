@@ -150,16 +150,23 @@ func TestQuestionTitle(t *testing.T) {
 	}
 }
 
-// Номера новых страниц не пересекаются со страницами мок-данных (kb-30…kb-38).
+// Номера новых страниц не пересекаются с исходными и уже созданными страницами.
 func TestNextPageIDSkipsTaken(t *testing.T) {
 	c := ctxFor(t, newStore(t), "expert.orlov")
+	taken := map[string]bool{}
+	for _, p := range c.Store.Pages() {
+		taken[p.ID] = true
+	}
 	seen := map[string]bool{}
 	for i := 0; i < 12; i++ {
 		id := nextPageID(c)
+		if taken[id] || seen[id] {
+			t.Fatalf("повторный номер страницы: %s", id)
+		}
 		c.Store.AddPage(mockdata.Page{ID: id})
 		seen[id] = true
 	}
-	if seen["kb-30"] || seen["kb-38"] || !seen["kb-20"] || !seen["kb-39"] {
+	if len(seen) != 12 || !seen["kb-20"] {
 		t.Fatalf("номера: %v", seen)
 	}
 }

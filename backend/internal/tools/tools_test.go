@@ -172,10 +172,26 @@ func TestMarkStepDone(t *testing.T) {
 }
 
 func TestTeamDirectoryExcludesInternsAndSelf(t *testing.T) {
-	r := data(t, Run(ctxFor(t, newStore(t), "intern.sokolov"), "team_directory", nil))
-	people := r["people"].([]map[string]string)
-	if len(people) != 5 {
-		t.Fatalf("ожидалось 5 сотрудников, получено %d", len(people))
+	s := newStore(t)
+	for _, login := range []string{"intern.sokolov", "buddy.belova"} {
+		c := ctxFor(t, s, login)
+		r := data(t, Run(c, "team_directory", nil))
+		people := r["people"].([]map[string]string)
+		want := map[string]bool{}
+		for _, u := range s.Data.Team.Users {
+			if u.ID != c.User.ID && !store.HasRole(&u, store.RoleIntern) {
+				want[u.ID] = true
+			}
+		}
+		if len(people) != len(want) {
+			t.Fatalf("%s: ожидалось %d сотрудников, получено %d", login, len(want), len(people))
+		}
+		for _, p := range people {
+			if !want[p["id"]] {
+				t.Fatalf("%s: лишний или повторный сотрудник: %v", login, p)
+			}
+			delete(want, p["id"])
+		}
 	}
 }
 
