@@ -50,6 +50,9 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /api/chat/messages", s.auth(s.chat))
 	mux.HandleFunc("POST /api/chat/reset", s.auth(s.chatReset))
 	mux.HandleFunc("GET /api/drafts", s.auth(s.drafts))
+	mux.HandleFunc("GET /api/drafts/{id}", s.auth(s.draft))
+	mux.HandleFunc("PATCH /api/drafts/{id}", s.auth(s.draftEdit))
+	mux.HandleFunc("DELETE /api/drafts/{id}", s.auth(s.draftCancel))
 	mux.HandleFunc("POST /api/drafts/{id}/confirm", s.auth(s.confirm))
 	mux.HandleFunc("POST /api/requests/{id}/confirm", s.auth(s.confirm))       // заявки (отгул, доступ)
 	mux.HandleFunc("POST /api/questions/{id}/confirm-send", s.auth(s.confirm)) // BR-11: вопрос человеку
@@ -130,7 +133,7 @@ func errBody(code, msg string) map[string]any {
 	return map[string]any{"ok": false, "error": map[string]string{"code": code, "message": msg}}
 }
 
-var statusByCode = map[string]int{"forbidden": 403, "not_found": 404, "validation": 422, "unavailable": 503}
+var statusByCode = map[string]int{"forbidden": 403, "not_found": 404, "validation": 422, "unavailable": 503, "conflict": 409}
 
 func writeResult(w http.ResponseWriter, res tools.Result) {
 	status := http.StatusOK
@@ -247,7 +250,18 @@ func (s *Server) chatReset(w http.ResponseWriter, _ *http.Request, u *mockdata.U
 }
 
 func (s *Server) confirm(w http.ResponseWriter, r *http.Request, u *mockdata.User) {
-	writeResult(w, s.Agent.Confirm(u.Login, r.PathValue("id")))
+	var body struct {
+		Version *int `json:"version"`
+	}
+	if !decodeDraftBody(r, &body, true) || (body.Version != nil && *body.Version < 1) {
+		writeJSON(w, 422, errBody("validation", "Неверная версия черновика."))
+		return
+	}
+	if body.Version == nil {
+		writeResult(w, s.Agent.Confirm(u.Login, r.PathValue("id")))
+	} else {
+		writeResult(w, s.Agent.Confirm(u.Login, r.PathValue("id"), *body.Version))
+	}
 }
 
 func (s *Server) plan(w http.ResponseWriter, r *http.Request, u *mockdata.User) {
@@ -382,7 +396,7 @@ func nonNil[T any](xs []T) []T {
 func (s *Server) drafts(w http.ResponseWriter, _ *http.Request, u *mockdata.User) {
 	out := []agent.Draft{}
 	for _, d := range s.Store.PendingDrafts(u.ID) {
-		out = append(out, agent.Draft{ID: d.ID, Tool: d.Tool, Args: d.Args})
+		out = append(out, agent.Draft{ID: d.ID, Tool: d.Tool, Args: d.Args, Version: d.Version, Status: "pending"})
 	}
 	writeJSON(w, 200, map[string]any{"drafts": out})
 }

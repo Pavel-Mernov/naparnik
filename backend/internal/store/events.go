@@ -44,6 +44,8 @@ const (
 	EvKBAnswer           = "kb_answer"
 	EvAnswerFeedback     = "answer_feedback"
 	EvDraftConfirmed     = "draft_confirmed"
+	EvDraftEdited        = "draft_edited"
+	EvDraftCancelled     = "draft_cancelled"
 	EvMeetingScheduled   = "meeting_scheduled"
 	EvMeetingNoRecording = "meeting_no_recording"
 	EvQuestionOpen       = "question_open"

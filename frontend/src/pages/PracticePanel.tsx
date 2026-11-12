@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Alert, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, LinearProgress, Stack, TextField, Typography } from "@mui/material";
 import { api, unwrap } from "../api";
-import { Markdown } from "../chat";
+import { DraftCard, Markdown, type Draft } from "../chat";
 import { Block, TestLabel } from "../components/ui";
 
 type Source = { page_id: string; title: string; author: string; updated_at: string; body: string };
@@ -14,10 +14,9 @@ type Practice = {
   general_terms: Term[]; team_terms: Term[]; team_rules: { title: string }[]; sources: Source[]; task?: Task; checklist?: string[];
   attempts?: Attempt[]; best_attempt?: Attempt; attempts_count: number; error_topics: string[]; help_available: boolean;
 };
-type Draft = { id: string; args: { text: string } };
 type Run = (path: string, body: unknown, key?: string) => Promise<unknown>;
 
-const PracticeCard = ({ item: p, buddy, busy, run }: { item: Practice; buddy: boolean; busy: boolean; run: Run }) => {
+const PracticeCard = ({ item: p, buddy, busy, run, login }: { item: Practice; buddy: boolean; busy: boolean; run: Run; login: string }) => {
   const path = `/api/practices/${p.intern_id}/${p.id}`;
   const [text, setText] = useState(p.task?.text ?? "");
   const [answer, setAnswer] = useState("");
@@ -91,8 +90,9 @@ const PracticeCard = ({ item: p, buddy, busy, run }: { item: Practice; buddy: bo
           <Button disabled={busy} onClick={() => advance("skip_stage")}>Пропустить учебное задание</Button>
           {p.help_available && !sent && <>
             {!draft ? <Button disabled={busy} onClick={async () => { const result = await run(`${path}/help-draft`, {}); if (result) setDraft(result as Draft); }}>Спросить бадди</Button> : <>
-              <Typography fontWeight={700}>Черновик вопроса бадди</Typography><Typography>{draft.args.text}</Typography>
-              <Button variant="contained" disabled={busy} onClick={async () => { if (await run(`/api/drafts/${draft.id}/confirm`, {})) setSent(true); }}>Подтвердить отправку бадди</Button>
+              <Typography fontWeight={700}>Черновик вопроса бадди</Typography>
+              <DraftCard draft={draft} login={login} look={{ userName: () => "Бадди", systemTitle: (id) => id, stepTitle: () => p.step.title }}
+                onDone={(d) => { if (d?.status === "confirmed") setSent(true); else if (d?.status === "cancelled") setDraft(null); }} />
             </>}
           </>}
           {sent && <Alert severity="success">Вопрос отправлен бадди.</Alert>}
@@ -161,6 +161,6 @@ export const PracticePanel = ({ login, buddy, revision }: { login: string; buddy
   return <Stack spacing={3} mt={4}>
     {preparing && <><Typography color="text.secondary">Напарник готовит учебную практику…</Typography><LinearProgress aria-label="Подготовка практики" /></>}
     {error && <Alert severity="error" action={<Button onClick={() => void run("/api/practices/sync", {})}>Повторить</Button>}>{error}</Alert>}
-    {items.map((p) => <PracticeCard key={`${p.intern_id}/${p.id}`} item={p} buddy={buddy} busy={busy} run={run} />)}
+    {items.map((p) => <PracticeCard key={`${p.intern_id}/${p.id}`} item={p} buddy={buddy} busy={busy} run={run} login={login} />)}
   </Stack>;
 };

@@ -37,11 +37,13 @@ type snapshot struct {
 }
 
 type ActionDraft struct {
-	ID     string          `json:"id"`
-	UserID string          `json:"user_id"`
-	Tool   string          `json:"tool"`
-	Args   map[string]any  `json:"args"`
-	Result json.RawMessage `json:"result,omitempty"`
+	ID        string          `json:"id"`
+	UserID    string          `json:"user_id"`
+	Tool      string          `json:"tool"`
+	Args      map[string]any  `json:"args"`
+	Result    json.RawMessage `json:"result,omitempty"`
+	Version   int             `json:"version"`
+	Cancelled bool            `json:"cancelled,omitempty"`
 }
 
 // Operation — результат принятого запроса с ключом идемпотентности.
@@ -51,15 +53,21 @@ type Operation struct {
 }
 
 func (s *Store) snapshot() snapshot {
-	return snapshot{2, s.steps, s.requests, s.questions, s.pages, s.seq, s.drafts, s.operations, s.practices, s.events, s.notifications, s.tgLinks, s.meetings, s.kbDecisions, s.plans}
+	return snapshot{3, s.steps, s.requests, s.questions, s.pages, s.seq, s.drafts, s.operations, s.practices, s.events, s.notifications, s.tgLinks, s.meetings, s.kbDecisions, s.plans}
 }
 
 func (s *Store) restore(v snapshot) error {
-	if (v.Version != 1 && v.Version != 2) || v.Steps == nil || v.Seq == nil || v.Drafts == nil || v.Operations == nil {
+	if (v.Version < 1 || v.Version > 3) || v.Steps == nil || v.Seq == nil || v.Drafts == nil || v.Operations == nil {
 		return errors.New("unsupported or corrupt stored state")
 	}
 	s.steps, s.requests, s.questions, s.pages = v.Steps, v.Requests, v.Questions, v.Pages
 	s.seq, s.drafts, s.operations = v.Seq, v.Drafts, v.Operations
+	for id, d := range s.drafts {
+		if d.Version == 0 {
+			d.Version = 1
+			s.drafts[id] = d
+		}
+	}
 	s.practices = v.Practices
 	if s.practices == nil {
 		s.practices = map[string]practice.State{}
@@ -210,6 +218,9 @@ func (s *Store) Transaction(fn func(*Store) error) error {
 func (s *Store) PutDraft(d ActionDraft) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	if d.Version == 0 {
+		d.Version = 1
+	}
 	s.drafts[d.ID] = d
 }
 
@@ -243,7 +254,7 @@ func (s *Store) PendingDrafts(userID string) []ActionDraft {
 	defer s.mu.Unlock()
 	out := []ActionDraft{}
 	for _, d := range s.drafts {
-		if d.UserID == userID && len(d.Result) == 0 {
+		if d.UserID == userID && len(d.Result) == 0 && !d.Cancelled {
 			raw, _ := json.Marshal(d)
 			var copy ActionDraft
 			_ = json.Unmarshal(raw, &copy)
