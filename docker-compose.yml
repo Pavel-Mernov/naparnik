@@ -37,6 +37,8 @@ services:
     build:
       context: .
       dockerfile: backend/Dockerfile
+      secrets:
+        - proxy_ca
     ports: ["8080:8080"]
     env_file:
       - path: .env
@@ -64,6 +66,8 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      secrets:
+        - proxy_ca
     ports: ["3000:3000"]
     depends_on:
       backend:
@@ -73,3 +77,8 @@ services:
 volumes:
   pgdata:
   redis-data:
+
+secrets:
+  # В Codex Cloud это CA прокси; локально используется системный bundle.
+  proxy_ca:
+    file: ${CODEX_PROXY_CERT:-/etc/ssl/certs/ca-certificates.crt}

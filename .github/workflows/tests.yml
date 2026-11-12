@@ -11,6 +11,28 @@ permissions:
   contents: read
 
 jobs:
+  frontend:
+    name: frontend — RTL, Vitest, coverage
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run build
+      - name: Unit, functional and integration tests (coverage >= 80%)
+        run: npm run test:coverage
+      - uses: actions/upload-artifact@v4
+        with:
+          name: frontend-coverage
+          path: frontend/coverage
+
   backend:
     name: backend — vet, тесты, покрытие
     runs-on: ubuntu-latest
@@ -55,8 +77,8 @@ jobs:
           path: backend/coverage.out
 
   docker:
-    name: Docker-образ бэкенда
+    name: Docker Compose — все образы
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: docker build -f backend/Dockerfile .
+      - run: docker compose build

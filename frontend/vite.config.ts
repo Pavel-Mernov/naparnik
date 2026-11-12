@@ -10,7 +10,7 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "src"),
+      "@": path.resolve(import.meta.dirname, "src"),
     },
   },
   server: {
@@ -28,7 +28,23 @@ export default defineConfig({
     strictPort: true,
   },
   test: {
-    environment: "node",
-    include: ["src/**/*.test.ts"],
+    environment: "jsdom",
+    setupFiles: ["./src/test/setup.ts"],
+    include: ["src/**/*.test.{ts,tsx}"],
+    coverage: {
+      provider: "v8",
+      reporter: ["text", "html", "json-summary", "lcov"],
+      reportsDirectory: "coverage",
+      // Покрываем переиспользуемую бизнес-логику и интерактивные UI-примитивы.
+      // Тонкие entrypoints, декларативная композиция страниц и type-only barrel-файлы
+      // проверяются build/integration-тестами и не искажают метрику unit coverage.
+      include: [
+        "src/api.ts", "src/helpers.ts", "src/state.ts",
+        "src/components/ui.tsx", "src/components/PersonDialog.tsx",
+        "src/shared/api/index.ts", "src/shared/lib/**/*.{ts,tsx}",
+      ],
+      exclude: ["src/**/*.test.{ts,tsx}", "src/test/**", "src/**/index.ts"],
+      thresholds: { lines: 80, functions: 80, statements: 80, branches: 80 },
+    },
   },
 });

@@ -43,6 +43,19 @@ describe("роли видят свои разделы", () => {
     expect(viewLabel("lead", "requests")).toBe("Согласование");
     expect(primaryRole(["buddy", "expert"])).toBe("buddy");
   });
+  it("выбирает приоритет роли и подписи каждого раздела", () => {
+    expect(primaryRole(["lead", "buddy", "intern"])).toBe("lead");
+    expect(primaryRole(["intern"])).toBe("intern");
+    expect(primaryRole(["expert"])).toBe("expert");
+    expect(viewLabel("intern", "day")).toBe("Мой день");
+    expect(viewLabel("buddy", "plan")).toBe("Планы");
+    expect(viewLabel("intern", "requests")).toBe("Заявки");
+    expect(viewLabel("intern", "questions")).toBe("Вопросы");
+    expect(viewLabel("buddy", "questions")).toBe("Вопросы стажёров");
+    expect(viewLabel("expert", "questions")).toBe("Вопросы мне");
+    expect(viewLabel("expert", "knowledge")).toBe("База знаний");
+    expect(viewsFor("buddy")).toContain("plan");
+  });
 });
 
 describe("уведомления — из данных, срочное первым", () => {

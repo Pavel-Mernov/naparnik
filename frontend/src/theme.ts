@@ -3,6 +3,7 @@
 // с сайта start.avito.ru: чёрный текст, серые плашки, линии 2 px, без скруглений и теней.
 // Контраст проверен: синий #00AAFF — только заливкой под чёрным текстом (8.2:1), для ссылок — #0A7BC2 (4.5:1).
 import { createTheme, type Theme } from "@mui/material";
+import type { ColorTokens } from "./shared/theme";
 
 export type Mode = "light" | "dark";
 
@@ -14,22 +15,22 @@ export const brand = {
   violet: "#965EEB",
 } as const;
 
-type Tokens = {
-  bg: string; surface: string; surfaceHover: string; line: string; text: string; muted: string;
-  link: string; inverse: string; onInverse: string;
-  ai: string; aiSoft: string; okSoft: string; badSoft: string; waitSoft: string; todaySoft: string;
-};
+type Tokens = ColorTokens;
 
 export const tokens: Record<Mode, Tokens> = {
   light: {
     bg: "#FFFFFF", surface: "#F4F4F4", surfaceHover: "#EBEBEB", line: "#E7E9E8", text: "#000000", muted: "#626362",
-    link: "#0A7BC2", inverse: "#000000", onInverse: "#FFFFFF",
+    link: "#0A7BC2", inverse: "#000000", onInverse: "#FFFFFF", inverseHover: "#262626",
     ai: "#6A35C9", aiSoft: "#EFE7FC", okSoft: "#D9F9E6", badSoft: "#FFE3E6", waitSoft: "#E3EFFD", todaySoft: brand.blueLight,
+    folderSoft: [brand.blueLight, "#D9F9E6", "#EFE7FC", "#FFE3E6", "#FFF3D6", "#E3EFFD"],
+    folderDot: [brand.blue, brand.green, brand.violet, brand.red, "#E5A000", brand.blue],
   },
   dark: {
     bg: "#0F0F0F", surface: "#1C1C1C", surfaceHover: "#262626", line: "#2E2E2E", text: "#F3F3F3", muted: "#A6A7A6",
-    link: "#5CC6FF", inverse: "#FFFFFF", onInverse: "#000000",
+    link: "#5CC6FF", inverse: "#FFFFFF", onInverse: "#000000", inverseHover: "#D9D9D9",
     ai: "#C3A2F7", aiSoft: "#2B2140", okSoft: "#12331F", badSoft: "#3D1A1F", waitSoft: "#1A2A3D", todaySoft: "#1D3A57",
+    folderSoft: ["#1E4A6E", "#1E3F2C", "#35284F", "#4A242A", "#4A3A14", "#243A52"],
+    folderDot: [brand.blue, brand.green, brand.violet, brand.red, "#E5A000", brand.blue],
   },
 };
 
