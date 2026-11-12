@@ -16,6 +16,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"sort"
 	"strings"
 	"time"
 
@@ -130,7 +131,43 @@ func (t *Service) LinkCode(ctx context.Context, userID string) (code, link strin
 
 // Unlink — отключить Telegram из веба.
 func (t *Service) Unlink(userID string) error {
+	_, _, _ = t.kv.Take(context.Background(), linkKey(userID))
 	return t.store.Transaction(func(s *store.Store) error { s.UnlinkTelegram(userID); return nil })
+}
+
+// Привязка чата дублируется в Redis без срока: если состояние Напарника сбросили (новые демо-данные,
+// пересоздали базу), бот не «забывает» людей и при старте возвращает привязки (BR-50).
+func linkKey(userID string) string { return "tg:link:" + userID }
+
+func (t *Service) remember(ctx context.Context, userID string, chatID int64) {
+	if err := t.kv.SetTTL(ctx, linkKey(userID), fmt.Sprint(chatID), 0); err != nil {
+		log.Printf("telegram: копия привязки не сохранена: %v", err)
+	}
+}
+
+// Restore возвращает привязки из Redis, которых нет в состоянии, и копирует в Redis те, что есть только в состоянии.
+func (t *Service) Restore(ctx context.Context) (restored int) {
+	_ = t.store.Transaction(func(s *store.Store) error {
+		for _, u := range s.Data.Team.Users {
+			if chat, ok := s.TelegramChat(u.ID); ok {
+				t.remember(ctx, u.ID, chat)
+				continue
+			}
+			v, ok, err := t.kv.Get(ctx, linkKey(u.ID))
+			var chat int64
+			if err == nil && ok {
+				if _, err := fmt.Sscan(v, &chat); err == nil && chat != 0 {
+					s.LinkTelegram(u.ID, chat)
+					restored++
+				}
+			}
+		}
+		return nil
+	})
+	if restored > 0 {
+		log.Printf("telegram: восстановлено привязок из Redis: %d", restored)
+	}
+	return restored
 }
 
 type update struct {
@@ -156,10 +193,17 @@ func (t *Service) Handle(ctx context.Context, chatID int64, text string) string 
 		if err != nil || !ok {
 			return "Код не подошёл или устарел — он действует 10 минут. Возьми новый в Напарнике."
 		}
-		if err := t.store.Transaction(func(s *store.Store) error { s.LinkTelegram(userID, chatID); return nil }); err != nil {
+		var missed int
+		var last string
+		if err := t.store.Transaction(func(s *store.Store) error { missed, last = s.LinkTelegram(userID, chatID); return nil }); err != nil {
 			return "Не получилось сохранить подключение. Попробуй ещё раз чуть позже."
 		}
-		return fmt.Sprintf("Готово, %s! Буду присылать уведомления: ответы на вопросы, статусы заявок, напоминания — только в твои рабочие часы. Отключить — /stop.", firstName(t.store.Name(userID)))
+		t.remember(ctx, userID, chatID)
+		reply := fmt.Sprintf("Готово, %s! Буду присылать уведомления: ответы на вопросы, статусы заявок, напоминания — только в твои рабочие часы. Отключить — /stop.", firstName(t.store.Name(userID)))
+		if missed > 0 {
+			reply += fmt.Sprintf("\n\nПока Telegram не был подключён, в Напарнике накопилось уведомлений: %d — они ждут там. Последнее:\n%s", missed, firstLine(last))
+		}
+		return reply
 	case text == "/stop":
 		if userID, ok := t.store.UserByTelegram(chatID); ok {
 			_ = t.Unlink(userID)
@@ -171,6 +215,45 @@ func (t *Service) Handle(ctx context.Context, chatID int64, text string) string 
 	default:
 		return "Я только присылаю уведомления — вопросы и заявки живут в Напарнике, там мы проверяем права и не отправляем ничего без подтверждения: " + t.cfg.WebURL
 	}
+}
+
+// bundle — несколько уведомлений одним сообщением: первые строки, свежие сверху, не больше пяти.
+func bundle(list []store.Notification) string {
+	sorted := append([]store.Notification(nil), list...)
+	sort.SliceStable(sorted, func(i, j int) bool { return sorted[i].At > sorted[j].At })
+	var b strings.Builder
+	fmt.Fprintf(&b, "🔔 Новых уведомлений: %d", len(sorted))
+	for i, n := range sorted {
+		if i == 5 {
+			fmt.Fprintf(&b, "\n…и ещё %d — в Напарнике.", len(sorted)-5)
+			break
+		}
+		b.WriteString("\n• " + firstLine(n.Text))
+	}
+	return b.String()
+}
+
+// command — что пришло, без кода привязки: он одноразовый, но в журнал не пишем.
+func command(text string) string {
+	f := strings.Fields(text)
+	if len(f) == 0 {
+		return ""
+	}
+	if strings.HasPrefix(strings.ToUpper(f[0]), "LINK-") {
+		return "LINK-…"
+	}
+	if len(f) > 1 && f[0] == "/start" {
+		return "/start <код>"
+	}
+	return f[0]
+}
+
+func firstLine(s string) string {
+	line, _, _ := strings.Cut(s, "\n")
+	if r := []rune(line); len(r) > 60 {
+		return string(r[:60]) + "…"
+	}
+	return line
 }
 
 func firstName(name string) string { return strings.Split(name, " ")[0] }
@@ -219,8 +302,23 @@ func (t *Service) Flush(ctx context.Context) error {
 				single = append(single, n)
 			}
 		}
+		// Срочное — всегда отдельным сообщением; остальное, что накопилось к одному моменту, — одним (не засыпаем чат).
+		var urgent, rest []store.Notification
 		for _, n := range single {
+			if n.Urgent {
+				urgent = append(urgent, n)
+			} else {
+				rest = append(rest, n)
+			}
+		}
+		for _, n := range urgent {
 			t.deliver(ctx, chatID, []store.Notification{n}, n.Text)
+		}
+		switch {
+		case len(rest) == 1:
+			t.deliver(ctx, chatID, rest, rest[0].Text)
+		case len(rest) > 1:
+			t.deliver(ctx, chatID, rest, bundle(rest))
 		}
 		if len(digest) > 0 {
 			t.deliver(ctx, chatID, digest, fmt.Sprintf("📬 Сводка: новых вопросов от стажёров — %d.\nОтветить можно прямо в карточке вопроса, пары строк хватит.", len(digest)))
@@ -374,6 +472,7 @@ func contains(xs []string, x string) bool {
 
 // Run — фон: опрос бота (live), напоминания и отправка раз в 15 секунд. Ошибки Telegram не роняют сервер.
 func (t *Service) Run(ctx context.Context) {
+	t.Restore(ctx)
 	if t.cfg.Mode == "live" {
 		var me struct {
 			Username string `json:"username"`
@@ -407,18 +506,26 @@ func (t *Service) Run(ctx context.Context) {
 
 func (t *Service) poll(ctx context.Context) {
 	var offset int64
+	var lastErr string
 	for ctx.Err() == nil {
 		var ups []update
 		if err := t.call(ctx, "getUpdates", map[string]any{"offset": offset, "timeout": 25, "allowed_updates": []string{"message"}}, &ups); err != nil {
+			// Ошибку видно в журнале (раньше глоталась): например, Conflict — тот же бот опрашивает другой экземпляр.
+			if msg := err.Error(); msg != lastErr && ctx.Err() == nil {
+				log.Printf("telegram: %v", err)
+				lastErr = msg
+			}
 			time.Sleep(5 * time.Second)
 			continue
 		}
+		lastErr = ""
 		for _, u := range ups {
 			offset = u.UpdateID + 1
 			if u.Message == nil {
 				continue
 			}
 			reply := t.Handle(ctx, u.Message.Chat.ID, u.Message.Text)
+			log.Printf("telegram: входящее %q → %s", command(u.Message.Text), firstLine(reply))
 			if err := t.send(ctx, u.Message.Chat.ID, reply); err != nil {
 				log.Printf("telegram: %v", err)
 			}

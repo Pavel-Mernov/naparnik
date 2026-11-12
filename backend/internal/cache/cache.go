@@ -12,7 +12,7 @@ import (
 )
 
 type KV interface {
-	// SetTTL кладёт значение с временем жизни.
+	// SetTTL кладёт значение с временем жизни; ttl 0 — без срока.
 	SetTTL(ctx context.Context, key, value string, ttl time.Duration) error
 	// Get возвращает значение, если оно есть и не истекло (кэш поиска по базе).
 	Get(ctx context.Context, key string) (string, bool, error)
@@ -102,7 +102,11 @@ func (m *memory) get(key string) (item, bool) {
 func (m *memory) SetTTL(_ context.Context, key, value string, ttl time.Duration) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	m.m[key] = item{v: value, exp: m.now().Add(ttl)}
+	it := item{v: value}
+	if ttl > 0 { // 0 — без срока, как в Redis
+		it.exp = m.now().Add(ttl)
+	}
+	m.m[key] = it
 	return nil
 }
 func (m *memory) Get(_ context.Context, key string) (string, bool, error) {

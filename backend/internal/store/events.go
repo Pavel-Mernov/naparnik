@@ -165,23 +165,28 @@ func (s *Store) TelegramChat(userID string) (int64, bool) {
 
 // LinkTelegram привязывает чат и возвращает в очередь пропущенное за последние сутки (не больше 10):
 // человек подключил бота — и сразу видит, что уже произошло.
-func (s *Store) LinkTelegram(userID string, chatID int64) {
+// LinkTelegram привязывает чат. Накопленное, пока чата не было, заново не рассылается: стажёр получит одно
+// сообщение «пока ты не был подключён — N уведомлений, последнее …», остальное и так видно в вебе.
+// Возвращает число пропущенных за сутки и текст последнего.
+func (s *Store) LinkTelegram(userID string, chatID int64) (missed int, last string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.tgLinks[userID] = chatID
 	since := Now().Add(-24 * time.Hour)
-	requeued := 0
-	for i := len(s.notifications) - 1; i >= 0 && requeued < 10; i-- {
-		n := &s.notifications[i]
+	for i := len(s.notifications) - 1; i >= 0; i-- {
+		n := s.notifications[i]
 		if n.UserID != userID || n.TG != "skipped" {
 			continue
 		}
 		if at, err := time.Parse(time.RFC3339, n.At); err == nil && at.Before(since) {
 			continue
 		}
-		n.TG = "pending"
-		requeued++
+		if missed == 0 {
+			last = n.Text
+		}
+		missed++
 	}
+	return missed, last
 }
 
 func (s *Store) UnlinkTelegram(userID string) {

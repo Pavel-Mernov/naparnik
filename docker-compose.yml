@@ -22,7 +22,10 @@ services:
   # Кэш и очередь: одноразовые коды Telegram, лимит запросов к модели, блокировка отправки (стек Авито: PostgreSQL + Redis)
   redis:
     image: redis:7-alpine
-    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    # AOF на томе: копия привязок Telegram (tg:link:*) переживает перезапуск и пересоздание состояния
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis-data:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 3s
@@ -62,3 +65,4 @@ services:
 
 volumes:
   pgdata:
+  redis-data:
