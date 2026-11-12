@@ -8,3 +8,4 @@
 | [interviews/interview-guide.md](./interviews/interview-guide.md) | Гайд интервью для стажёров и бадди |
 | [interviews/intern-interviews.md](./interviews/intern-interviews.md) | Интервью 4 стажёров и сводка |
 | [interviews/buddy-interviews.md](./interviews/buddy-interviews.md) | Интервью 2 бадди и общая сводка со стажёрами |
+| [avito-inputs.md](./avito-inputs.md) | Вводные от Авито: метрики онбординга, обращения к наставнику, доступы стажёров; что подтвердилось и что уточнили |
