@@ -1,6 +1,6 @@
 # Прогон эталонного набора: stub
 
-> `docs/04-mock-data/evals.json`, 43 вопросов. Модель: **stub**. 2026-11-12T14:07.
+> `docs/04-mock-data/evals.json`, 43 вопросов. Модель: **stub**. 2026-11-12T17:18.
 > Воспроизвести: `cd backend && go run ./cmd/evals -mode stub`.
 
 **Итого: 38 из 43.**
