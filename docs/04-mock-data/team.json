@@ -16,7 +16,8 @@
       "SC-23",
       "SC-13",
       "SC-35"
-    ]
+    ],
+    "profiles_note": "Контакты синтетические: почта в домене .example (RFC 2606), телефоны +7 900 000-00-XX не существуют. Фото в моках нет — загружается в профиле."
   },
   "department": {
     "id": "dept-analytics",
@@ -52,7 +53,9 @@
       "working_hours": "10:00-19:00",
       "digest_mode": "digest",
       "tg_connected": false,
-      "management_level": "department_lead"
+      "management_level": "department_lead",
+      "email": "lead.kovalev@naparnik.example",
+      "phone": "+7 900 000-00-01"
     },
     {
       "id": "u-volkov",
@@ -66,7 +69,9 @@
       "responsibility": "Стратегия аналитики, метрики верхнего уровня, приоритизация направлений",
       "working_hours": "10:00-19:00",
       "digest_mode": "digest",
-      "tg_connected": false
+      "tg_connected": false,
+      "email": "director.volkov@naparnik.example",
+      "phone": "+7 900 000-00-02"
     },
     {
       "id": "u-belova",
@@ -85,7 +90,9 @@
       "working_hours": "10:00-19:00",
       "digest_mode": "digest",
       "tg_connected": true,
-      "management_level": "none"
+      "management_level": "none",
+      "email": "buddy.belova@naparnik.example",
+      "phone": "+7 900 000-00-03"
     },
     {
       "id": "u-orlov",
@@ -99,7 +106,9 @@
       "working_hours": "11:00-20:00",
       "digest_mode": "digest",
       "tg_connected": true,
-      "management_level": "none"
+      "management_level": "none",
+      "email": "expert.orlov@naparnik.example",
+      "phone": "+7 900 000-00-04"
     },
     {
       "id": "u-smirnova",
@@ -113,7 +122,9 @@
       "working_hours": "09:00-18:00",
       "digest_mode": "digest",
       "tg_connected": true,
-      "management_level": "none"
+      "management_level": "none",
+      "email": "expert.smirnova@naparnik.example",
+      "phone": "+7 900 000-00-05"
     },
     {
       "id": "u-lebedeva",
@@ -127,7 +138,9 @@
       "working_hours": "10:00-19:00",
       "digest_mode": "instant",
       "tg_connected": false,
-      "management_level": "none"
+      "management_level": "none",
+      "email": "expert.lebedeva@naparnik.example",
+      "phone": "+7 900 000-00-06"
     },
     {
       "id": "u-sokolov",
@@ -151,7 +164,9 @@
         ]
       },
       "tg_connected": true,
-      "management_level": "none"
+      "management_level": "none",
+      "email": "intern.sokolov@naparnik.example",
+      "phone": "+7 900 000-00-07"
     },
     {
       "id": "u-egorova",
@@ -175,7 +190,9 @@
         "note": "SC-13: текст вопросов скрыт от бадди, адресат и статус видны"
       },
       "tg_connected": false,
-      "management_level": "none"
+      "management_level": "none",
+      "email": "intern.egorova@naparnik.example",
+      "phone": "+7 900 000-00-08"
     }
   ],
   "other_teams": [

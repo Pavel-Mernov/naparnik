@@ -28,12 +28,13 @@ type snapshot struct {
 	Operations map[string]Operation                        `json:"operations"`
 	Practices  map[string]practice.State                   `json:"practices"`
 	// Журнал событий, уведомления и привязки Telegram. В старом сохранённом состоянии их нет — это пустые списки.
-	Events        []LogEvent            `json:"events,omitempty"`
-	Notifications []Notification        `json:"notifications,omitempty"`
-	TGLinks       map[string]int64      `json:"tg_links,omitempty"`
-	Meetings      []*Meeting            `json:"meetings,omitempty"`
-	KBDecisions   map[string]string     `json:"kb_decisions,omitempty"`
-	Plans         map[string]*PlanState `json:"plans,omitempty"`
+	Events        []LogEvent             `json:"events,omitempty"`
+	Notifications []Notification         `json:"notifications,omitempty"`
+	TGLinks       map[string]int64       `json:"tg_links,omitempty"`
+	Meetings      []*Meeting             `json:"meetings,omitempty"`
+	KBDecisions   map[string]string      `json:"kb_decisions,omitempty"`
+	Plans         map[string]*PlanState  `json:"plans,omitempty"`
+	Profiles      map[string]ProfileEdit `json:"profiles,omitempty"` // правки профиля и фото (без них — из оргструктуры)
 }
 
 type ActionDraft struct {
@@ -53,7 +54,7 @@ type Operation struct {
 }
 
 func (s *Store) snapshot() snapshot {
-	return snapshot{3, s.steps, s.requests, s.questions, s.pages, s.seq, s.drafts, s.operations, s.practices, s.events, s.notifications, s.tgLinks, s.meetings, s.kbDecisions, s.plans}
+	return snapshot{3, s.steps, s.requests, s.questions, s.pages, s.seq, s.drafts, s.operations, s.practices, s.events, s.notifications, s.tgLinks, s.meetings, s.kbDecisions, s.plans, s.profiles}
 }
 
 func (s *Store) restore(v snapshot) error {
@@ -75,6 +76,10 @@ func (s *Store) restore(v snapshot) error {
 	s.events, s.notifications, s.tgLinks, s.meetings = v.Events, v.Notifications, v.TGLinks, v.Meetings
 	s.kbDecisions = v.KBDecisions
 	s.plans = v.Plans
+	s.profiles = v.Profiles
+	if s.profiles == nil {
+		s.profiles = map[string]ProfileEdit{}
+	}
 	if s.plans == nil { // старое состояние без жизненного цикла планов — берём его из трекера
 		s.plans = map[string]*PlanState{}
 		for _, p := range s.Data.Tracker.Plans {

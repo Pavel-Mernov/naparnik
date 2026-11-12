@@ -98,8 +98,38 @@ HTTP-коды в API: `forbidden` → 403, `not_found` → 404, `validation` →
 | GET | `/api/plans/{internId}/draft` | черновик или состояние плана — бадди и руководитель стажёра (SC-20) |
 | PATCH | `/api/plans/{internId}/draft` | `{steps: [{step_id, due_date?, removed?}], comment?}` — правка бадди |
 | POST | `/api/plans/{internId}/approve` | утверждение руководителем |
+| GET | `/api/profile` | своя карточка |
+| PATCH | `/api/profile` | `{phone}` — свой рабочий телефон |
+| PUT / DELETE | `/api/profile/photo` | загрузить (тело — изображение) / убрать своё фото |
+| GET | `/api/profiles` | карточки отдела; `?role=intern` — только стажёры |
+| GET | `/api/profiles/{id}` | карточка сотрудника отдела |
+| GET | `/api/profiles/{id}/photo` | само фото для `<img>` |
 
 В `GET /api/questions` у вопроса со статусом `Sent` есть `due_at` (срок ответа текущего адресата) и `overdue` (BR-18); `route[]` — смены адресата; `hint` — только адресату (BR-10a).
+
+## Профили сотрудников (US-38)
+
+Карточка — `{ok: true, profile: {...}}`, список — `{ok: true, profiles: [...]}`. Код — `tools/profile.go`, `httpapi/profile.go`.
+
+| Поле | Откуда |
+|---|---|
+| `id`, `name`, `position`, `department`, `email` | Оргструктура (`team.json`), не правятся |
+| `status` | По главной роли: «Стажёр» важнее остальных, затем «Руководитель», «Бадди», «Эксперт» |
+| `phone` | Оргструктура; сотрудник может заменить своим — хранится в состоянии |
+| `photo` | `null` или `{url, updated_at}`; `url` меняется с каждым новым фото (`?v=…`) |
+| `initials` | Две буквы ФИО — заглушка вместо фото |
+| `start_date`, `week`, `buddy`, `lead` | Только у стажёра |
+| `can_edit` | `true` у своей карточки |
+
+Правила:
+
+- Видят сотрудники своего отдела (рабочие контакты); отсутствующий или чужой сотрудник — одинаковый 404. Без учётки — 401.
+- `PATCH /api/profile` принимает только `phone`: российский номер в любом написании (`+7…`, `8…`, 10 цифр) → `+7 900 123-45-67`. Любое другое поле или неверный номер — 422.
+- Фото: тело `PUT` — само изображение, JPEG, PNG или WebP до 512 КБ; тип определяется по содержимому, а не по заголовку (SVG, HTML и прочее — 422). Отдаётся с `Content-Type` формата, `X-Content-Type-Options: nosniff`, `Cache-Control: private`.
+- Правка пишет событие `profile_updated` с полем (`phone`, `photo`, `photo_deleted`) без значений. Правки и фото сохраняются в снимке состояния (PostgreSQL) и переживают перезапуск.
+- Контакты не передаются модели: инструменты агента (`team_directory`, `get_plan`, `find_expert` …) их не возвращают (BR-72).
+
+Тесты: `TestInternProfile`, `TestProfilePhone`, `TestProfilePhoto`, `TestContactsNotSentToModel`, `TestProfileAPI`, `TestProfileSnapshot`.
 
 ## Черновик плана (SC-20, BR-81)
 

@@ -55,6 +55,7 @@ const (
 	EvInternIdle         = "intern_idle"      // стажёр простаивает (BR-85)
 	EvPlanEdited         = "plan_edited"      // бадди поправил черновик плана (BR-81)
 	EvPlanDecided        = "plan_decided"     // план утверждён или активирован без утверждения
+	EvProfileUpdated     = "profile_updated"  // сотрудник поправил телефон или фото (значения в журнал не пишутся)
 )
 
 // Now — часы для журнала; в тестах подменяются.

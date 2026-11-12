@@ -38,3 +38,25 @@ func TestPlanStateSnapshot(t *testing.T) {
 		}
 	}
 }
+
+// Правки профиля и фото переживают перезапуск.
+func TestProfileSnapshot(t *testing.T) {
+	s := watchStore(t)
+	s.UpdateProfile("u-sokolov", func(p *ProfileEdit) {
+		p.Phone = "+7 912 345-67-89"
+		p.Photo = &Photo{ContentType: "image/png", Data: []byte{1, 2}}
+	})
+	raw, _ := json.Marshal(s.snapshot())
+	r := watchStore(t)
+	if err := r.decode(raw); err != nil {
+		t.Fatal(err)
+	}
+	p, ok := r.Profile("u-sokolov")
+	if !ok || p.Phone != "+7 912 345-67-89" || p.Photo == nil || len(p.Photo.Data) != 2 {
+		t.Fatal(p)
+	}
+	p.Photo.Data[0] = 9
+	if q, _ := r.Profile("u-sokolov"); q.Photo.Data[0] != 1 {
+		t.Fatal("копия, а не ссылка на состояние")
+	}
+}

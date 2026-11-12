@@ -35,6 +35,8 @@ type User struct {
 	RoleSet         string    `json:"role_set,omitempty"` // набор знаний роли стажёра (BR-87)
 	Settings        *Settings `json:"settings"`
 	TGConnected     bool      `json:"tg_connected"`
+	Email           string    `json:"email"` // рабочая почта из оргструктуры (синтетическая)
+	Phone           string    `json:"phone"` // рабочий телефон; сотрудник может поправить в профиле
 }
 
 type Department struct {
