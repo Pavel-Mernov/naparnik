@@ -28,10 +28,11 @@ type snapshot struct {
 	Operations map[string]Operation                        `json:"operations"`
 	Practices  map[string]practice.State                   `json:"practices"`
 	// Журнал событий, уведомления и привязки Telegram. В старом сохранённом состоянии их нет — это пустые списки.
-	Events        []LogEvent       `json:"events,omitempty"`
-	Notifications []Notification   `json:"notifications,omitempty"`
-	TGLinks       map[string]int64 `json:"tg_links,omitempty"`
-	Meetings      []*Meeting       `json:"meetings,omitempty"`
+	Events        []LogEvent        `json:"events,omitempty"`
+	Notifications []Notification    `json:"notifications,omitempty"`
+	TGLinks       map[string]int64  `json:"tg_links,omitempty"`
+	Meetings      []*Meeting        `json:"meetings,omitempty"`
+	KBDecisions   map[string]string `json:"kb_decisions,omitempty"`
 }
 
 type ActionDraft struct {
@@ -49,7 +50,7 @@ type Operation struct {
 }
 
 func (s *Store) snapshot() snapshot {
-	return snapshot{2, s.steps, s.requests, s.questions, s.pages, s.seq, s.drafts, s.operations, s.practices, s.events, s.notifications, s.tgLinks, s.meetings}
+	return snapshot{2, s.steps, s.requests, s.questions, s.pages, s.seq, s.drafts, s.operations, s.practices, s.events, s.notifications, s.tgLinks, s.meetings, s.kbDecisions}
 }
 
 func (s *Store) restore(v snapshot) error {
@@ -63,6 +64,10 @@ func (s *Store) restore(v snapshot) error {
 		s.practices = map[string]practice.State{}
 	}
 	s.events, s.notifications, s.tgLinks, s.meetings = v.Events, v.Notifications, v.TGLinks, v.Meetings
+	s.kbDecisions = v.KBDecisions
+	if s.kbDecisions == nil {
+		s.kbDecisions = map[string]string{}
+	}
 	if s.tgLinks == nil {
 		s.tgLinks = map[string]int64{}
 	}

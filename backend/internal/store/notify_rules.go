@@ -92,6 +92,32 @@ func (s *Store) notificationsFor(e LogEvent) []Notification {
 				Text: "📂 Новый открытый вопрос в базе знаний · " + name(m["asker"]) + ".\nВстреча прошла без записи, ответа текстом не будет. Назначь, кто ответит."})
 		}
 		return out
+	case EvQuestionRerouted:
+		// BR-16, BR-17: стажёр и новый адресат узнают о смене; прежний — что отвечать не нужно
+		var out []Notification
+		newTo, asker := m["to"], m["asker"]
+		why := map[string]string{"not_mine": " подсказал(а), кто ответит лучше", "redirect": " (бадди) передал(а) его коллеге", "assign": " назначил(а), кто ответит"}[m["kind"]]
+		if asker != "" {
+			out = append(out, Notification{UserID: asker, Type: "question_rerouted", View: "questions", TG: "pending",
+				Text: "↪️ Твой вопрос теперь у " + "коллеги · " + name(newTo) + ".\n" + name(e.Actor) + why + ". Ничего делать не нужно — ответ придёт сюда же."})
+		}
+		urgent := m["urgent"] == "true"
+		out = append(out, Notification{UserID: newTo, Type: "question_new", View: "questions", TG: "pending", Urgent: urgent,
+			Text: "↪️ Тебе передали вопрос стажёра · " + name(asker) + ".\nКонтекст уже собран в карточке — ответить можно парой строк или назначить встречу."})
+		if m["kind"] != "not_mine" && m["from"] != "" && m["from"] != e.Actor && m["from"] != newTo {
+			out = append(out, Notification{UserID: m["from"], Type: "question_taken", View: "questions", TG: "pending",
+				Text: "👌 Вопрос стажёра · " + name(asker) + " передан коллеге — отвечать не нужно. Спасибо!"})
+		}
+		return out
+	case EvPagesMerged:
+		var out []Notification
+		for _, a := range strings.Split(m["authors"], ",") {
+			if a != "" && a != e.Actor {
+				out = append(out, Notification{UserID: a, Type: "pages_merged", View: "knowledge", TG: "pending",
+					Text: "🧩 Две похожие страницы в базе объединены в одну — твоя теперь ведёт на неё (BR-39).\nЗагляни, всё ли верно в общем тексте."})
+			}
+		}
+		return out
 	case EvAnswerFeedback:
 		// H11: «устарело» → владельцу страницы
 		if m["value"] == "stale" && m["author"] != "" && m["author"] != e.Actor {

@@ -71,11 +71,11 @@
 
 				<option value="file7">github.com/worker4556/naparnik/backend/internal/httpapi/meetings.go (100.0%)</option>
 
-				<option value="file8">github.com/worker4556/naparnik/backend/internal/httpapi/notify.go (90.6%)</option>
+				<option value="file8">github.com/worker4556/naparnik/backend/internal/httpapi/notify.go (87.0%)</option>
 
 				<option value="file9">github.com/worker4556/naparnik/backend/internal/httpapi/practice.go (95.7%)</option>
 
-				<option value="file10">github.com/worker4556/naparnik/backend/internal/httpapi/server.go (97.2%)</option>
+				<option value="file10">github.com/worker4556/naparnik/backend/internal/httpapi/server.go (97.3%)</option>
 
 				<option value="file11">github.com/worker4556/naparnik/backend/internal/llm/anthropic.go (100.0%)</option>
 
@@ -93,17 +93,17 @@
 
 				<option value="file18">github.com/worker4556/naparnik/backend/internal/store/events.go (100.0%)</option>
 
-				<option value="file19">github.com/worker4556/naparnik/backend/internal/store/meetings.go (94.3%)</option>
+				<option value="file19">github.com/worker4556/naparnik/backend/internal/store/meetings.go (95.1%)</option>
 
-				<option value="file20">github.com/worker4556/naparnik/backend/internal/store/notify_rules.go (98.2%)</option>
+				<option value="file20">github.com/worker4556/naparnik/backend/internal/store/notify_rules.go (98.4%)</option>
 
-				<option value="file21">github.com/worker4556/naparnik/backend/internal/store/persistence.go (88.8%)</option>
+				<option value="file21">github.com/worker4556/naparnik/backend/internal/store/persistence.go (89.1%)</option>
 
 				<option value="file22">github.com/worker4556/naparnik/backend/internal/store/practice.go (100.0%)</option>
 
-				<option value="file23">github.com/worker4556/naparnik/backend/internal/store/store.go (97.3%)</option>
+				<option value="file23">github.com/worker4556/naparnik/backend/internal/store/store.go (96.5%)</option>
 
-				<option value="file24">github.com/worker4556/naparnik/backend/internal/telegram/telegram.go (91.1%)</option>
+				<option value="file24">github.com/worker4556/naparnik/backend/internal/telegram/telegram.go (92.0%)</option>
 
 				<option value="file25">github.com/worker4556/naparnik/backend/internal/tools/access.go (100.0%)</option>
 
@@ -117,19 +117,23 @@
 
 				<option value="file30">github.com/worker4556/naparnik/backend/internal/tools/kb.go (98.9%)</option>
 
-				<option value="file31">github.com/worker4556/naparnik/backend/internal/tools/meetings.go (94.4%)</option>
+				<option value="file31">github.com/worker4556/naparnik/backend/internal/tools/maintenance.go (94.4%)</option>
 
-				<option value="file32">github.com/worker4556/naparnik/backend/internal/tools/plan.go (98.5%)</option>
+				<option value="file32">github.com/worker4556/naparnik/backend/internal/tools/meetings.go (94.4%)</option>
 
-				<option value="file33">github.com/worker4556/naparnik/backend/internal/tools/practice.go (91.8%)</option>
+				<option value="file33">github.com/worker4556/naparnik/backend/internal/tools/plan.go (98.5%)</option>
 
-				<option value="file34">github.com/worker4556/naparnik/backend/internal/tools/requests.go (98.7%)</option>
+				<option value="file34">github.com/worker4556/naparnik/backend/internal/tools/practice.go (91.8%)</option>
 
-				<option value="file35">github.com/worker4556/naparnik/backend/internal/tools/service.go (98.9%)</option>
+				<option value="file35">github.com/worker4556/naparnik/backend/internal/tools/requests.go (98.7%)</option>
 
-				<option value="file36">github.com/worker4556/naparnik/backend/internal/tools/tools.go (100.0%)</option>
+				<option value="file36">github.com/worker4556/naparnik/backend/internal/tools/reroute.go (96.3%)</option>
 
-				<option value="file37">github.com/worker4556/naparnik/backend/internal/tools/transaction.go (92.5%)</option>
+				<option value="file37">github.com/worker4556/naparnik/backend/internal/tools/service.go (98.9%)</option>
+
+				<option value="file38">github.com/worker4556/naparnik/backend/internal/tools/tools.go (100.0%)</option>
+
+				<option value="file39">github.com/worker4556/naparnik/backend/internal/tools/transaction.go (92.5%)</option>
 
 				</select>
 			</div>
@@ -979,6 +983,67 @@ func (s *Server) meetings(w http.ResponseWriter, _ *http.Request, u *mockdata.Us
         }
         <span class="cov8" title="1">writeJSON(w, 200, map[string]any{"meetings": out})</span>
 }
+
+func (s *Server) to(r *http.Request) string {
+        <span class="cov8" title="1">var body struct {
+                To string `json:"to"`
+</span>        }
+        <span class="cov8" title="1">_ = json.NewDecoder(r.Body).Decode(&amp;body)
+        return body.To
+</span>}
+
+func (s *Server) questionResult(w http.ResponseWriter, q store.Question, e *tools.Error) {
+        <span class="cov8" title="1">if e != nil </span>{
+                <span class="cov8" title="1">writeResult(w, tools.Result{Error: e})
+                return
+</span>        }
+        <span class="cov8" title="1">writeJSON(w, 200, map[string]any{"ok": true, "addressee_id": q.AddresseeID, "addressee": s.Store.Name(q.AddresseeID), "status": q.Status})</span>
+}
+
+func (s *Server) notMine(w http.ResponseWriter, r *http.Request, u *mockdata.User) {
+        <span class="cov8" title="1">q, e := tools.NotMine(s.ctx(u), r.PathValue("id"), s.to(r))
+        s.questionResult(w, q, e)
+</span>}
+
+func (s *Server) redirect(w http.ResponseWriter, r *http.Request, u *mockdata.User) {
+        <span class="cov8" title="1">q, e := tools.Redirect(s.ctx(u), r.PathValue("id"), s.to(r))
+        s.questionResult(w, q, e)
+</span>}
+
+func (s *Server) assign(w http.ResponseWriter, r *http.Request, u *mockdata.User) {
+        <span class="cov8" title="1">q, e := tools.AssignOpen(s.ctx(u), r.PathValue("id"), s.to(r))
+        s.questionResult(w, q, e)
+</span>}
+
+func (s *Server) kbMaintenance(w http.ResponseWriter, _ *http.Request, u *mockdata.User) {
+        <span class="cov8" title="1">m, e := tools.KBMaintenance(s.ctx(u))
+        if e != nil </span>{
+                <span class="cov8" title="1">writeResult(w, tools.Result{Error: e})
+                return
+</span>        }
+        <span class="cov8" title="1">writeJSON(w, 200, m)</span>
+}
+
+func (s *Server) kbDuplicate(w http.ResponseWriter, r *http.Request, u *mockdata.User) {
+        <span class="cov8" title="1">var body struct {
+                Decision string `json:"decision"`
+</span>        }
+        <span class="cov8" title="1">_ = json.NewDecoder(r.Body).Decode(&amp;body)
+        d, e := tools.DecideDuplicate(s.ctx(u), r.PathValue("id"), body.Decision)
+        if e != nil </span>{
+                <span class="cov8" title="1">writeResult(w, tools.Result{Error: e})
+                return
+</span>        }
+        <span class="cov8" title="1">writeJSON(w, 200, map[string]any{"ok": true, "duplicate": d})</span>
+}
+
+func (s *Server) kbRemind(w http.ResponseWriter, r *http.Request, u *mockdata.User) {
+        <span class="cov8" title="1">if e := tools.RemindDraft(s.ctx(u), r.PathValue("id")); e != nil </span>{
+                <span class="cov8" title="1">writeResult(w, tools.Result{Error: e})
+                return
+</span>        }
+        <span class="cov8" title="1">writeJSON(w, 200, map[string]bool{"ok": true})</span>
+}
 </pre>
 
 		<pre class="file" id="file8" style="display: none">package httpapi
@@ -1060,7 +1125,64 @@ func (s *Server) metrics(w http.ResponseWriter, _ *http.Request, u *mockdata.Use
                 <span class="cov8" title="1">writeJSON(w, 403, errBody("forbidden", "Метрики отдела видит руководитель."))
                 return
 </span>        }
-        <span class="cov8" title="1">writeJSON(w, 200, Metrics(s.Store.Events()))</span>
+        <span class="cov8" title="1">m := Metrics(s.Store.Events())
+        m["load"] = Load(s.Store.Events(), s.Store.Data.Team.Users)
+        writeJSON(w, 200, m)</span>
+}
+
+// LoadRow — нагрузка бадди и экспертов (M-05, M-06): сколько вопросов дошло, сколько ответил, встречи, оценка времени.
+type LoadRow struct {
+        ID       string `json:"id"`
+        Name     string `json:"name"`
+        Role     string `json:"role"`
+        Received int    `json:"received"`
+        Answered int    `json:"answered"`
+        Meetings int    `json:"meetings"`
+        Pages    int    `json:"pages"`
+        Minutes  int    `json:"minutes"` // оценка: ответ ≈ 10 минут, встреча ≈ 30 минут
+}
+
+func Load(events []store.LogEvent, users []mockdata.User) []LoadRow {
+        <span class="cov8" title="1">rows := map[string]*LoadRow{}
+        var order []string
+        for _, u := range users </span>{
+                <span class="cov8" title="1">if store.HasRole(&amp;u, store.RoleIntern) || store.HasRole(&amp;u, store.RoleLead) </span>{
+                        <span class="cov8" title="1">continue</span>
+                }
+                <span class="cov8" title="1">role := "эксперт"
+                if store.HasRole(&amp;u, store.RoleBuddy) </span>{
+                        <span class="cov8" title="1">role = "бадди"
+</span>                }
+                <span class="cov8" title="1">rows[u.ID] = &amp;LoadRow{ID: u.ID, Name: u.Name, Role: role}
+                order = append(order, u.ID)</span>
+        }
+        <span class="cov8" title="1">for _, e := range events </span>{
+                <span class="cov8" title="1">switch e.Type </span>{
+                case store.EvQuestionSent, store.EvQuestionRerouted:
+                        <span class="cov8" title="1">if r := rows[e.Meta["to"]]; r != nil </span>{
+                                <span class="cov8" title="1">r.Received++
+</span>                        }
+                case store.EvQuestionAnswered:
+                        <span class="cov0" title="0">if r := rows[e.Actor]; r != nil </span>{
+                                <span class="cov0" title="0">r.Answered++
+</span>                        }
+                case store.EvMeetingScheduled:
+                        <span class="cov0" title="0">if r := rows[e.Actor]; r != nil </span>{
+                                <span class="cov0" title="0">r.Meetings++
+</span>                        }
+                case store.EvPagePublished:
+                        <span class="cov0" title="0">if r := rows[e.Actor]; r != nil </span>{
+                                <span class="cov0" title="0">r.Pages++
+</span>                        }
+                }
+        }
+        <span class="cov8" title="1">out := make([]LoadRow, 0, len(order))
+        for _, id := range order </span>{
+                <span class="cov8" title="1">r := rows[id]
+                r.Minutes = r.Answered*10 + r.Meetings*30
+                out = append(out, *r)
+</span>        }
+        <span class="cov8" title="1">return out</span>
 }
 
 // Metrics считает показатели по журналу: сколько вопросов закрыла база, как быстро отвечают люди,
@@ -1259,6 +1381,12 @@ func (s *Server) Handler() http.Handler {
         mux.HandleFunc("POST /api/questions/{id}/meeting", s.auth(s.scheduleMeeting))
         mux.HandleFunc("POST /api/questions/{id}/leave-open", s.auth(s.leaveOpen)) // BR-37
         mux.HandleFunc("GET /api/meetings", s.auth(s.meetings))
+        mux.HandleFunc("POST /api/questions/{id}/not-mine", s.auth(s.notMine))  // BR-17
+        mux.HandleFunc("POST /api/questions/{id}/redirect", s.auth(s.redirect)) // BR-16: бадди
+        mux.HandleFunc("POST /api/questions/{id}/assign", s.auth(s.assign))     // BR-37: владелец базы
+        mux.HandleFunc("GET /api/kb/maintenance", s.auth(s.kbMaintenance))      // SC-22
+        mux.HandleFunc("POST /api/kb/duplicates/{id}", s.auth(s.kbDuplicate))
+        mux.HandleFunc("POST /api/kb/drafts/{id}/remind", s.auth(s.kbRemind))
         mux.HandleFunc("POST /api/meetings/{id}/finish", s.auth(s.finishMeeting)) // в проде — сигнал ВКС
         if s.StaticDir != "" </span>{
                 <span class="cov8" title="1">files := http.FileServer(http.Dir(s.StaticDir))
@@ -1493,19 +1621,20 @@ func (s *Server) precheck(w http.ResponseWriter, r *http.Request, u *mockdata.Us
 </span>}
 
 type questionView struct {
-        ID          string `json:"id"`
-        AskedBy     string `json:"asked_by"`
-        AddresseeID string `json:"addressee_id"`
-        Addressee   string `json:"addressee"`
-        Title       string `json:"title,omitempty"`
-        Text        string `json:"text,omitempty"`
-        TextHidden  bool   `json:"text_hidden,omitempty"`
-        Reason      string `json:"reason,omitempty"`
-        Urgent      bool   `json:"urgent"`
-        Status      string `json:"status"`
-        Answer      string `json:"answer,omitempty"`
-        PageID      string `json:"page_id,omitempty"`
-        Hint        string `json:"hint,omitempty"` // BR-10a: только адресату
+        ID          string            `json:"id"`
+        AskedBy     string            `json:"asked_by"`
+        AddresseeID string            `json:"addressee_id"`
+        Addressee   string            `json:"addressee"`
+        Title       string            `json:"title,omitempty"`
+        Text        string            `json:"text,omitempty"`
+        TextHidden  bool              `json:"text_hidden,omitempty"`
+        Reason      string            `json:"reason,omitempty"`
+        Urgent      bool              `json:"urgent"`
+        Status      string            `json:"status"`
+        Answer      string            `json:"answer,omitempty"`
+        PageID      string            `json:"page_id,omitempty"`
+        Hint        string            `json:"hint,omitempty"`  // BR-10a: только адресату
+        Route       []store.RouteStep `json:"route,omitempty"` // смены адресата: видит стажёр, адресаты и бадди
 }
 
 // questions — видимость по 02-ROLES:
@@ -1516,7 +1645,7 @@ func (s *Server) questions(w http.ResponseWriter, _ *http.Request, u *mockdata.U
         count := 0
         for _, q := range s.Store.Questions() </span>{
                 <span class="cov8" title="1">asker, _ := s.Store.User(q.AskedBy)
-                v := questionView{q.ID, q.AskedBy, q.AddresseeID, s.Store.Name(q.AddresseeID), q.Title, q.Text, false, q.Reason, q.Urgent, q.Status, q.Answer, q.PageID, ""}
+                v := questionView{q.ID, q.AskedBy, q.AddresseeID, s.Store.Name(q.AddresseeID), q.Title, q.Text, false, q.Reason, q.Urgent, q.Status, q.Answer, q.PageID, "", q.Route}
                 if q.AddresseeID == u.ID </span>{
                         <span class="cov8" title="1">v.Hint = q.Hint
 </span>                }
@@ -2498,6 +2627,7 @@ type Page struct {
         Body            string `json:"body"`
         SourceQuestion  string `json:"source_question,omitempty"` // для страниц «Вопрос-ответ» из ответа человека (P2)
         SimilarPageID   string `json:"similar_page_id,omitempty"` // BR-32: похожая страница, которую можно дополнить
+        MergedInto      string `json:"merged_into,omitempty"`     // BR-39: после объединения дублей страница ведёт на общую
 }
 
 type Folder struct {
@@ -2507,9 +2637,33 @@ type Folder struct {
 }
 
 type KB struct {
-        Spaces  []Space  `json:"spaces"`
-        Folders []Folder `json:"folders"`
-        Pages   []Page   `json:"pages"`
+        Spaces      []Space         `json:"spaces"`
+        Folders     []Folder        `json:"folders"`
+        Pages       []Page          `json:"pages"`
+        Maintenance MaintenanceSeed `json:"maintenance_seed"`
+}
+
+// MaintenanceSeed — исходное состояние «Поддержки базы» (SC-22): дубли, открытые вопросы, неподтверждённые черновики.
+type MaintenanceSeed struct {
+        DuplicatePairs []struct {
+                ID            string   `json:"id"`
+                Pages         []string `json:"pages"`
+                ProposedTitle string   `json:"proposed_title"`
+                Reason        string   `json:"reason"`
+        } `json:"duplicate_pairs"`
+        OpenQuestions []struct {
+                ID      string `json:"id"`
+                Text    string `json:"text"`
+                AskedBy string `json:"asked_by"`
+                Reason  string `json:"reason"`
+        } `json:"open_questions"`
+        UnconfirmedDrafts []struct {
+                ID        string `json:"id"`
+                Title     string `json:"title"`
+                AuthorID  string `json:"author_id"`
+                CreatedAt string `json:"created_at"`
+        } `json:"unconfirmed_drafts"`
+        NextScheduledCheck string `json:"next_scheduled_check"`
 }
 
 type Stage struct {
@@ -2866,6 +3020,8 @@ const (
         EvMeetingScheduled   = "meeting_scheduled"
         EvMeetingNoRecording = "meeting_no_recording"
         EvQuestionOpen       = "question_open"
+        EvQuestionRerouted   = "question_rerouted"
+        EvPagesMerged        = "pages_merged"
 )
 
 // Now — часы для журнала; в тестах подменяются.
@@ -3100,6 +3256,18 @@ func (s *Store) cleanMeetingContent() {
                 <span class="cov8" title="1">q.Answer = s.publicMeetingText(q.Answer)
 </span>        }
 }
+
+func (s *Store) KBDecision(key string) string {
+        <span class="cov8" title="1">s.mu.Lock()
+        defer s.mu.Unlock()
+        return s.kbDecisions[key]
+</span>}
+
+func (s *Store) SetKBDecision(key, value string) {
+        <span class="cov8" title="1">s.mu.Lock()
+        defer s.mu.Unlock()
+        s.kbDecisions[key] = value
+</span>}
 </pre>
 
 		<pre class="file" id="file20" style="display: none">package store
@@ -3195,6 +3363,32 @@ func (s *Store) notificationsFor(e LogEvent) []Notification {
                         <span class="cov8" title="1">out = append(out, Notification{UserID: owner, Type: "open_question", View: "day", TG: "pending",
                                 Text: "📂 Новый открытый вопрос в базе знаний · " + name(m["asker"]) + ".\nВстреча прошла без записи, ответа текстом не будет. Назначь, кто ответит."})
 </span>                }
+                <span class="cov8" title="1">return out</span>
+        case EvQuestionRerouted:
+                // BR-16, BR-17: стажёр и новый адресат узнают о смене; прежний — что отвечать не нужно
+                <span class="cov8" title="1">var out []Notification
+                newTo, asker := m["to"], m["asker"]
+                why := map[string]string{"not_mine": " подсказал(а), кто ответит лучше", "redirect": " (бадди) передал(а) его коллеге", "assign": " назначил(а), кто ответит"}[m["kind"]]
+                if asker != "" </span>{
+                        <span class="cov8" title="1">out = append(out, Notification{UserID: asker, Type: "question_rerouted", View: "questions", TG: "pending",
+                                Text: "↪️ Твой вопрос теперь у " + "коллеги · " + name(newTo) + ".\n" + name(e.Actor) + why + ". Ничего делать не нужно — ответ придёт сюда же."})
+</span>                }
+                <span class="cov8" title="1">urgent := m["urgent"] == "true"
+                out = append(out, Notification{UserID: newTo, Type: "question_new", View: "questions", TG: "pending", Urgent: urgent,
+                        Text: "↪️ Тебе передали вопрос стажёра · " + name(asker) + ".\nКонтекст уже собран в карточке — ответить можно парой строк или назначить встречу."})
+                if m["kind"] != "not_mine" &amp;&amp; m["from"] != "" &amp;&amp; m["from"] != e.Actor &amp;&amp; m["from"] != newTo </span>{
+                        <span class="cov8" title="1">out = append(out, Notification{UserID: m["from"], Type: "question_taken", View: "questions", TG: "pending",
+                                Text: "👌 Вопрос стажёра · " + name(asker) + " передан коллеге — отвечать не нужно. Спасибо!"})
+</span>                }
+                <span class="cov8" title="1">return out</span>
+        case EvPagesMerged:
+                <span class="cov8" title="1">var out []Notification
+                for _, a := range strings.Split(m["authors"], ",") </span>{
+                        <span class="cov8" title="1">if a != "" &amp;&amp; a != e.Actor </span>{
+                                <span class="cov8" title="1">out = append(out, Notification{UserID: a, Type: "pages_merged", View: "knowledge", TG: "pending",
+                                        Text: "🧩 Две похожие страницы в базе объединены в одну — твоя теперь ведёт на неё (BR-39).\nЗагляни, всё ли верно в общем тексте."})
+</span>                        }
+                }
                 <span class="cov8" title="1">return out</span>
         case EvAnswerFeedback:
                 // H11: «устарело» → владельцу страницы
@@ -3355,10 +3549,11 @@ type snapshot struct {
         Operations map[string]Operation                        `json:"operations"`
         Practices  map[string]practice.State                   `json:"practices"`
         // Журнал событий, уведомления и привязки Telegram. В старом сохранённом состоянии их нет — это пустые списки.
-        Events        []LogEvent       `json:"events,omitempty"`
-        Notifications []Notification   `json:"notifications,omitempty"`
-        TGLinks       map[string]int64 `json:"tg_links,omitempty"`
-        Meetings      []*Meeting       `json:"meetings,omitempty"`
+        Events        []LogEvent        `json:"events,omitempty"`
+        Notifications []Notification    `json:"notifications,omitempty"`
+        TGLinks       map[string]int64  `json:"tg_links,omitempty"`
+        Meetings      []*Meeting        `json:"meetings,omitempty"`
+        KBDecisions   map[string]string `json:"kb_decisions,omitempty"`
 }
 
 type ActionDraft struct {
@@ -3376,7 +3571,7 @@ type Operation struct {
 }
 
 func (s *Store) snapshot() snapshot {
-        <span class="cov8" title="1">return snapshot{2, s.steps, s.requests, s.questions, s.pages, s.seq, s.drafts, s.operations, s.practices, s.events, s.notifications, s.tgLinks, s.meetings}
+        <span class="cov8" title="1">return snapshot{2, s.steps, s.requests, s.questions, s.pages, s.seq, s.drafts, s.operations, s.practices, s.events, s.notifications, s.tgLinks, s.meetings, s.kbDecisions}
 </span>}
 
 func (s *Store) restore(v snapshot) error {
@@ -3390,7 +3585,11 @@ func (s *Store) restore(v snapshot) error {
                 <span class="cov8" title="1">s.practices = map[string]practice.State{}
 </span>        }
         <span class="cov8" title="1">s.events, s.notifications, s.tgLinks, s.meetings = v.Events, v.Notifications, v.TGLinks, v.Meetings
-        if s.tgLinks == nil </span>{
+        s.kbDecisions = v.KBDecisions
+        if s.kbDecisions == nil </span>{
+                <span class="cov8" title="1">s.kbDecisions = map[string]string{}
+</span>        }
+        <span class="cov8" title="1">if s.tgLinks == nil </span>{
                 <span class="cov8" title="1">s.tgLinks = map[string]int64{}
 </span>        }
         <span class="cov8" title="1">s.cleanMeetingContent()
@@ -3685,6 +3884,16 @@ type Question struct {
         // Hint — подсказка только адресату (BR-10a): «по теме больше всех писал …». Стажёру не показывается.
         Hint      string `json:"hint,omitempty"`
         MeetingID string `json:"meeting_id,omitempty"` // встреча по вопросу (US-14)
+        // Route — смены адресата: «не ко мне» (BR-17), переадресация бадди (BR-16), назначение владельцем базы (BR-37).
+        Route []RouteStep `json:"route,omitempty"`
+}
+
+type RouteStep struct {
+        At   string `json:"at"`
+        From string `json:"from"`
+        To   string `json:"to"`
+        By   string `json:"by"`
+        Kind string `json:"kind"` // not_mine | redirect | assign
 }
 
 type Store struct {
@@ -3705,11 +3914,12 @@ type Store struct {
         notifications []Notification
         tgLinks       map[string]int64
         meetings      []*Meeting
+        kbDecisions   map[string]string // поддержка базы: решения по дублям и созданные из «посева» вопросы
 }
 
 func New(d *mockdata.Data, today time.Time) *Store {
         <span class="cov8" title="1">s := &amp;Store{Data: d, Today: today, practices: map[string]practice.State{}, steps: map[string]map[string]*mockdata.TrackerStep{},
-                pages: append([]mockdata.Page(nil), d.KB.Pages...), drafts: map[string]ActionDraft{}, operations: map[string]Operation{}, tgLinks: map[string]int64{},
+                pages: append([]mockdata.Page(nil), d.KB.Pages...), drafts: map[string]ActionDraft{}, operations: map[string]Operation{}, tgLinks: map[string]int64{}, kbDecisions: map[string]string{},
                 seq: map[string]int{"ABS": 1041, "ACC": 2001, "MTG": 302, "Q": 100, "DRAFT": 0, "kb": 19}}
         for _, p := range d.Tracker.Plans </span>{
                 <span class="cov8" title="1">m := map[string]*mockdata.TrackerStep{}
@@ -3745,6 +3955,14 @@ func (s *Store) User(id string) (*mockdata.User, bool) {
 </span>                }
         }
         <span class="cov8" title="1">return nil, false</span>
+}
+
+// UserBuddy — бадди стажёра (пусто, если нет).
+func (s *Store) UserBuddy(id string) string {
+        <span class="cov8" title="1">if u, ok := s.User(id); ok </span>{
+                <span class="cov8" title="1">return u.BuddyID
+</span>        }
+        <span class="cov0" title="0">return ""</span>
 }
 
 func (s *Store) Name(id string) string {
@@ -4326,7 +4544,7 @@ func (t *Service) poll(ctx context.Context) {
         for ctx.Err() == nil </span>{
                 <span class="cov8" title="1">var ups []update
                 if err := t.call(ctx, "getUpdates", map[string]any{"offset": offset, "timeout": 25, "allowed_updates": []string{"message"}}, &amp;ups); err != nil </span>{
-                        <span class="cov0" title="0">time.Sleep(5 * time.Second)
+                        <span class="cov8" title="1">time.Sleep(5 * time.Second)
                         continue</span>
                 }
                 <span class="cov8" title="1">for _, u := range ups </span>{
@@ -4931,6 +5149,11 @@ func teamDirectory(c Ctx, _ map[string]any) Result {
 // Базовый лексический подбор. Лидер на сценарных вопросах верный (Q2 → Орлов, Q3 → Смирнова, Q5 → Лебедева),
 // но уверенность у Q2 и Q5 ниже порога BR-13 → они уйдут бадди. Настраивать по docs/04-mock-data/evals.json.
 func FindExpert(c Ctx, question string) (id string, confidence float64, reason string) {
+        <span class="cov8" title="1">return findExpertExcluding(c, question, nil)
+</span>}
+
+// findExpertExcluding — то же, без людей, которые уже сказали «не ко мне» (BR-17: ИИ предлагает следующего кандидата).
+func findExpertExcluding(c Ctx, question string, exclude map[string]bool) (id string, confidence float64, reason string) {
         <span class="cov8" title="1">q := Stems(question)
         type cand struct {
                 pageScores []float64
@@ -4961,7 +5184,7 @@ func FindExpert(c Ctx, question string) (id string, confidence float64, reason s
         <span class="cov8" title="1">n := float64(len(kbPages))
         weight := func(st string) float64 </span>{ <span class="cov8" title="1">return math.Min(1, math.Log(1+n/float64(df[st]))/math.Log(1+n/3)) }</span>
         <span class="cov8" title="1">for i, p := range kbPages </span>{
-                <span class="cov8" title="1">if p.AuthorID == "" || p.AuthorID == c.User.ID || generalFolders[p.Folder] </span>{
+                <span class="cov8" title="1">if p.AuthorID == "" || p.AuthorID == c.User.ID || generalFolders[p.Folder] || exclude[p.AuthorID] </span>{
                         <span class="cov8" title="1">continue</span>
                 }
                 <span class="cov8" title="1">topic := 0.0
@@ -4976,7 +5199,7 @@ func FindExpert(c Ctx, question string) (id string, confidence float64, reason s
                 <span class="cov8" title="1">get(p.AuthorID).pageScores = append(get(p.AuthorID).pageScores, recencyWeight(c, p.UpdatedAt)*topic)</span>
         }
         <span class="cov8" title="1">for _, u := range c.Store.Data.Team.Users </span>{
-                <span class="cov8" title="1">if u.ID == c.User.ID || store.HasRole(&amp;u, store.RoleIntern) </span>{
+                <span class="cov8" title="1">if u.ID == c.User.ID || store.HasRole(&amp;u, store.RoleIntern) || exclude[u.ID] </span>{
                         <span class="cov8" title="1">continue</span>
                 }
                 <span class="cov8" title="1">if n := overlap(q, Stems(u.Responsibility)); n &gt; 0 </span>{
@@ -5175,6 +5398,215 @@ func clip(s string) string {
 </pre>
 
 		<pre class="file" id="file31" style="display: none">package tools
+
+import (
+        "strings"
+        "time"
+
+        "github.com/worker4556/naparnik/backend/internal/mockdata"
+        "github.com/worker4556/naparnik/backend/internal/store"
+)
+
+// Поддержка базы (SC-22, F8, P5, SCR-L3): владельцу базы — открытые вопросы, черновики без «Ок»,
+// страницы, отмеченные устаревшими, и пары похожих страниц от плановой проверки (BR-38) с решением
+// «объединить» (старые ведут на общую, авторы уведомлены, BR-39) или «не дубль».
+
+func isKBOwner(c Ctx) bool { <span class="cov8" title="1">return c.User.ID == c.Store.Data.Team.Department.KBOwnerID }</span>
+
+type OpenItem struct {
+        ID      string `json:"id"`
+        Title   string `json:"title"`
+        AskedBy string `json:"asked_by"`
+        Reason  string `json:"reason"`
+        Seed    bool   `json:"seed,omitempty"` // из стартовых данных: назначение создаст вопрос
+}
+
+type DraftItem struct {
+        ID       string `json:"id"`
+        Title    string `json:"title"`
+        AuthorID string `json:"author_id"`
+        Since    string `json:"since"`
+}
+
+type StaleItem struct {
+        PageID   string `json:"page_id"`
+        Title    string `json:"title"`
+        AuthorID string `json:"author_id"`
+        Marks    int    `json:"marks"`
+}
+
+type DuplicateItem struct {
+        ID            string   `json:"id"`
+        Pages         []string `json:"pages"`
+        Titles        []string `json:"titles"`
+        Authors       []string `json:"authors"`
+        ProposedTitle string   `json:"proposed_title"`
+        Note          string   `json:"note,omitempty"` // почему пара может быть не дублем
+        Decision      string   `json:"decision,omitempty"`
+}
+
+type Maintenance struct {
+        Open       []OpenItem      `json:"open_questions"`
+        Drafts     []DraftItem     `json:"drafts"`
+        Stale      []StaleItem     `json:"stale"`
+        Duplicates []DuplicateItem `json:"duplicates"`
+        NextCheck  string          `json:"next_check"`
+}
+
+func pageByID(c Ctx, id string) (mockdata.Page, bool) {
+        <span class="cov8" title="1">for _, p := range c.Store.Pages() </span>{
+                <span class="cov8" title="1">if p.ID == id </span>{
+                        <span class="cov8" title="1">return p, true
+</span>                }
+        }
+        <span class="cov0" title="0">return mockdata.Page{}, false</span>
+}
+
+// KBMaintenance — всё, что требует внимания владельца базы.
+func KBMaintenance(c Ctx) (Maintenance, *Error) {
+        <span class="cov8" title="1">if !isKBOwner(c) </span>{
+                <span class="cov8" title="1">return Maintenance{}, &amp;Error{Code: "forbidden", Message: "Поддержка базы — у владельца базы."}
+</span>        }
+        <span class="cov8" title="1">seed := c.Store.Data.KB.Maintenance
+        out := Maintenance{Open: []OpenItem{}, Drafts: []DraftItem{}, Stale: []StaleItem{}, Duplicates: []DuplicateItem{}, NextCheck: seed.NextScheduledCheck}
+        for _, q := range c.Store.Questions() </span>{
+                <span class="cov8" title="1">if q.Status == "Open" </span>{
+                        <span class="cov0" title="0">out.Open = append(out.Open, OpenItem{ID: q.ID, Title: q.Title, AskedBy: q.AskedBy, Reason: "Встреча без записи, ответ текстом не дан"})
+</span>                }
+        }
+        <span class="cov8" title="1">for _, s := range seed.OpenQuestions </span>{
+                <span class="cov8" title="1">if c.Store.KBDecision("seed:"+s.ID) == "" </span>{
+                        <span class="cov8" title="1">out.Open = append(out.Open, OpenItem{ID: s.ID, Title: s.Text, AskedBy: s.AskedBy, Reason: s.Reason, Seed: true})
+</span>                }
+        }
+        <span class="cov8" title="1">for _, p := range c.Store.Pages() </span>{
+                <span class="cov8" title="1">if p.Status == "Draft" </span>{
+                        <span class="cov0" title="0">out.Drafts = append(out.Drafts, DraftItem{ID: p.ID, Title: p.Title, AuthorID: p.AuthorID, Since: p.UpdatedAt})
+</span>                }
+        }
+        <span class="cov8" title="1">for _, d := range seed.UnconfirmedDrafts </span>{
+                <span class="cov8" title="1">out.Drafts = append(out.Drafts, DraftItem{ID: d.ID, Title: d.Title, AuthorID: d.AuthorID, Since: d.CreatedAt})
+</span>        }
+        <span class="cov8" title="1">marks := map[string]int{}
+        for _, e := range c.Store.Events() </span>{
+                <span class="cov8" title="1">if e.Type == store.EvAnswerFeedback &amp;&amp; e.Meta["value"] == "stale" </span>{
+                        <span class="cov8" title="1">marks[e.Object]++
+</span>                }
+        }
+        <span class="cov8" title="1">for id, n := range marks </span>{
+                <span class="cov8" title="1">if p, ok := pageByID(c, id); ok &amp;&amp; p.Status == "Published" </span>{
+                        <span class="cov8" title="1">out.Stale = append(out.Stale, StaleItem{PageID: id, Title: p.Title, AuthorID: p.AuthorID, Marks: n})
+</span>                }
+        }
+        <span class="cov8" title="1">for _, d := range seed.DuplicatePairs </span>{
+                <span class="cov8" title="1">item := DuplicateItem{ID: d.ID, Pages: d.Pages, ProposedTitle: d.ProposedTitle, Note: d.Reason, Decision: c.Store.KBDecision("dup:" + d.ID)}
+                for _, id := range d.Pages </span>{
+                        <span class="cov8" title="1">p, _ := pageByID(c, id)
+                        item.Titles, item.Authors = append(item.Titles, p.Title), append(item.Authors, p.AuthorID)
+</span>                }
+                <span class="cov8" title="1">out.Duplicates = append(out.Duplicates, item)</span>
+        }
+        <span class="cov8" title="1">return out, nil</span>
+}
+
+// DecideDuplicate — «объединить»: первая страница получает общий заголовок и текст обеих, вторая ведёт на неё
+// и не попадает в поиск; авторы уведомлены (BR-39). «не дубль» — пара больше не предлагается.
+func DecideDuplicate(c Ctx, pairID, decision string) (DuplicateItem, *Error) {
+        <span class="cov8" title="1">return atomic(c, func(c Ctx) (DuplicateItem, *Error) </span>{
+                <span class="cov8" title="1">if !isKBOwner(c) </span>{
+                        <span class="cov8" title="1">return DuplicateItem{}, &amp;Error{Code: "forbidden", Message: "Решение по дублям принимает владелец базы."}
+</span>                }
+                <span class="cov8" title="1">if decision != "merge" &amp;&amp; decision != "not_duplicate" </span>{
+                        <span class="cov8" title="1">return DuplicateItem{}, &amp;Error{Code: "validation", Message: "Решение: merge или not_duplicate."}
+</span>                }
+                <span class="cov8" title="1">var pair *DuplicateItem
+                m, _ := KBMaintenance(c)
+                for i := range m.Duplicates </span>{
+                        <span class="cov8" title="1">if m.Duplicates[i].ID == pairID </span>{
+                                <span class="cov8" title="1">pair = &amp;m.Duplicates[i]
+</span>                        }
+                }
+                <span class="cov8" title="1">switch </span>{
+                case pair == nil:
+                        <span class="cov8" title="1">return DuplicateItem{}, &amp;Error{Code: "not_found", Message: "Пара не найдена."}</span>
+                case pair.Decision != "":
+                        <span class="cov8" title="1">return *pair, &amp;Error{Code: "validation", Message: "По этой паре уже есть решение."}</span>
+                }
+                <span class="cov8" title="1">if decision == "merge" </span>{
+                        <span class="cov8" title="1">a, _ := pageByID(c, pair.Pages[0])
+                        b, _ := pageByID(c, pair.Pages[1])
+                        c.Store.UpdatePage(a.ID, func(p *mockdata.Page) </span>{
+                                <span class="cov8" title="1">if pair.ProposedTitle != "" </span>{
+                                        <span class="cov8" title="1">p.Title = pair.ProposedTitle
+</span>                                }
+                                <span class="cov8" title="1">p.Body = strings.TrimSpace(a.Body) + "\n\n" + strings.TrimSpace(b.Body)
+                                p.UpdatedAt = c.Store.Today.Format(time.DateOnly)</span>
+                        })
+                        <span class="cov8" title="1">c.Store.UpdatePage(b.ID, func(p *mockdata.Page) </span>{ <span class="cov8" title="1">p.Status, p.MergedInto = "Merged", a.ID }</span>)
+                        <span class="cov8" title="1">c.Store.Emit(store.EvPagesMerged, c.User.ID, a.ID, map[string]string{"merged": b.ID, "authors": strings.Join(pair.Authors, ",")})</span>
+                }
+                <span class="cov8" title="1">c.Store.SetKBDecision("dup:"+pairID, decision)
+                pair.Decision = decision
+                return *pair, nil</span>
+        })
+}
+
+// AssignOpen — владелец базы назначает, кто ответит на открытый вопрос (BR-37). Вопрос из стартовых данных
+// при первом назначении становится обычным вопросом стажёра.
+func AssignOpen(c Ctx, questionID, to string) (store.Question, *Error) {
+        <span class="cov8" title="1">if !isKBOwner(c) </span>{
+                <span class="cov8" title="1">return store.Question{}, &amp;Error{Code: "forbidden", Message: "Назначает владелец базы."}
+</span>        }
+        <span class="cov8" title="1">for _, s := range c.Store.Data.KB.Maintenance.OpenQuestions </span>{
+                <span class="cov8" title="1">if s.ID != questionID </span>{
+                        <span class="cov0" title="0">continue</span>
+                }
+                <span class="cov8" title="1">created, e := atomic(c, func(c Ctx) (store.Question, *Error) </span>{
+                        <span class="cov8" title="1">if c.Store.KBDecision("seed:"+s.ID) != "" </span>{
+                                <span class="cov8" title="1">return store.Question{}, &amp;Error{Code: "validation", Message: "Этот вопрос уже назначен."}
+</span>                        }
+                        <span class="cov8" title="1">q := &amp;store.Question{ID: c.Store.NextID("Q"), AskedBy: s.AskedBy, AddresseeID: c.User.ID, Title: QuestionTitle("", s.Text), Text: s.Text,
+                                Reason: s.Reason, Status: "Open"}
+                        c.Store.AddQuestion(q)
+                        c.Store.SetKBDecision("seed:"+s.ID, q.ID)
+                        return *q, nil</span>
+                })
+                <span class="cov8" title="1">if e != nil </span>{
+                        <span class="cov8" title="1">return created, e
+</span>                }
+                <span class="cov8" title="1">questionID = created.ID</span>
+        }
+        <span class="cov8" title="1">return Redirect(c, questionID, to)</span>
+}
+
+// RemindDraft — одно напоминание автору черновика: без «Ок» страница не появится в базе (BR-33).
+func RemindDraft(c Ctx, draftID string) *Error {
+        <span class="cov8" title="1">if !isKBOwner(c) </span>{
+                <span class="cov8" title="1">return &amp;Error{Code: "forbidden", Message: "Напоминает владелец базы."}
+</span>        }
+        <span class="cov8" title="1">m, _ := KBMaintenance(c)
+        for _, d := range m.Drafts </span>{
+                <span class="cov8" title="1">if d.ID == draftID </span>{
+                        <span class="cov8" title="1">return asErr(c.Store.Transaction(func(s *store.Store) error </span>{
+                                <span class="cov8" title="1">s.Notify(store.Notification{ID: "remind:" + d.ID + ":" + c.Store.Today.Format(time.DateOnly), UserID: d.AuthorID, Type: "draft_review",
+                                        View: "questions", TG: "pending",
+                                        Text: "📄 Черновик страницы для базы знаний ждёт твоего «Ок».\nЭто минута: проверь текст и опубликуй — следующий стажёр получит ответ сразу."})
+                                return nil
+</span>                        }))
+                }
+        }
+        <span class="cov8" title="1">return &amp;Error{Code: "not_found", Message: "Черновик не найден."}</span>
+}
+
+func asErr(err error) *Error {
+        <span class="cov8" title="1">if err != nil </span>{
+                <span class="cov0" title="0">return &amp;Error{Code: "unavailable", Message: "Не удалось сохранить. Повтори запрос."}
+</span>        }
+        <span class="cov8" title="1">return nil</span>
+}
+</pre>
+
+		<pre class="file" id="file32" style="display: none">package tools
 
 import (
         "strings"
@@ -5429,7 +5861,7 @@ func LeaveOpen(c Ctx, questionID string) (store.Question, *Error) {
 }
 </pre>
 
-		<pre class="file" id="file32" style="display: none">package tools
+		<pre class="file" id="file33" style="display: none">package tools
 
 import (
         "strings"
@@ -5561,7 +5993,7 @@ func containsStr(xs []string, x string) bool {
 }
 </pre>
 
-		<pre class="file" id="file33" style="display: none">package tools
+		<pre class="file" id="file34" style="display: none">package tools
 
 import (
         "crypto/sha256"
@@ -6017,7 +6449,7 @@ func PracticeHelpDraft(c Ctx, intern, id string) Result {
 }
 </pre>
 
-		<pre class="file" id="file34" style="display: none">package tools
+		<pre class="file" id="file35" style="display: none">package tools
 
 import (
         "strings"
@@ -6183,7 +6615,118 @@ func requestAccess(c Ctx, args map[string]any) Result {
 }
 </pre>
 
-		<pre class="file" id="file35" style="display: none">package tools
+		<pre class="file" id="file36" style="display: none">package tools
+
+import (
+        "time"
+
+        "github.com/worker4556/naparnik/backend/internal/mockdata"
+        "github.com/worker4556/naparnik/backend/internal/store"
+)
+
+// Смена адресата вопроса: «не ко мне» (SC-08, BR-17), переадресация бадди (SC-09, BR-16),
+// назначение открытого вопроса владельцем базы (SC-22, BR-37). Маршрут сохраняется в вопросе —
+// бадди видит, где ИИ ошибся с адресатом (SCR-B2).
+
+func findQuestion(c Ctx, id string) (store.Question, bool) {
+        <span class="cov8" title="1">for _, q := range c.Store.Questions() </span>{
+                <span class="cov8" title="1">if q.ID == id </span>{
+                        <span class="cov8" title="1">return q, true
+</span>                }
+        }
+        <span class="cov8" title="1">return store.Question{}, false</span>
+}
+
+// reroute — общий шаг: новый адресат, запись в маршрут, событие для уведомлений и метрик.
+func reroute(c Ctx, q store.Question, to, kind string) (store.Question, *Error) {
+        <span class="cov8" title="1">target, ok := c.Store.User(to)
+        if !ok </span>{
+                <span class="cov8" title="1">return q, &amp;Error{Code: "not_found", Message: "Такого человека нет в команде."}
+</span>        }
+        <span class="cov8" title="1">if to == q.AddresseeID </span>{
+                <span class="cov8" title="1">return q, &amp;Error{Code: "validation", Message: "Вопрос и так у этого человека."}
+</span>        }
+        <span class="cov8" title="1">if store.HasRole(target, store.RoleIntern) || to == q.AskedBy </span>{
+                <span class="cov8" title="1">return q, &amp;Error{Code: "validation", Message: "Вопрос нужно отправить сотруднику, а не стажёру."}
+</span>        }
+        <span class="cov8" title="1">from := q.AddresseeID
+        now := time.Now().Format(time.RFC3339)
+        out, _ := c.Store.UpdateQuestion(q.ID, func(x *store.Question) </span>{
+                <span class="cov8" title="1">x.Route = append(x.Route, store.RouteStep{At: now, From: from, To: to, By: c.User.ID, Kind: kind})
+                x.AddresseeID, x.Status, x.Hint = to, "Sent", ""
+                if kind == "not_mine" </span>{
+                        <span class="cov8" title="1">x.Reason = "Предыдущий адресат подсказал, что лучше ответит этот коллега"
+</span>                }
+        })
+        <span class="cov8" title="1">if to == c.Store.UserBuddy(q.AskedBy) </span>{ // BR-10a: если дальше бадди — подсказка про топ-руководителя
+                <span class="cov8" title="1">hint := seniorHint(Ctx{Store: c.Store, User: askerOf(c, q.AskedBy)}, q.Title+" "+q.Text)
+                out, _ = c.Store.UpdateQuestion(q.ID, func(x *store.Question) </span>{ <span class="cov8" title="1">x.Hint = hint }</span>)
+        }
+        <span class="cov8" title="1">c.Store.Emit(store.EvQuestionRerouted, c.User.ID, q.ID, map[string]string{"from": from, "to": to, "asker": q.AskedBy, "kind": kind,
+                "urgent": map[bool]string{true: "true", false: "false"}[q.Urgent]})
+        return out, nil</span>
+}
+
+func askerOf(c Ctx, id string) *mockdata.User {
+        <span class="cov8" title="1">u, _ := c.Store.User(id)
+        return u
+</span>}
+
+// NotMine — адресат: «не ко мне» (BR-17). Указал коллегу — вопрос ему; не указал — ИИ предлагает следующего
+// кандидата без тех, кто уже отказался; кандидатов нет — бадди стажёра.
+func NotMine(c Ctx, questionID, to string) (store.Question, *Error) {
+        <span class="cov8" title="1">return atomic(c, func(c Ctx) (store.Question, *Error) </span>{
+                <span class="cov8" title="1">q, ok := findQuestion(c, questionID)
+                switch </span>{
+                case !ok:
+                        <span class="cov8" title="1">return q, &amp;Error{Code: "not_found", Message: "Вопрос не найден."}</span>
+                case q.AddresseeID != c.User.ID:
+                        <span class="cov8" title="1">return q, &amp;Error{Code: "forbidden", Message: "«Не ко мне» может нажать только адресат."}</span>
+                case q.Status != "Sent":
+                        <span class="cov0" title="0">return q, &amp;Error{Code: "validation", Message: "По вопросу уже есть ответ или встреча."}</span>
+                case q.Hint != "" &amp;&amp; c.User.ID == c.Store.UserBuddy(q.AskedBy):
+                        // BR-10a: вопрос по теме топ-руководителя бадди решает сам — ответить или переадресовать
+                        <span class="cov8" title="1">return q, &amp;Error{Code: "validation", Message: "Этот вопрос пришёл тебе как бадди — ответь или переадресуй его."}</span>
+                }
+                <span class="cov8" title="1">if to == "" </span>{
+                        <span class="cov8" title="1">asker := Ctx{Store: c.Store, User: askerOf(c, q.AskedBy)}
+                        exclude := map[string]bool{c.User.ID: true}
+                        for _, r := range q.Route </span>{
+                                <span class="cov8" title="1">exclude[r.From] = true
+</span>                        }
+                        <span class="cov8" title="1">id, conf, _ := findExpertExcluding(asker, q.Title+" "+q.Text, exclude)
+                        if id == "" || conf &lt; ExpertThreshold || isSenior(asker, id) </span>{
+                                <span class="cov8" title="1">id = c.Store.UserBuddy(q.AskedBy)
+</span>                        }
+                        <span class="cov8" title="1">to = id</span>
+                }
+                <span class="cov8" title="1">return reroute(c, q, to, "not_mine")</span>
+        })
+}
+
+// Redirect — бадди переадресует вопрос своего стажёра (BR-16); владелец базы назначает открытый вопрос (BR-37, SC-22).
+func Redirect(c Ctx, questionID, to string) (store.Question, *Error) {
+        <span class="cov8" title="1">return atomic(c, func(c Ctx) (store.Question, *Error) </span>{
+                <span class="cov8" title="1">q, ok := findQuestion(c, questionID)
+                if !ok </span>{
+                        <span class="cov0" title="0">return q, &amp;Error{Code: "not_found", Message: "Вопрос не найден."}
+</span>                }
+                <span class="cov8" title="1">isBuddy := c.User.ID == c.Store.UserBuddy(q.AskedBy)
+                isOwner := c.User.ID == c.Store.Data.Team.Department.KBOwnerID
+                switch </span>{
+                case q.Status == "Open" &amp;&amp; isOwner:
+                        <span class="cov8" title="1">return reroute(c, q, to, "assign")</span>
+                case !isBuddy:
+                        <span class="cov8" title="1">return q, &amp;Error{Code: "forbidden", Message: "Переадресовать может бадди стажёра."}</span>
+                case q.Status != "Sent" &amp;&amp; q.Status != "NoRecording":
+                        <span class="cov8" title="1">return q, &amp;Error{Code: "validation", Message: "По вопросу уже есть ответ или встреча."}</span>
+                }
+                <span class="cov8" title="1">return reroute(c, q, to, "redirect")</span>
+        })
+}
+</pre>
+
+		<pre class="file" id="file37" style="display: none">package tools
 
 import (
         "time"
@@ -6390,7 +6933,7 @@ func requestableSystems(c Ctx) []SystemView {
 }
 </pre>
 
-		<pre class="file" id="file36" style="display: none">// Package tools — инструменты агента AI-buddy.
+		<pre class="file" id="file38" style="display: none">// Package tools — инструменты агента AI-buddy.
 //
 // Правила из docs/03-requirements, которые проверяет код (а не промпт):
 //   - BR-40: права проверяются до вызова; недоступное не показывается и не упоминается;
@@ -6606,7 +7149,7 @@ func Check(c Ctx, name string, args map[string]any) *Error {
 }
 </pre>
 
-		<pre class="file" id="file37" style="display: none">package tools
+		<pre class="file" id="file39" style="display: none">package tools
 
 import (
         "crypto/sha256"

@@ -47,6 +47,8 @@ const (
 	EvMeetingScheduled   = "meeting_scheduled"
 	EvMeetingNoRecording = "meeting_no_recording"
 	EvQuestionOpen       = "question_open"
+	EvQuestionRerouted   = "question_rerouted"
+	EvPagesMerged        = "pages_merged"
 )
 
 // Now — часы для журнала; в тестах подменяются.

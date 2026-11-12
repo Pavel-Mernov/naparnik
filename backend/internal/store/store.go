@@ -65,6 +65,16 @@ type Question struct {
 	// Hint — подсказка только адресату (BR-10a): «по теме больше всех писал …». Стажёру не показывается.
 	Hint      string `json:"hint,omitempty"`
 	MeetingID string `json:"meeting_id,omitempty"` // встреча по вопросу (US-14)
+	// Route — смены адресата: «не ко мне» (BR-17), переадресация бадди (BR-16), назначение владельцем базы (BR-37).
+	Route []RouteStep `json:"route,omitempty"`
+}
+
+type RouteStep struct {
+	At   string `json:"at"`
+	From string `json:"from"`
+	To   string `json:"to"`
+	By   string `json:"by"`
+	Kind string `json:"kind"` // not_mine | redirect | assign
 }
 
 type Store struct {
@@ -85,11 +95,12 @@ type Store struct {
 	notifications []Notification
 	tgLinks       map[string]int64
 	meetings      []*Meeting
+	kbDecisions   map[string]string // поддержка базы: решения по дублям и созданные из «посева» вопросы
 }
 
 func New(d *mockdata.Data, today time.Time) *Store {
 	s := &Store{Data: d, Today: today, practices: map[string]practice.State{}, steps: map[string]map[string]*mockdata.TrackerStep{},
-		pages: append([]mockdata.Page(nil), d.KB.Pages...), drafts: map[string]ActionDraft{}, operations: map[string]Operation{}, tgLinks: map[string]int64{},
+		pages: append([]mockdata.Page(nil), d.KB.Pages...), drafts: map[string]ActionDraft{}, operations: map[string]Operation{}, tgLinks: map[string]int64{}, kbDecisions: map[string]string{},
 		seq: map[string]int{"ABS": 1041, "ACC": 2001, "MTG": 302, "Q": 100, "DRAFT": 0, "kb": 19}}
 	for _, p := range d.Tracker.Plans {
 		m := map[string]*mockdata.TrackerStep{}
@@ -125,6 +136,14 @@ func (s *Store) User(id string) (*mockdata.User, bool) {
 		}
 	}
 	return nil, false
+}
+
+// UserBuddy — бадди стажёра (пусто, если нет).
+func (s *Store) UserBuddy(id string) string {
+	if u, ok := s.User(id); ok {
+		return u.BuddyID
+	}
+	return ""
 }
 
 func (s *Store) Name(id string) string {

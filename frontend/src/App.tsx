@@ -30,6 +30,7 @@ import { QuestionsPage } from "./pages/QuestionsPage";
 import { KnowledgePage } from "./pages/KnowledgePage";
 import { RequestsPage } from "./pages/RequestsPage";
 import { BuddyPage, TeamPage } from "./pages/TeamPages";
+import { LeadPanels } from "./pages/LeadPanels";
 import { PracticePanel } from "./pages/PracticePanel";
 
 const ICONS: Record<View, ReactElement> = {
@@ -212,7 +213,8 @@ function App() {
       if (role === "intern") return <DayPage data={data} onMarkDone={(s) => void markDone(s)} onAsk={openChat} onOpenPlan={() => nav("plan")} onOpenQuestions={() => nav("questions")}
         waiting={<Block title="Новости">{waitingForMe.filter((n) => !n.id.startsWith("ans-")).length ? waitingForMe.filter((n) => !n.id.startsWith("ans-")).slice(0, 5).map((n) => <Row key={n.id} title={n.text} sub={n.meta} onClick={() => nav(n.go)} />)
           : <Empty text="Ответы людей и статусы заявок появятся здесь." variant={1} />}</Block>} />;
-      if (role === "lead") return <TeamPage overview={data.overview} onRequests={() => nav("requests")} />;
+      if (role === "lead") return <><TeamPage overview={data.overview} onRequests={() => nav("requests")} />
+        <LeadPanels login={login} users={data.users} onAction={perform} /></>;
       if (role === "buddy") return <BuddyPage data={data} onPlan={(id) => { setSelectedIntern(id); nav("plan"); }} onQuestions={() => nav("questions")} />;
     }
     if (view === "plan" && role === "intern") return <PlanPage plan={data.plan} title="Мой план" context={`${data.me.week}-я неделя · ${data.me.department}`} today={data.me.today} onMarkDone={(s) => void markDone(s)} />;

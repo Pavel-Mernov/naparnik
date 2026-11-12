@@ -48,6 +48,7 @@ export type Question = {
   answer?: string;
   page_id?: string;
   hint?: string; // BR-10a: подсказка только адресату-бадди
+  route?: Array<{ at: string; from: string; to: string; by: string; kind: string }>;
   reason?: string;
   urgent: boolean;
   status: string;
