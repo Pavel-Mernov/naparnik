@@ -67,7 +67,7 @@ func TestMeetingWithRecording(t *testing.T) {
 	if _, e := FinishMeeting(olga, m.ID, true); e == nil {
 		t.Fatal("повторный итог")
 	}
-	// BR-36: в черновике — ответ с таймкодами и ссылкой, без посторонних тем
+	// BR-36: в черновике — ответ с таймкодами, без URL записи и посторонних тем.
 	var page = struct{ Title, Body, Type, Status string }{}
 	for _, p := range s.Pages() {
 		if p.ID == done.PageID {
@@ -75,7 +75,7 @@ func TestMeetingWithRecording(t *testing.T) {
 		}
 	}
 	if page.Type != "meeting" || page.Status != "Draft" || page.Title != "Длительность A/B-теста при низком трафике" ||
-		!strings.Contains(page.Body, "05:48–11:20") || !strings.Contains(page.Body, "vks.mock.local/rec/MTG-301") || strings.Contains(page.Body, "отпуск") {
+		!strings.Contains(page.Body, "05:48–11:20") || strings.Contains(page.Body, "vks.mock.local/rec/") || strings.Contains(page.Body, "отпуск") || done.RecordingURL == "" {
 		t.Fatalf("черновик: %+v", page)
 	}
 	for _, x := range s.Questions() {
