@@ -175,13 +175,13 @@ func TestPublishedAndBacklog(t *testing.T) {
 	}
 	s.Notify(Notification{ID: "old", UserID: "u-sokolov", TG: "skipped", At: "2026-11-09T12:00:00+03:00"})
 	s.SetTelegramStatus([]string{s.NotificationsFor("u-sokolov")[1].ID}, "skipped", "")
-	s.LinkTelegram("u-sokolov", 5)
+	missed, last := s.LinkTelegram("u-sokolov", 5)
+	if missed != 1 || last == "" {
+		t.Fatal("за сутки пропущено одно, старое не считается", missed, last)
+	}
 	for _, n := range s.NotificationsFor("u-sokolov") {
-		if n.ID == "old" && n.TG != "skipped" {
-			t.Fatal("старше суток — не присылаем")
-		}
-		if n.Type == "answer_published" && n.TG != "pending" {
-			t.Fatal("свежее пропущенное — снова в очередь")
+		if n.TG == "pending" {
+			t.Fatal("накопленное не рассылается заново пачкой", n)
 		}
 	}
 }
