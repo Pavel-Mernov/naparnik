@@ -219,3 +219,29 @@ func TestLoadMaintenanceRerouteAPI(t *testing.T) {
 		t.Fatalf("нагрузка: %v", load)
 	}
 }
+
+// SC-20: черновик плана — бадди правит, руководитель утверждает, стажёру черновик не виден.
+func TestPlanDraftAPI(t *testing.T) {
+	_, h := newServer(t)
+	if code, _ := call(t, h, "GET", "/api/plans/u-egorova/draft", "intern.egorova", ""); code != 403 {
+		t.Fatal(code)
+	}
+	code, v := call(t, h, "GET", "/api/plans/u-egorova/draft", "buddy.belova", "")
+	if code != 200 || v["status"] != "draft" || v["can_edit"] != true {
+		t.Fatal(code, v)
+	}
+	code, v = call(t, h, "PATCH", "/api/plans/u-egorova/draft", "buddy.belova", `{"steps":[{"step_id":"s-14","removed":true}],"comment":"без A/B"}`)
+	if code != 200 || v["comment"] != "без A/B" {
+		t.Fatal(code, v)
+	}
+	if code, _ := call(t, h, "POST", "/api/plans/u-egorova/approve", "buddy.belova", ""); code != 403 {
+		t.Fatal(code)
+	}
+	code, v = call(t, h, "POST", "/api/plans/u-egorova/approve", "lead.kovalev", "")
+	if code != 200 || v["status"] != "approved" {
+		t.Fatal(code, v)
+	}
+	if code, p := call(t, h, "GET", "/api/plans/u-egorova", "intern.egorova", ""); code != 200 || p["data"] == nil && p["steps"] == nil {
+		t.Fatal(code, p)
+	}
+}

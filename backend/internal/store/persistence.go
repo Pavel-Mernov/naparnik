@@ -28,11 +28,12 @@ type snapshot struct {
 	Operations map[string]Operation                        `json:"operations"`
 	Practices  map[string]practice.State                   `json:"practices"`
 	// Журнал событий, уведомления и привязки Telegram. В старом сохранённом состоянии их нет — это пустые списки.
-	Events        []LogEvent        `json:"events,omitempty"`
-	Notifications []Notification    `json:"notifications,omitempty"`
-	TGLinks       map[string]int64  `json:"tg_links,omitempty"`
-	Meetings      []*Meeting        `json:"meetings,omitempty"`
-	KBDecisions   map[string]string `json:"kb_decisions,omitempty"`
+	Events        []LogEvent            `json:"events,omitempty"`
+	Notifications []Notification        `json:"notifications,omitempty"`
+	TGLinks       map[string]int64      `json:"tg_links,omitempty"`
+	Meetings      []*Meeting            `json:"meetings,omitempty"`
+	KBDecisions   map[string]string     `json:"kb_decisions,omitempty"`
+	Plans         map[string]*PlanState `json:"plans,omitempty"`
 }
 
 type ActionDraft struct {
@@ -50,7 +51,7 @@ type Operation struct {
 }
 
 func (s *Store) snapshot() snapshot {
-	return snapshot{2, s.steps, s.requests, s.questions, s.pages, s.seq, s.drafts, s.operations, s.practices, s.events, s.notifications, s.tgLinks, s.meetings, s.kbDecisions}
+	return snapshot{2, s.steps, s.requests, s.questions, s.pages, s.seq, s.drafts, s.operations, s.practices, s.events, s.notifications, s.tgLinks, s.meetings, s.kbDecisions, s.plans}
 }
 
 func (s *Store) restore(v snapshot) error {
@@ -65,6 +66,13 @@ func (s *Store) restore(v snapshot) error {
 	}
 	s.events, s.notifications, s.tgLinks, s.meetings = v.Events, v.Notifications, v.TGLinks, v.Meetings
 	s.kbDecisions = v.KBDecisions
+	s.plans = v.Plans
+	if s.plans == nil { // старое состояние без жизненного цикла планов — берём его из трекера
+		s.plans = map[string]*PlanState{}
+		for _, p := range s.Data.Tracker.Plans {
+			s.plans[p.InternID] = s.initialPlan(p)
+		}
+	}
 	if s.kbDecisions == nil {
 		s.kbDecisions = map[string]string{}
 	}

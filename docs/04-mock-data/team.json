@@ -123,7 +123,7 @@
       "roles": [
         "expert"
       ],
-      "responsibility": "Дашборды и продуктовые метрики раздела «Объявления»",
+      "responsibility": "Дашборды и продуктовые метрики раздела «Объявления»: retention, когорты, конверсии",
       "working_hours": "10:00-19:00",
       "digest_mode": "instant",
       "tg_connected": false,
@@ -140,6 +140,7 @@
       "buddy_id": "u-belova",
       "lead_id": "u-kovalev",
       "start_date": "2026-11-09",
+      "role_set": "analyst",
       "working_hours": "10:00-17:00",
       "settings": {
         "proactivity": "daily_plan",
@@ -163,6 +164,7 @@
       "buddy_id": "u-belova",
       "lead_id": "u-kovalev",
       "start_date": "2026-12-07",
+      "role_set": "analyst",
       "working_hours": "10:00-17:00",
       "settings": {
         "proactivity": "deadlines_and_meetings",

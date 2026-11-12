@@ -95,12 +95,13 @@ type Store struct {
 	notifications []Notification
 	tgLinks       map[string]int64
 	meetings      []*Meeting
-	kbDecisions   map[string]string // поддержка базы: решения по дублям и созданные из «посева» вопросы
+	kbDecisions   map[string]string     // поддержка базы: решения по дублям и созданные из «посева» вопросы
+	plans         map[string]*PlanState // жизненный цикл плана адаптации (BR-81)
 }
 
 func New(d *mockdata.Data, today time.Time) *Store {
 	s := &Store{Data: d, Today: today, practices: map[string]practice.State{}, steps: map[string]map[string]*mockdata.TrackerStep{},
-		pages: append([]mockdata.Page(nil), d.KB.Pages...), drafts: map[string]ActionDraft{}, operations: map[string]Operation{}, tgLinks: map[string]int64{}, kbDecisions: map[string]string{},
+		pages: append([]mockdata.Page(nil), d.KB.Pages...), drafts: map[string]ActionDraft{}, operations: map[string]Operation{}, tgLinks: map[string]int64{}, kbDecisions: map[string]string{}, plans: map[string]*PlanState{},
 		seq: map[string]int{"ABS": 1041, "ACC": 2001, "MTG": 302, "Q": 100, "DRAFT": 0, "kb": 19}}
 	for _, p := range d.Tracker.Plans {
 		m := map[string]*mockdata.TrackerStep{}
@@ -109,6 +110,7 @@ func New(d *mockdata.Data, today time.Time) *Store {
 			m[st.StepID] = &st
 		}
 		s.steps[p.InternID] = m
+		s.plans[p.InternID] = s.initialPlan(p)
 	}
 	return s
 }

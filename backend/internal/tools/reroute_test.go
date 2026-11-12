@@ -179,3 +179,41 @@ func TestMergeKeepsTitle(t *testing.T) {
 		t.Fatal(after.Title)
 	}
 }
+
+// Модель дописала к вопросу свои слова — подбор держится за слова стажёра (evals e-23, e-24).
+func TestFindExpertPrefersInternWords(t *testing.T) {
+	s := newStore(t)
+	c := ctxFor(t, s, "intern.sokolov")
+	c.Question = "Как исключить ботов из выборки эксперимента?"
+	d := data(t, Run(c, "find_expert", map[string]any{"question": "Как исключить ботов? Какие правила фильтрации ботов используем в продуктовой аналитике и витринах?"}))
+	if d["addressee_id"] != "u-smirnova" {
+		t.Fatal(d)
+	}
+	c.Question = "Как посчитать retention по когортам?" // evals e-21: расширенный вопрос модели уводил к Орлову
+	d = data(t, Run(c, "find_expert", map[string]any{"question": "Как посчитать retention по когортам? Нужны правила расчёта: как формируются когорты, окно наблюдения, какие события считаются возвратом, где смотреть данные."}))
+	if d["addressee_id"] != "u-lebedeva" {
+		t.Fatal(d)
+	}
+}
+
+// Модель расширила запрос к базе — страница по словам стажёра всё равно найдена (evals e-09, e-17).
+func TestSearchKBUsesInternWords(t *testing.T) {
+	s := newStore(t)
+	c := ctxFor(t, s, "intern.sokolov")
+	c.Question = "Что писать в еженедельном отчёте?"
+	hits := data(t, Run(c, "search_kb", map[string]any{"query": "еженедельный отчёт стажёра что писать"}))["hits"].([]Hit)
+	if len(hits) == 0 || hits[0].PageID != "kb-12" {
+		t.Fatal(hits)
+	}
+}
+
+// «A/B-тест» и «retention» не теряются при разборе слов (evals e-19, e-21).
+func TestExpertForABAndRetention(t *testing.T) {
+	s := newStore(t)
+	c := ctxFor(t, s, "intern.sokolov")
+	for q, want := range map[string]string{"Сколько держать A/B-тест при маленьком трафике?": "u-smirnova", "Как посчитать retention по когортам?": "u-lebedeva"} {
+		if id, conf, _ := FindExpert(c, q); id != want || conf < ExpertThreshold {
+			t.Fatal(q, id, conf)
+		}
+	}
+}

@@ -16,7 +16,7 @@ var piiPatterns = []*regexp.Regexp{
 }
 
 // BR-60: оценка, выход в штат, зарплата, конфликты — решают люди.
-var boundaryPattern = regexp.MustCompile(`(?i)в штат|оценк[аиуе]|зарплат|уволят|конфликт|повышени`)
+var boundaryPattern = regexp.MustCompile(`(?i)в штат|оценк[аиуе]|меня оценива|оценивает меня|зарплат|оклад|сколько (получа|плат)|уволят|конфликт|повышени`)
 
 const (
 	piiAnswer = "Такие данные я не обрабатываю и никуда не сохраняю. Паспортные и банковские данные вноси только в HR-сервисе — " +
@@ -42,12 +42,16 @@ func MaskPII(text string) string {
 	return text
 }
 
-// guard возвращает готовый ответ, если сообщение нельзя отправлять в модель.
-func guard(text string) (string, bool) {
+// guard возвращает готовый ответ, если сообщение нельзя отправлять в модель. people — к кому идти
+// с вопросом о границах (BR-60): стажёру называем бадди и руководителя по имени, а не «кого-нибудь».
+func guard(text, people string) (string, bool) {
 	switch {
 	case containsPII(text):
 		return piiAnswer, true
 	case boundaryPattern.MatchString(strings.ToLower(text)):
+		if people != "" {
+			return "Это решают люди, а не я. Лучше обсудить лично: " + people + ". Могу подготовить вопрос, а отправишь его ты.", true
+		}
 		return boundaryAnswer, true
 	}
 	return "", false

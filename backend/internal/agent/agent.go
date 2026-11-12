@@ -46,6 +46,10 @@ type Reply struct {
 	Degraded bool     `json:"degraded"` // модель не ответила — показан запасной ответ (BR-70)
 	Retry    bool     `json:"retry"`    // показать кнопку «Повторить», вопрос сохранён
 	ToolLog  []string `json:"-"`        // для журнала событий (BR-73)
+	Trace    []string `json:"-"`        // вызовы с аргументами и коротким итогом — для прогона evals
+
+	searched, found, expertAsked bool // искал ли в базе в этом ходе, нашёл ли, подбирал ли человека
+
 }
 
 type Agent struct {
@@ -109,10 +113,14 @@ func (a *Agent) Ask(ctx context.Context, login, text string) (Reply, error) {
 	if !found {
 		return Reply{}, fmt.Errorf("нет пользователя %q", login)
 	}
-	if answer, blocked := guard(text); blocked {
+	people := ""
+	if store.HasRole(u, store.RoleIntern) && u.BuddyID != "" {
+		people = "бадди — " + a.Store.Name(u.BuddyID) + ", руководитель — " + a.Store.Name(u.LeadID)
+	}
+	if answer, blocked := guard(text, people); blocked {
 		return Reply{Text: answer, Drafts: []Draft{}, Sources: []Source{}}, nil
 	}
-	tc := tools.Ctx{Store: a.Store, User: u}
+	tc := tools.Ctx{Store: a.Store, User: u, Question: text}
 	var specs []llm.ToolSpec
 	for _, t := range tools.For(u) {
 		specs = append(specs, llm.ToolSpec{Name: t.Name, Description: t.Description, Schema: t.Schema})
@@ -143,7 +151,7 @@ func (a *Agent) Ask(ctx context.Context, login, text string) (Reply, error) {
 		a.mu.Unlock()
 		return a.fallback(tc, text, err), nil
 	}
-	reply.Text = step.Text
+	reply.Text = honestMiss(tc, &reply, step.Text, text)
 	if step.Refused {
 		reply.Text = "С этим запросом помочь не могу."
 	}
@@ -174,14 +182,38 @@ func (a *Agent) handle(tc tools.Ctx, call llm.ToolCall, reply *Reply) string {
 	} else {
 		r := tools.Run(tc, call.Name, call.Input)
 		res = r
-		if call.Name == "search_kb" && r.OK {
-			for _, h := range r.Data.(map[string]any)["hits"].([]tools.Hit) {
-				reply.Sources = append(reply.Sources, Source{h.PageID, h.Title, h.Author, h.UpdatedAt, h.Label})
+		if r.OK {
+			hits := tools.SourcesFor(tc, call.Name, call.Input)
+			switch call.Name {
+			case "search_kb":
+				hits = r.Data.(map[string]any)["hits"].([]tools.Hit)
+				reply.searched, reply.found = true, reply.found || len(hits) > 0
+			case "find_expert":
+				reply.expertAsked = true
+			}
+			for _, h := range hits {
+				reply.addSource(Source{h.PageID, h.Title, h.Author, h.UpdatedAt, h.Label})
 			}
 		}
 	}
 	raw, _ := json.Marshal(res)
+	args, _ := json.Marshal(call.Input)
+	out := []rune(string(raw))
+	if len(out) > 160 {
+		out = append(out[:160], '…')
+	}
+	reply.Trace = append(reply.Trace, call.Name+" "+string(args)+" → "+string(out))
 	return string(raw)
+}
+
+// addSource — источник без повторов: поиск часто вызывают дважды с разными формулировками.
+func (r *Reply) addSource(src Source) {
+	for _, have := range r.Sources {
+		if have.PageID == src.PageID {
+			return
+		}
+	}
+	r.Sources = append(r.Sources, src)
 }
 
 // run — один ход: сообщение модели и цикл вызова инструментов до текстового ответа.
@@ -198,6 +230,51 @@ func (a *Agent) run(ctx context.Context, session llm.Session, tc tools.Ctx, repl
 		step, err = session.SendToolResults(ctx, results)
 	}
 	return step, err
+}
+
+var notFoundRe = regexp.MustCompile(`(?i)не наш(ёл|ел|лось|лись|[её]лся)|ничего не|ничего нет|пусто|нет (в базе|ответа|страниц|информац)|ответа нет|в базе[^.]{0,25}(нет|не )|не описан`)
+
+// missRe — строгий признак «в базе ответа нет» в словах модели (без случайных «ничего не нужно»).
+var missRe = regexp.MustCompile(`(?i)в базе[^.]{0,40}(нет|не нашл|не описан|ничего)|не наш(ёл|ел|лось|лись)[^.]{0,20}в базе`)
+
+// honestMiss — BR-02, M-15: если в этом ходе база ничего не нашла, ответ честно с этого начинается, а стажёр
+// узнаёт, к кому идти (SC-04), даже когда модель сразу перескочила к черновику или забыла подобрать человека.
+func honestMiss(tc tools.Ctx, r *Reply, text, question string) string {
+	text = testLabel(r, text)
+	asksPerson := false
+	for _, d := range r.Drafts {
+		asksPerson = asksPerson || d.Tool == "send_question"
+	}
+	// Искал в базе и всё равно подбирает человека или готовит ему вопрос — значит, найденное не ответило.
+	// find_expert по описанию — для вопроса, которого в базе нет. Так и говорим.
+	if r.searched && (asksPerson || r.expertAsked) && !notFoundRe.MatchString(text) {
+		return "В базе ответа на это нет. " + text
+	}
+	// Модель сама признала, что в базе ответа нет, но человека не назвала — назовём (SC-04).
+	admitted := missRe.MatchString(text)
+	if !admitted && (!r.searched || r.found || len(r.Sources) > 0) {
+		return text
+	}
+	if !admitted && !notFoundRe.MatchString(text) {
+		text = "В базе ответа на это нет. " + text
+	}
+	if !r.expertAsked && len(r.Drafts) == 0 && store.HasRole(tc.User, store.RoleIntern) {
+		if pick := tools.Run(tc, "find_expert", map[string]any{"question": question}); pick.OK {
+			d := pick.Data.(map[string]any)
+			text += fmt.Sprintf("\n\nПо этой теме лучше спросить: %s — %s. Подготовить вопрос?", d["name"], d["reason"])
+		}
+	}
+	return text
+}
+
+// testLabel — BR-05: ответ по тестовой инструкции всегда с пометкой, даже если модель её не повторила.
+func testLabel(r *Reply, text string) string {
+	for _, src := range r.Sources {
+		if src.Label != "" && !strings.Contains(strings.ToLower(text), "тестов") {
+			return text + "\n\nИсточник «" + src.Title + "» — " + src.Label + "."
+		}
+	}
+	return text
 }
 
 const draftNudge = "[Служебная заметка системы, не от стажёра] Ты написал про черновик, но не вызвал инструмент, " +

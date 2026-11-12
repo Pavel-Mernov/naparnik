@@ -47,6 +47,9 @@ func getPlan(c Ctx, args map[string]any) Result {
 	}
 	steps := planViews(c, internID)
 	if len(steps) == 0 {
+		if p, found := c.Store.Plan(internID); found && p.Status == store.PlanDraft {
+			return fail("not_found", "План адаптации ещё готовится: черновик у бадди, утвердит руководитель.")
+		}
 		return fail("not_found", "План адаптации ещё не утверждён.")
 	}
 	var mine, done int
@@ -62,10 +65,17 @@ func getPlan(c Ctx, args map[string]any) Result {
 			next = &steps[i]
 		}
 	}
-	return ok(map[string]any{
+	out := map[string]any{
 		"intern": c.Store.Name(internID), "stages": c.Store.Data.Template.Stages, "steps": steps,
 		"progress_pct": done * 100 / max(mine, 1), "next_step": next,
-	})
+	}
+	if p, found := c.Store.Plan(internID); found {
+		out["plan_status"] = p.Status
+		if p.Status == store.PlanAutoActivated {
+			out["approval"] = "не утверждён: активирован по шаблону, руководитель ещё не утвердил (BR-81)"
+		}
+	}
+	return ok(out)
 }
 
 func getToday(c Ctx, _ map[string]any) Result {

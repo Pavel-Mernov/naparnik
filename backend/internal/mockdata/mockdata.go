@@ -32,6 +32,7 @@ type User struct {
 	BuddyID         string    `json:"buddy_id"`
 	LeadID          string    `json:"lead_id"`
 	StartDate       string    `json:"start_date"`
+	RoleSet         string    `json:"role_set,omitempty"` // набор знаний роли стажёра (BR-87)
 	Settings        *Settings `json:"settings"`
 	TGConnected     bool      `json:"tg_connected"`
 }
@@ -127,6 +128,7 @@ type TemplateStep struct {
 	Title          string `json:"title"`
 	Source         string `json:"source"`
 	PreparedAction string `json:"prepared_action"`
+	DueOffset      int    `json:"due_offset"` // срок: рабочих дней от старта стажировки
 }
 
 type PlanTemplate struct {
@@ -146,8 +148,13 @@ type Plan struct {
 	ID       string        `json:"id"`
 	EpicKey  string        `json:"epic_key"`
 	InternID string        `json:"intern_id"`
-	Status   string        `json:"status"`
+	Status   string        `json:"status"` // approved | draft (BR-81)
 	Steps    []TrackerStep `json:"steps"`
+	// LastActivityAt — последняя активность стажёра по плану в трекере (BR-85).
+	LastActivityAt string `json:"last_activity_at"`
+	ApprovedBy     string `json:"approved_by"`
+	ApprovedAt     string `json:"approved_at"`
+	CreatedAt      string `json:"created_at"` // для черновика: с какого момента идёт срок утверждения (BR-81)
 }
 
 type Tracker struct {
@@ -238,6 +245,38 @@ type AccessState struct {
 	RelatedStep string `json:"related_step"`
 }
 
+// RoleKnowledge — наборы знаний по ролям стажёра (BR-87): данные, а не код.
+type RoleKnowledge struct {
+	Sets []RoleSet `json:"role_sets"`
+}
+
+type RoleSet struct {
+	ID            string   `json:"id"`
+	Title         string   `json:"title"`
+	IsExample     bool     `json:"is_example"`
+	Glossary      []string `json:"glossary"` // страницы глоссария отдела
+	GlossaryTerms []struct {
+		Term       string `json:"term"`
+		Definition string `json:"definition"`
+	} `json:"glossary_terms"` // термины прямо в наборе (пример для бэкенда)
+	CodeStyle []string `json:"code_style"` // id страниц (kb-…) или правила текстом
+	Review    []string `json:"review"`
+	DataMap   []struct {
+		Name    string   `json:"name"`
+		What    string   `json:"what"`
+		OwnerID string   `json:"owner_id"`
+		Sources []string `json:"sources"`
+	} `json:"data_map"`
+	ServiceMap []struct {
+		Service   string   `json:"service"`
+		What      string   `json:"what"`
+		DependsOn []string `json:"depends_on"`
+		OwnerTeam string   `json:"owner_team"`
+	} `json:"service_map"`
+	Practices       []string `json:"practices"`
+	PracticeExample string   `json:"practice_example"`
+}
+
 type AccessService struct {
 	Systems      []System                 `json:"systems"`
 	CurrentState map[string][]AccessState `json:"current_state"`
@@ -259,6 +298,7 @@ type Data struct {
 	Meetings struct {
 		Meetings []MeetingFixture `json:"meetings"`
 	}
+	Roles     RoleKnowledge
 	Questions struct {
 		Questions []struct {
 			ID   string `json:"id"`
@@ -300,6 +340,7 @@ func Load(dir string) (*Data, error) {
 		{"practice.json", &d.Practice},
 		{"meetings.json", &d.Meetings},
 		{"questions.json", &d.Questions},
+		{"role-knowledge.json", &d.Roles},
 		{"team.json", &meta},
 	}
 	for _, f := range files {

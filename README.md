@@ -138,9 +138,20 @@ Redis (`REDIS_URL`, в Docker задаётся сам) хранит однора
 npm --prefix frontend run build        # TypeScript и сборка React
 ```
 
-Отчёт — [docs/coverage/coverage.txt](docs/coverage/coverage.txt) (по функциям и итог) и `docs/coverage/coverage.html`. Покрытие строк прикладного кода — **95.7%**. Считаются `backend/internal` и `backend/cmd/buddy`; не входят зависимости, тесты и точка входа `cmd/server`. Порог 80% проверяется в CI ([.github/workflows/tests.yml](.github/workflows/tests.yml)).
+Отчёт — [docs/coverage/coverage.txt](docs/coverage/coverage.txt) (по функциям и итог) и `docs/coverage/coverage.html`. Покрытие строк прикладного кода — **93.9%**. Считаются `backend/internal` и `backend/cmd/buddy`; не входят зависимости, тесты и точка входа `cmd/server`. Порог 80% проверяется в CI ([.github/workflows/tests.yml](.github/workflows/tests.yml)).
 
 Тесты не обращаются к внешней модели: используется заглушка, для Claude и DeepSeek — локальный тестовый HTTP-сервер.
+
+### Эталонный набор (H7, M-14…M-17)
+
+```bash
+cd backend
+go run ./cmd/evals -mode stub   # заглушка модели, без сети → docs/evals/stub.md
+go run ./cmd/evals -mode live   # модель из .env (DeepSeek) → docs/evals/live.md
+go run ./cmd/evals -mode live -only e-17,e-21   # отдельные вопросы
+```
+
+43 вопроса из [`docs/04-mock-data/evals.json`](docs/04-mock-data/evals.json) проходят через настоящего агента, каждый с чистого разговора; состояние — в памяти (PostgreSQL и Redis не трогаются). Оценивается ветка, источник, адресат и права, а не точный текст. Для проверки прав засеваются «приманки»: чужая заявка и чужой вопрос. В отчёте — доля по категориям, метрики M-14 (верный источник), M-15 (честное «не нашёл»), M-16 (ответ с источником), M-17 (верный адресат), отказы по правам и ПДн и разбор каждого провала с вызовами инструментов. Прогон на заглушке входит в `go test` как регрессионный барьер.
 
 Unit-тесты React: `npm --prefix frontend test` (Vitest). Проверки в браузере: `scripts/test_role_ui.py` использует Python Playwright и описывает сценарии ролей и запоздавших ответов; после обновления дизайна его селекторы требуют адаптации к новой навигации. Сквозной SC-33 проверяется также через HTTP в `backend/internal/httpapi/access_test.go`.
 

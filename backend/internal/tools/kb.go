@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"regexp"
+	"slices"
 	"sort"
 	"strings"
 	"time"
@@ -38,6 +39,7 @@ var stopWords = map[string]bool{
 	"как": true, "что": true, "где": true, "это": true, "мне": true, "для": true, "через": true, "такое": true,
 	"нужно": true, "нужен": true, "можно": true, "почему": true, "когда": true, "какой": true, "какие": true,
 	"кто": true, "мой": true, "или": true, "если": true, "есть": true, "наш": true, "нашем": true, "the": true,
+	"при": true, "сколько": true, "будут": true, "будет": true,
 }
 
 // synonyms — словарь синонимов отдела: сводит разные слова к одной основе.
@@ -51,12 +53,16 @@ var synonyms = map[string]string{
 	"code":  "код",
 	"стиль": "стайл",
 	"style": "стайл",
+	"churn": "отток",
 }
+
+// phrases — устойчивые обозначения, которые иначе распадаются на буквы: «A/B-тест» ≈ «эксперимент».
+var phrases = strings.NewReplacer("a/b", " эксперимент ", "а/б", " эксперимент ", "ab-тест", " эксперимент ", "аб-тест", " эксперимент ")
 
 // Stems — грубый стемминг префиксом: для русского работает прилично и не требует словарей.
 func Stems(text string) map[string]bool {
 	out := map[string]bool{}
-	for _, w := range wordRe.FindAllString(strings.ToLower(strings.ReplaceAll(text, "ё", "е")), -1) {
+	for _, w := range wordRe.FindAllString(phrases.Replace(strings.ToLower(strings.ReplaceAll(text, "ё", "е"))), -1) {
 		r := []rune(w)
 		if len(r) < 3 || stopWords[w] {
 			continue
@@ -136,7 +142,23 @@ func SearchKB(c Ctx, query string) []Hit {
 func searchKB(c Ctx, args map[string]any) Result {
 	query := str(args, "query")
 	hits := cached(c, "search", query, func() []Hit { return SearchKB(c, query) })
+	if c.Question != "" && c.Question != query {
+		hits = mergeHits(cached(c, "search", c.Question, func() []Hit { return SearchKB(c, c.Question) }), hits)
+	}
 	return ok(map[string]any{"found": len(hits) > 0, "hits": hits})
+}
+
+// mergeHits — сначала найденное по словам стажёра, затем по запросу модели, без повторов, не больше 3.
+func mergeHits(first, second []Hit) []Hit {
+	out := []Hit{}
+	seen := map[string]bool{}
+	for _, h := range append(append([]Hit{}, first...), second...) {
+		if !seen[h.PageID] && len(out) < 3 {
+			seen[h.PageID] = true
+			out = append(out, h)
+		}
+	}
+	return out
 }
 
 func teamDirectory(c Ctx, _ map[string]any) Result {
@@ -256,6 +278,17 @@ func findExpert(c Ctx, args map[string]any) Result {
 		id, conf, reason := FindExpert(c, question)
 		return expertPick{id, conf, reason}
 	})
+	// Модель дописывает к вопросу свои слова («какой дашборд в Redash»), и подбор уплывает к соседней теме.
+	// Слова стажёра — сильнее: уверенный подбор по ним выигрывает всегда, неуверенный — если он всё же лучше.
+	if c.Question != "" && c.Question != question {
+		own := cached(c, "expert", c.Question, func() expertPick {
+			id, conf, reason := FindExpert(c, c.Question)
+			return expertPick{id, conf, reason}
+		})
+		if own.ID != "" && (own.Confidence >= ExpertThreshold || own.Confidence > pick.Confidence) {
+			pick = own
+		}
+	}
 	id, conf, reason := pick.ID, pick.Confidence, pick.Reason
 	// BR-10a: топ-руководителя стажёру напрямую не предлагаем — вопрос уходит бадди. Имя руководителя
 	// в ответ инструменту не попадает, чтобы модель не назвала его стажёру; подсказку бадди добавит send_question.
@@ -402,4 +435,48 @@ func clip(s string) string {
 		return string(r[:120]) + "…"
 	}
 	return s
+}
+
+// toolSources — на какой странице базы держится ответ инструмента правил: порядок отгулов, доступы,
+// кто есть кто. Так у ответа «за 2 рабочих дня» есть источник с автором и датой (BR-01, M-16), даже если
+// модель не вызывала поиск. Страницы — из описаний сервисов в docs/04-mock-data.
+var toolSources = map[string][]string{
+	"get_required_accesses": {"kb-11"},
+	"get_access_rules":      {"kb-11"},
+	"team_directory":        {"kb-01"},
+}
+
+// SourcesFor — страницы-источники для ответа инструмента; только те, что стажёр может читать.
+func SourcesFor(c Ctx, tool string, args map[string]any) []Hit {
+	ids := toolSources[tool]
+	switch tool {
+	case "get_role_knowledge":
+		ids = roleSources(c)
+	case "explain_term":
+		if e, known := lookupTerm(c, str(args, "term")); known && e.Page != nil {
+			ids = []string{e.Page.ID}
+		}
+		for _, h := range termPages(c, str(args, "term")) {
+			ids = append(ids, h.PageID)
+		}
+	}
+	if tool == "get_absence_rules" {
+		ids = []string{c.Store.Data.Absence.SelfService.SourcePage}
+	}
+	if tool == "get_access_rules" && strings.Contains(strings.ToLower(str(args, "system")), "redash") {
+		ids = append([]string{"kb-15"}, ids...)
+	}
+	var out []Hit
+	for _, p := range readablePages(c) {
+		for _, id := range ids {
+			if p.ID == id && !slices.ContainsFunc(out, func(h Hit) bool { return h.PageID == id }) {
+				h := Hit{p.ID, p.Title, p.Body, c.Store.Name(p.AuthorID), p.UpdatedAt, p.TestInstruction, "", 1}
+				if p.TestInstruction {
+					h.Label = TestInstructionLabel
+				}
+				out = append(out, h)
+			}
+		}
+	}
+	return out
 }

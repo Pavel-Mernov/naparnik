@@ -19,8 +19,14 @@ func TestAccessGuidanceDoesNotSearchPrivateKB(t *testing.T) {
 	} {
 		a := newAgent(t, "stub_ok", time.Second)
 		r := ask(t, a, "intern.sokolov", question)
-		if len(r.Drafts) != 0 || len(r.Sources) != 0 || len(a.Store.Requests("")) != 0 || !slices.Equal(r.ToolLog, []string{"get_access_rules"}) {
+		if len(r.Drafts) != 0 || len(a.Store.Requests("")) != 0 || !slices.Equal(r.ToolLog, []string{"get_access_rules"}) {
 			t.Fatal(question, r)
+		}
+		// Источник — только открытая тестовая инструкция по доступам (M-16), не закрытые страницы.
+		for _, src := range r.Sources {
+			if src.PageID != "kb-11" {
+				t.Fatal("лишний источник", src)
+			}
 		}
 		for _, secret := range []string{"kb-R1", "space-dwh-pii", "sys-dwh-pii", "Витрина клиентов с контактными данными"} {
 			if strings.Contains(r.Text, secret) {

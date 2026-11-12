@@ -40,6 +40,9 @@ func ok(data any) Result           { return Result{OK: true, Data: data} }
 type Ctx struct {
 	Store *store.Store
 	User  *mockdata.User
+	// Question — исходная реплика пользователя в этом ходе. Модель часто «обогащает» запрос к базе
+	// общими словами, и верная страница не проходит порог покрытия; поиск страхуется исходной фразой.
+	Question string
 }
 
 type Tool struct {
@@ -99,6 +102,13 @@ func All() []Tool {
 				"text": prop("string", "полный вопрос: суть, контекст, что уже пробовал"), "addressee_id": prop("string", "id адресата"),
 				"reason": prop("string", "почему выбран адресат"), "urgent": prop("boolean", "блокирует работу")}, "text", "addressee_id"),
 			[]string{store.RoleIntern}, true, sendQuestion},
+		{"explain_term", "Только «что значит слово»: значение термина или жаргона команды — из глоссария отдела с пометкой «у нас так говорят» и источником; если в глоссарии нет — found=false, можно дать общий смысл с пометкой «общее определение». Вызывай для каждого термина отдельно.",
+			schema(map[string]any{"term": prop("string", "один термин, например «сплит»")}, "term"), allRoles, false, explainTerm},
+		{"suggest_term", "Предложить новый термин в глоссарий отдела (после подтверждения стажёра): черновик страницы уйдёт бадди, в базе термин появится после его «Ок».",
+			schema(map[string]any{"term": prop("string", "термин"), "definition": prop("string", "черновик определения простыми словами")}, "term", "definition"),
+			[]string{store.RoleIntern}, true, suggestTerm},
+		{"get_role_knowledge", "Набор знаний своей роли: глоссарий, код-стайл, ревью, карта данных или сервисов, учебная практика — со страницами базы.",
+			schema(map[string]any{}), allRoles, false, roleKnowledge},
 		{"get_absence_rules", "Порядок оформления отсутствия и путь «сделай сам».",
 			schema(map[string]any{"type": map[string]any{"type": "string", "enum": []string{"day_off", "vacation", "sick_leave"}}}, "type"),
 			allRoles, false, getAbsenceRules},
@@ -202,6 +212,10 @@ func Check(c Ctx, name string, args map[string]any) *Error {
 		}
 		if day, ok := parseDate(str(args, "date")); !ok || !day.After(c.Store.Today) {
 			return &Error{Code: "validation", Message: "Укажи будущую дату"}
+		}
+	case "suggest_term":
+		if _, found := lookupTerm(c, str(args, "term")); found {
+			return &Error{Code: "validation", Message: "Этот термин уже есть в глоссарии — объясни его через explain_term."}
 		}
 	case "mark_step_done":
 		if internID := str(args, "intern_id"); internID != "" && internID != c.User.ID {

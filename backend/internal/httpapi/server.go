@@ -54,6 +54,9 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /api/requests/{id}/confirm", s.auth(s.confirm))       // заявки (отгул, доступ)
 	mux.HandleFunc("POST /api/questions/{id}/confirm-send", s.auth(s.confirm)) // BR-11: вопрос человеку
 	mux.HandleFunc("GET /api/plans/{internId}", s.auth(s.plan))
+	mux.HandleFunc("GET /api/plans/{internId}/draft", s.auth(s.planDraft)) // SC-20, BR-81
+	mux.HandleFunc("PATCH /api/plans/{internId}/draft", s.auth(s.planDraftEdit))
+	mux.HandleFunc("POST /api/plans/{internId}/approve", s.auth(s.planApprove))
 	mux.HandleFunc("PATCH /api/plan-steps/{id}", s.auth(s.markStep))
 	mux.HandleFunc("GET /api/requests", s.auth(s.requests))
 	mux.HandleFunc("POST /api/requests", s.auth(s.createRequest))            // BR-42: «сделай сам» — форма сервиса
@@ -330,8 +333,10 @@ type questionView struct {
 	Status      string            `json:"status"`
 	Answer      string            `json:"answer,omitempty"`
 	PageID      string            `json:"page_id,omitempty"`
-	Hint        string            `json:"hint,omitempty"`  // BR-10a: только адресату
-	Route       []store.RouteStep `json:"route,omitempty"` // смены адресата: видит стажёр, адресаты и бадди
+	Hint        string            `json:"hint,omitempty"`    // BR-10a: только адресату
+	Route       []store.RouteStep `json:"route,omitempty"`   // смены адресата: видит стажёр, адресаты и бадди
+	DueAt       string            `json:"due_at,omitempty"`  // срок ответа текущего адресата (BR-18)
+	Overdue     bool              `json:"overdue,omitempty"` // срок истёк
 }
 
 // questions — видимость по 02-ROLES:
@@ -342,7 +347,10 @@ func (s *Server) questions(w http.ResponseWriter, _ *http.Request, u *mockdata.U
 	count := 0
 	for _, q := range s.Store.Questions() {
 		asker, _ := s.Store.User(q.AskedBy)
-		v := questionView{q.ID, q.AskedBy, q.AddresseeID, s.Store.Name(q.AddresseeID), q.Title, q.Text, false, q.Reason, q.Urgent, q.Status, q.Answer, q.PageID, "", q.Route}
+		v := questionView{q.ID, q.AskedBy, q.AddresseeID, s.Store.Name(q.AddresseeID), q.Title, q.Text, false, q.Reason, q.Urgent, q.Status, q.Answer, q.PageID, "", q.Route, "", false}
+		if _, due, ok := s.Store.QuestionSLA(q); ok && q.Status == "Sent" {
+			v.DueAt, v.Overdue = due.Format(time.RFC3339), !store.Now().Before(due)
+		}
 		if q.AddresseeID == u.ID {
 			v.Hint = q.Hint
 		}
