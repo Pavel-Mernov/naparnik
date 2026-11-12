@@ -6,7 +6,6 @@ import (
 	"context"
 	_ "embed"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"regexp"
 	"strings"
@@ -25,10 +24,13 @@ var SystemPrompt string
 const maxToolRounds = 5
 
 type Draft struct {
-	ID     string         `json:"id"`
-	UserID string         `json:"-"`
-	Tool   string         `json:"tool"`
-	Args   map[string]any `json:"args"`
+	ID      string          `json:"id"`
+	UserID  string          `json:"-"`
+	Tool    string          `json:"tool"`
+	Args    map[string]any  `json:"args"`
+	Version int             `json:"version,omitempty"`
+	Status  string          `json:"status,omitempty"`
+	Result  json.RawMessage `json:"result,omitempty"`
 }
 
 type Source struct {
@@ -169,7 +171,7 @@ func (a *Agent) handle(tc tools.Ctx, call llm.ToolCall, reply *Reply) string {
 		}
 		var d Draft
 		err := a.Store.Transaction(func(s *store.Store) error {
-			d = Draft{ID: s.NextID("DRAFT"), UserID: tc.User.ID, Tool: call.Name, Args: call.Input}
+			d = Draft{ID: s.NextID("DRAFT"), UserID: tc.User.ID, Tool: call.Name, Args: call.Input, Version: 1, Status: "pending"}
 			s.PutDraft(store.ActionDraft{ID: d.ID, UserID: d.UserID, Tool: d.Tool, Args: d.Args})
 			return nil
 		})
@@ -326,41 +328,8 @@ func (a *Agent) Reset(login string) {
 
 // Confirm — человек нажал «Подтвердить»: выполнить черновик и вернуть квитанцию (BR-43).
 // Если сервис недоступен, черновик сохраняется — можно повторить (SC-15).
-func (a *Agent) Confirm(login, draftID string) tools.Result {
-	u, found := a.Store.UserByLogin(login)
-	if !found {
-		return tools.Result{Error: &tools.Error{Code: "not_found", Message: "Черновик не найден."}}
-	}
-	var res tools.Result
-	err := a.Store.Transaction(func(s *store.Store) error {
-		d, ok := s.ActionDraft(draftID)
-		if !ok || d.UserID != u.ID {
-			res = tools.Result{Error: &tools.Error{Code: "not_found", Message: "Черновик не найден."}}
-			return errors.New("draft unavailable")
-		}
-		if len(d.Result) > 0 {
-			return json.Unmarshal(d.Result, &res)
-		}
-		res = tools.Run(tools.Ctx{Store: s, User: u}, d.Tool, d.Args)
-		if res.Error != nil {
-			return errors.New("action rejected")
-		}
-		raw, err := json.Marshal(res)
-		if err != nil {
-			return err
-		}
-		d.Result = raw
-		s.PutDraft(d)
-		return nil
-	})
-	if err != nil && res.Error == nil {
-		return tools.Result{Error: &tools.Error{Code: "unavailable", Message: "Не удалось сохранить действие. Повтори подтверждение."}}
-	}
-	return res
-}
-
 // Draft возвращает только незавершённый черновик; квитанция остаётся для повторов.
 func (a *Agent) Draft(id string) (Draft, bool) {
 	d, ok := a.Store.ActionDraft(id)
-	return Draft{ID: d.ID, UserID: d.UserID, Tool: d.Tool, Args: d.Args}, ok && len(d.Result) == 0
+	return draftView(d), ok && len(d.Result) == 0 && !d.Cancelled
 }

@@ -110,9 +110,15 @@ export type SystemOption = { system: string; title: string; status: string; week
 export type Warning = { code: string; message: string };
 export type KbFolder = { id: string; title: string; space: string };
 
+export type ActionDraft = {
+  id: string; tool: string; args: Record<string, unknown>; version?: number;
+  status?: "pending" | "confirmed" | "cancelled";
+  result?: { receipt?: Record<string, string> };
+};
+
 export type ChatReply = {
   text: string;
-  drafts: Array<{ id: string; tool: string; args: Record<string, unknown> }>;
+  drafts: ActionDraft[];
   sources: Array<{ page_id: string; title: string; author: string; updated_at: string; label?: string }>;
   degraded: boolean;
   retry: boolean;

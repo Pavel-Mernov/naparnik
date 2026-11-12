@@ -437,6 +437,9 @@ func PracticeHelpDraft(c Ctx, intern, id string) Result {
 		if len(st.Attempts) < practiceAttempts || practicePassed(st) {
 			return fail("validation", "Помощь после трёх неудачных попыток пока не требуется.")
 		}
+		if previous, ok := c.Store.ActionDraft(st.HelpDraftID); ok && previous.Cancelled {
+			st.HelpDraftID = "" // новый запрос помощи после явной отмены создаёт новый черновик
+		}
 		if st.HelpDraftID == "" {
 			internUser, _ := c.Store.User(intern)
 			view := practiceView(c, t, st)
@@ -449,6 +452,6 @@ func PracticeHelpDraft(c Ctx, intern, id string) Result {
 			c.Store.PutPractice(st)
 		}
 		d, _ := c.Store.ActionDraft(st.HelpDraftID)
-		return ok(map[string]any{"id": d.ID, "tool": d.Tool, "args": d.Args})
+		return ok(map[string]any{"id": d.ID, "tool": d.Tool, "args": d.Args, "version": d.Version})
 	})
 }

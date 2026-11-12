@@ -72,7 +72,7 @@ func show(out io.Writer, in *bufio.Reader, a *agent.Agent, user string, r agent.
 		fmt.Fprintf(out, "   📝 Черновик %s: %s %v\n   Подтвердить? [y/N] ", d.ID, d.Tool, d.Args)
 		line, _ := in.ReadString('\n')
 		if strings.TrimSpace(strings.ToLower(line)) == "y" {
-			res := a.Confirm(user, d.ID)
+			res := a.Confirm(user, d.ID, d.Version)
 			if res.Error != nil {
 				fmt.Fprintf(out, "   ❌ %s\n", res.Error.Message)
 			} else {

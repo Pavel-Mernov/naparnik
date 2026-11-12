@@ -212,6 +212,18 @@ func TestPracticeAttemptsLimitAndHelp(t *testing.T) {
 	if len(s.Store.Questions()) != 0 {
 		t.Fatal("вопрос без подтверждения")
 	}
+	if code, r := call(t, h, "DELETE", "/api/drafts/"+id, "intern.sokolov", `{"version":1}`); code != 200 {
+		t.Fatal(code, r)
+	}
+	code, replacement := call(t, h, "POST", practicePath+"help-draft", "intern.sokolov", "{}")
+	if code != 200 {
+		t.Fatal(code, replacement)
+	}
+	previous := id
+	id = replacement["data"].(map[string]any)["id"].(string)
+	if id == previous {
+		t.Fatal("новый запрос помощи вернул отменённый черновик")
+	}
 	code, r := call(t, h, "POST", "/api/drafts/"+id+"/confirm", "intern.sokolov", "{}")
 	if code != 200 {
 		t.Fatal(code, r)

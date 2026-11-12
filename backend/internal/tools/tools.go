@@ -22,7 +22,7 @@ import (
 const TestInstructionLabel = "тестовая инструкция, не регламент Авито"
 
 type Error struct {
-	Code    string `json:"code"` // forbidden | not_found | validation | unavailable
+	Code    string `json:"code"` // forbidden | not_found | validation | unavailable | conflict
 	Message string `json:"message"`
 	WhoCan  string `json:"who_can,omitempty"`
 }

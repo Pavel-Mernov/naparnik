@@ -23,6 +23,7 @@
 | Нет доступа | `get_access_rules` → разрешённая система из каталога, неделя выдачи, свой шаг плана и согласующий; варианты «сам» / «за тебя». Объяснение не создаёт черновик. Закрытые страницы не читаются; запрещённая система не предлагается | MUST: SC-33, BR-45; `TestAccessRulesPrivacy`, `TestAccessGuidanceToRequest` |
 | Действие | `create_absence_request`, `request_access`, `send_question`, `mark_step_done` → черновик; до черновика `tools.Check` проверяет права и данные (BR-40, BR-43) | MUST, `TestForbiddenNotDrafted` |
 | Подтверждение | Выполняет только владелец черновика; ошибка `unavailable` — черновик сохраняется для повтора (SC-15); повтор после успеха возвращает ту же квитанцию (транзакция PostgreSQL) | MUST, `TestUnavailableKeepsDraft` |
+| Правка и отмена | Владелец правит текст и срочность вопроса; новая версия требует нового подтверждения. Отмена хранится на сервере, после неё отправка запрещена. Права и ПДн проверяются повторно; события правки не содержат текста | MUST, `TestQuestionDraftEditConfirm`, `TestDraftCancellation`, `TestPostgresQuestionDraftRaces` |
 | Сбой модели | Ошибка или таймаут → `degraded: true`, `retry: true`, найденные фрагменты базы без пересказа (BR-70) | MUST, `TestFallback` |
 | Цикл | Не больше 5 раундов вызова инструментов | MUST, `TestLoopLimitAndRefusal` |
 
