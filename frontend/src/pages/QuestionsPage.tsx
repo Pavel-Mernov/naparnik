@@ -5,6 +5,7 @@ import { api, type KbDraft, type Meeting, type Question } from "../api";
 import type { DataState, Role } from "../state";
 import { AiTag, Block, Empty, PageHead, Row, StatusTag } from "../components/ui";
 import { Markdown } from "../chat";
+import { PersonDialog } from "../components/PersonDialog";
 
 const questionTitle = (q: Question) => (q.text_hidden ? "Текст скрыт настройками стажёра" : q.title || q.text || "Вопрос");
 
@@ -37,9 +38,10 @@ const SlotDialog = ({ q, login, onClose, onPick }: { q: Question | null; login: 
   );
 };
 
-const Incoming = ({ q, from, meeting, onAnswer, onMeeting, onFinish, onLeaveOpen }: {
+const Incoming = ({ q, from, meeting, onAnswer, onMeeting, onFinish, onLeaveOpen, onNotMine, notMineLabel = "Не ко мне" }: {
   q: Question; from: string; meeting?: Meeting; onAnswer: (q: Question, text: string) => Promise<boolean>;
   onMeeting: (q: Question) => void; onFinish: (m: Meeting, recorded: boolean) => void; onLeaveOpen: (q: Question) => void;
+  onNotMine?: (q: Question) => void; notMineLabel?: string;
 }) => {
   const { t } = useTheme();
   const [text, setText] = useState("");
@@ -75,6 +77,7 @@ const Incoming = ({ q, from, meeting, onAnswer, onMeeting, onFinish, onLeaveOpen
           {noRecording
             ? <Button variant="text" onClick={() => onLeaveOpen(q)}>Нет, оставить открытым</Button>
             : <Button variant="text" onClick={() => onMeeting(q)}>Проще голосом — назначить встречу</Button>}
+          {!noRecording && onNotMine && <Button variant="text" onClick={() => onNotMine(q)}>{notMineLabel}</Button>}
         </Stack>
       </>}
     </Box>
@@ -112,6 +115,10 @@ export const QuestionsPage = ({ data, role, login, onAsk, onAnswer, onApprove, o
 }) => {
   const [draft, setDraft] = useState<KbDraft | null>(null);
   const [slotFor, setSlotFor] = useState<Question | null>(null);
+  const [rerouting, setRerouting] = useState<{ q: Question; kind: "not-mine" | "redirect" } | null>(null);
+  const colleagues = data.users.filter((u) => u.id !== data.me.id && !u.roles.includes("intern"));
+  const myInterns = new Set(data.me.interns.map((i) => i.id));
+  const routeText = (q: Question) => (q.route?.length ? [q.route[0].from, ...q.route.map((r) => r.to)].map((id) => name(id).split(" ")[0]).join(" → ") : "");
   const meetingOf = (q: Question) => data.meetings.find((m) => m.question_id === q.id);
   const name = (id: string) => data.users.find((u) => u.id === id)?.name ?? "Стажёр";
   const incoming = data.questions.filter((q) => q.addressee_id === data.me.id && ["Sent", "MeetingScheduled", "NoRecording"].includes(q.status));
@@ -138,7 +145,9 @@ export const QuestionsPage = ({ data, role, login, onAsk, onAnswer, onApprove, o
         onMeeting={setSlotFor}
         onFinish={(m, recorded) => void onAction(`/api/meetings/${m.id}/finish`, "POST", { recorded },
           recorded ? "Собрал ответ со встречи — проверь черновик страницы" : "Понял, записи нет. Можешь ответить текстом")}
-        onLeaveOpen={(x) => void onAction(`/api/questions/${x.id}/leave-open`, "POST", {}, "Вопрос передан владельцу базы")} />)}</Block>}
+        onLeaveOpen={(x) => void onAction(`/api/questions/${x.id}/leave-open`, "POST", {}, "Вопрос передан владельцу базы")}
+        notMineLabel={q.hint && myInterns.has(q.asked_by) ? "Переадресовать" : "Не ко мне"}
+        onNotMine={(x) => setRerouting({ q: x, kind: q.hint && myInterns.has(q.asked_by) ? "redirect" : "not-mine" })} />)}</Block>}
       <Block title={role === "buddy" ? "Маршрут вопросов стажёров" : "Все вопросы"}>
         {all.length > 0 && <Stack direction={{ xs: "column", sm: "row" }} gap={1} mb={1.5}>
           <TextField size="small" placeholder="Найти вопрос" value={search} onChange={(e) => setSearch(e.target.value)} aria-label="Поиск вопросов" sx={{ flex: 1 }} />
@@ -152,17 +161,28 @@ export const QuestionsPage = ({ data, role, login, onAsk, onAnswer, onApprove, o
                 <Typography variant="body2" color="text.secondary">{q.asked_by === data.me.id ? `Кому: ${q.addressee}` : `${name(q.asked_by)} → ${q.addressee}`}{q.urgent ? " · срочно" : ""}
                   {q.status === "MeetingScheduled" && meetingOf(q) ? ` · встреча ${when(meetingOf(q)!.start)}` : ""}</Typography>
               </Box>
-              <StatusTag status={q.status} />
+              <Stack alignItems="flex-end" gap={0.75}>
+                <StatusTag status={q.status} />
+                {role === "buddy" && myInterns.has(q.asked_by) && ["Sent", "NoRecording"].includes(q.status) && q.addressee_id !== data.me.id &&
+                  <Button variant="text" size="small" sx={{ minHeight: 32 }} onClick={() => setRerouting({ q, kind: "redirect" })}>Переадресовать</Button>}
+              </Stack>
             </Stack>
+            {routeText(q) && <Typography variant="caption" component="div" color="text.secondary">Маршрут: {routeText(q)}</Typography>}
             {q.answer && <Box sx={{ mt: 1.5, pl: 2, borderLeft: 3, borderColor: "success.main" }}>
               <Typography variant="body2" fontWeight={600} mb={0.5}>Ответ · {q.addressee}</Typography>
               <Markdown text={q.answer} />
               {q.page_id && <Typography variant="caption" color="text.secondary">Ответ сохранён в базе знаний — следующему стажёру Напарник ответит сразу</Typography>}
             </Box>}
-            {q.reason && !q.answer && <Typography variant="caption" color="text.secondary">Почему {q.addressee}: {q.reason}</Typography>}
+            {q.reason && !q.answer && <Typography variant="caption" component="div" color="text.secondary">Почему {q.addressee}: {q.reason}</Typography>}
           </Box>)) : <Empty text={role === "intern" ? "Вопросов людям пока нет. Спроси Напарника — он сначала поищет в базе." : "Здесь появятся вопросы, на которые ты ответил."} action={role === "intern" ? <Button variant="text" onClick={onAsk}>Спросить</Button> : undefined} />}
       </Block>
     </Stack>
+    <PersonDialog open={Boolean(rerouting)} people={colleagues.filter((u) => u.id !== rerouting?.q.addressee_id)}
+      title={rerouting?.kind === "redirect" ? "Переадресовать вопрос" : "Не ко мне"} allowAuto={rerouting?.kind === "not-mine"}
+      text={rerouting?.kind === "redirect" ? "Напарник ошибся с адресатом? Выбери, кто ответит лучше. Стажёр и прежний адресат узнают об этом."
+        : "Подскажи, кто ответит лучше, — или пусть Напарник подберёт следующего кандидата. Стажёр увидит, что вопрос передан."}
+      confirm={rerouting?.kind === "redirect" ? "Переадресовать" : "Передать"} onClose={() => setRerouting(null)}
+      onPick={(to) => { const r = rerouting; setRerouting(null); if (r) void onAction(`/api/questions/${r.q.id}/${r.kind}`, "POST", { to }, "Вопрос передан — стажёр в курсе"); }} />
     <SlotDialog q={slotFor} login={login} onClose={() => setSlotFor(null)}
       onPick={(slot) => { const q = slotFor; setSlotFor(null); if (q) void onAction(`/api/questions/${q.id}/meeting`, "POST", { slot }, "Встреча назначена — стажёр получил приглашение"); }} />
     <DraftDialog draft={draft} folder={data.folders.find((f) => f.id === draft?.folder)?.title} onClose={() => setDraft(null)}

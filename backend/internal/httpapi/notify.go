@@ -91,7 +91,64 @@ func (s *Server) metrics(w http.ResponseWriter, _ *http.Request, u *mockdata.Use
 		writeJSON(w, 403, errBody("forbidden", "Метрики отдела видит руководитель."))
 		return
 	}
-	writeJSON(w, 200, Metrics(s.Store.Events()))
+	m := Metrics(s.Store.Events())
+	m["load"] = Load(s.Store.Events(), s.Store.Data.Team.Users)
+	writeJSON(w, 200, m)
+}
+
+// LoadRow — нагрузка бадди и экспертов (M-05, M-06): сколько вопросов дошло, сколько ответил, встречи, оценка времени.
+type LoadRow struct {
+	ID       string `json:"id"`
+	Name     string `json:"name"`
+	Role     string `json:"role"`
+	Received int    `json:"received"`
+	Answered int    `json:"answered"`
+	Meetings int    `json:"meetings"`
+	Pages    int    `json:"pages"`
+	Minutes  int    `json:"minutes"` // оценка: ответ ≈ 10 минут, встреча ≈ 30 минут
+}
+
+func Load(events []store.LogEvent, users []mockdata.User) []LoadRow {
+	rows := map[string]*LoadRow{}
+	var order []string
+	for _, u := range users {
+		if store.HasRole(&u, store.RoleIntern) || store.HasRole(&u, store.RoleLead) {
+			continue
+		}
+		role := "эксперт"
+		if store.HasRole(&u, store.RoleBuddy) {
+			role = "бадди"
+		}
+		rows[u.ID] = &LoadRow{ID: u.ID, Name: u.Name, Role: role}
+		order = append(order, u.ID)
+	}
+	for _, e := range events {
+		switch e.Type {
+		case store.EvQuestionSent, store.EvQuestionRerouted:
+			if r := rows[e.Meta["to"]]; r != nil {
+				r.Received++
+			}
+		case store.EvQuestionAnswered:
+			if r := rows[e.Actor]; r != nil {
+				r.Answered++
+			}
+		case store.EvMeetingScheduled:
+			if r := rows[e.Actor]; r != nil {
+				r.Meetings++
+			}
+		case store.EvPagePublished:
+			if r := rows[e.Actor]; r != nil {
+				r.Pages++
+			}
+		}
+	}
+	out := make([]LoadRow, 0, len(order))
+	for _, id := range order {
+		r := rows[id]
+		r.Minutes = r.Answered*10 + r.Meetings*30
+		out = append(out, *r)
+	}
+	return out
 }
 
 // Metrics считает показатели по журналу: сколько вопросов закрыла база, как быстро отвечают люди,

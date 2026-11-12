@@ -74,6 +74,7 @@ type Page struct {
 	Body            string `json:"body"`
 	SourceQuestion  string `json:"source_question,omitempty"` // для страниц «Вопрос-ответ» из ответа человека (P2)
 	SimilarPageID   string `json:"similar_page_id,omitempty"` // BR-32: похожая страница, которую можно дополнить
+	MergedInto      string `json:"merged_into,omitempty"`     // BR-39: после объединения дублей страница ведёт на общую
 }
 
 type Folder struct {
@@ -83,9 +84,33 @@ type Folder struct {
 }
 
 type KB struct {
-	Spaces  []Space  `json:"spaces"`
-	Folders []Folder `json:"folders"`
-	Pages   []Page   `json:"pages"`
+	Spaces      []Space         `json:"spaces"`
+	Folders     []Folder        `json:"folders"`
+	Pages       []Page          `json:"pages"`
+	Maintenance MaintenanceSeed `json:"maintenance_seed"`
+}
+
+// MaintenanceSeed — исходное состояние «Поддержки базы» (SC-22): дубли, открытые вопросы, неподтверждённые черновики.
+type MaintenanceSeed struct {
+	DuplicatePairs []struct {
+		ID            string   `json:"id"`
+		Pages         []string `json:"pages"`
+		ProposedTitle string   `json:"proposed_title"`
+		Reason        string   `json:"reason"`
+	} `json:"duplicate_pairs"`
+	OpenQuestions []struct {
+		ID      string `json:"id"`
+		Text    string `json:"text"`
+		AskedBy string `json:"asked_by"`
+		Reason  string `json:"reason"`
+	} `json:"open_questions"`
+	UnconfirmedDrafts []struct {
+		ID        string `json:"id"`
+		Title     string `json:"title"`
+		AuthorID  string `json:"author_id"`
+		CreatedAt string `json:"created_at"`
+	} `json:"unconfirmed_drafts"`
+	NextScheduledCheck string `json:"next_scheduled_check"`
 }
 
 type Stage struct {

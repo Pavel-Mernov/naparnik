@@ -157,6 +157,11 @@ func teamDirectory(c Ctx, _ map[string]any) Result {
 // Базовый лексический подбор. Лидер на сценарных вопросах верный (Q2 → Орлов, Q3 → Смирнова, Q5 → Лебедева),
 // но уверенность у Q2 и Q5 ниже порога BR-13 → они уйдут бадди. Настраивать по docs/04-mock-data/evals.json.
 func FindExpert(c Ctx, question string) (id string, confidence float64, reason string) {
+	return findExpertExcluding(c, question, nil)
+}
+
+// findExpertExcluding — то же, без людей, которые уже сказали «не ко мне» (BR-17: ИИ предлагает следующего кандидата).
+func findExpertExcluding(c Ctx, question string, exclude map[string]bool) (id string, confidence float64, reason string) {
 	q := Stems(question)
 	type cand struct {
 		pageScores []float64
@@ -187,7 +192,7 @@ func FindExpert(c Ctx, question string) (id string, confidence float64, reason s
 	n := float64(len(kbPages))
 	weight := func(st string) float64 { return math.Min(1, math.Log(1+n/float64(df[st]))/math.Log(1+n/3)) }
 	for i, p := range kbPages {
-		if p.AuthorID == "" || p.AuthorID == c.User.ID || generalFolders[p.Folder] {
+		if p.AuthorID == "" || p.AuthorID == c.User.ID || generalFolders[p.Folder] || exclude[p.AuthorID] {
 			continue
 		}
 		topic := 0.0
@@ -202,7 +207,7 @@ func FindExpert(c Ctx, question string) (id string, confidence float64, reason s
 		get(p.AuthorID).pageScores = append(get(p.AuthorID).pageScores, recencyWeight(c, p.UpdatedAt)*topic)
 	}
 	for _, u := range c.Store.Data.Team.Users {
-		if u.ID == c.User.ID || store.HasRole(&u, store.RoleIntern) {
+		if u.ID == c.User.ID || store.HasRole(&u, store.RoleIntern) || exclude[u.ID] {
 			continue
 		}
 		if n := overlap(q, Stems(u.Responsibility)); n > 0 {

@@ -47,3 +47,15 @@ func (s *Store) UpdateMeeting(id string, fn func(*Meeting)) (Meeting, bool) {
 	}
 	return Meeting{}, false
 }
+
+func (s *Store) KBDecision(key string) string {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.kbDecisions[key]
+}
+
+func (s *Store) SetKBDecision(key, value string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.kbDecisions[key] = value
+}

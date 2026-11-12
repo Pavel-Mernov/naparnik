@@ -78,6 +78,12 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /api/questions/{id}/meeting", s.auth(s.scheduleMeeting))
 	mux.HandleFunc("POST /api/questions/{id}/leave-open", s.auth(s.leaveOpen)) // BR-37
 	mux.HandleFunc("GET /api/meetings", s.auth(s.meetings))
+	mux.HandleFunc("POST /api/questions/{id}/not-mine", s.auth(s.notMine))  // BR-17
+	mux.HandleFunc("POST /api/questions/{id}/redirect", s.auth(s.redirect)) // BR-16: бадди
+	mux.HandleFunc("POST /api/questions/{id}/assign", s.auth(s.assign))     // BR-37: владелец базы
+	mux.HandleFunc("GET /api/kb/maintenance", s.auth(s.kbMaintenance))      // SC-22
+	mux.HandleFunc("POST /api/kb/duplicates/{id}", s.auth(s.kbDuplicate))
+	mux.HandleFunc("POST /api/kb/drafts/{id}/remind", s.auth(s.kbRemind))
 	mux.HandleFunc("POST /api/meetings/{id}/finish", s.auth(s.finishMeeting)) // в проде — сигнал ВКС
 	if s.StaticDir != "" {
 		files := http.FileServer(http.Dir(s.StaticDir))
@@ -312,19 +318,20 @@ func (s *Server) precheck(w http.ResponseWriter, r *http.Request, u *mockdata.Us
 }
 
 type questionView struct {
-	ID          string `json:"id"`
-	AskedBy     string `json:"asked_by"`
-	AddresseeID string `json:"addressee_id"`
-	Addressee   string `json:"addressee"`
-	Title       string `json:"title,omitempty"`
-	Text        string `json:"text,omitempty"`
-	TextHidden  bool   `json:"text_hidden,omitempty"`
-	Reason      string `json:"reason,omitempty"`
-	Urgent      bool   `json:"urgent"`
-	Status      string `json:"status"`
-	Answer      string `json:"answer,omitempty"`
-	PageID      string `json:"page_id,omitempty"`
-	Hint        string `json:"hint,omitempty"` // BR-10a: только адресату
+	ID          string            `json:"id"`
+	AskedBy     string            `json:"asked_by"`
+	AddresseeID string            `json:"addressee_id"`
+	Addressee   string            `json:"addressee"`
+	Title       string            `json:"title,omitempty"`
+	Text        string            `json:"text,omitempty"`
+	TextHidden  bool              `json:"text_hidden,omitempty"`
+	Reason      string            `json:"reason,omitempty"`
+	Urgent      bool              `json:"urgent"`
+	Status      string            `json:"status"`
+	Answer      string            `json:"answer,omitempty"`
+	PageID      string            `json:"page_id,omitempty"`
+	Hint        string            `json:"hint,omitempty"`  // BR-10a: только адресату
+	Route       []store.RouteStep `json:"route,omitempty"` // смены адресата: видит стажёр, адресаты и бадди
 }
 
 // questions — видимость по 02-ROLES:
@@ -335,7 +342,7 @@ func (s *Server) questions(w http.ResponseWriter, _ *http.Request, u *mockdata.U
 	count := 0
 	for _, q := range s.Store.Questions() {
 		asker, _ := s.Store.User(q.AskedBy)
-		v := questionView{q.ID, q.AskedBy, q.AddresseeID, s.Store.Name(q.AddresseeID), q.Title, q.Text, false, q.Reason, q.Urgent, q.Status, q.Answer, q.PageID, ""}
+		v := questionView{q.ID, q.AskedBy, q.AddresseeID, s.Store.Name(q.AddresseeID), q.Title, q.Text, false, q.Reason, q.Urgent, q.Status, q.Answer, q.PageID, "", q.Route}
 		if q.AddresseeID == u.ID {
 			v.Hint = q.Hint
 		}

@@ -166,3 +166,56 @@ func TestMeetingAPI(t *testing.T) {
 		t.Fatalf("владелец базы видит открытый вопрос: %v", lead)
 	}
 }
+
+// SC-21: нагрузка бадди и экспертов; SC-22: поддержка базы; SC-08/09 через API.
+func TestLoadMaintenanceRerouteAPI(t *testing.T) {
+	srv, h := newServer(t)
+	u, _ := srv.Store.UserByLogin("intern.sokolov")
+	q := tools.Run(tools.Ctx{Store: srv.Store, User: u}, "send_question", map[string]any{"addressee_id": "u-lebedeva",
+		"text": "Как посчитать retention по когортам?"}).Data.(*store.Question)
+	if code, r := call(t, h, "POST", "/api/questions/"+q.ID+"/not-mine", "expert.lebedeva", `{"to":"u-orlov"}`); code != 200 || r["addressee"] != "Михаил Орлов" {
+		t.Fatalf("не ко мне: %d %v", code, r)
+	}
+	if code, _ := call(t, h, "POST", "/api/questions/"+q.ID+"/redirect", "expert.orlov", `{"to":"u-smirnova"}`); code != 403 {
+		t.Fatal("переадресует бадди")
+	}
+	if code, _ := call(t, h, "POST", "/api/questions/"+q.ID+"/redirect", "buddy.belova", `{"to":"u-smirnova"}`); code != 200 {
+		t.Fatal("бадди переадресовал")
+	}
+	_, mine := call(t, h, "GET", "/api/questions", "intern.sokolov", "")
+	if len(mine["questions"].([]any)[0].(map[string]any)["route"].([]any)) != 2 {
+		t.Fatal("маршрут виден стажёру")
+	}
+	if code, _ := call(t, h, "GET", "/api/kb/maintenance", "intern.sokolov", ""); code != 403 {
+		t.Fatal("поддержка базы — владельцу")
+	}
+	_, m := call(t, h, "GET", "/api/kb/maintenance", "lead.kovalev", "")
+	if len(m["duplicates"].([]any)) != 2 || len(m["open_questions"].([]any)) != 1 {
+		t.Fatalf("поддержка базы: %v", m)
+	}
+	if code, _ := call(t, h, "POST", "/api/kb/duplicates/dp-02", "lead.kovalev", `{"decision":"not_duplicate"}`); code != 200 {
+		t.Fatal("не дубль")
+	}
+	if code, _ := call(t, h, "POST", "/api/kb/duplicates/dp-02", "lead.kovalev", `{"decision":"merge"}`); code != 422 {
+		t.Fatal("повтор")
+	}
+	if code, _ := call(t, h, "POST", "/api/questions/q-seed-open/assign", "lead.kovalev", `{"to":"u-smirnova"}`); code != 200 {
+		t.Fatal("назначить")
+	}
+	if code, _ := call(t, h, "POST", "/api/kb/drafts/kb-draft-01/remind", "lead.kovalev", ""); code != 200 {
+		t.Fatal("напомнить")
+	}
+	if code, _ := call(t, h, "POST", "/api/kb/drafts/nope/remind", "lead.kovalev", ""); code != 404 {
+		t.Fatal("нет черновика")
+	}
+	_, metrics := call(t, h, "GET", "/api/metrics", "lead.kovalev", "")
+	load := map[string]map[string]any{}
+	for _, r := range metrics["load"].([]any) {
+		row := r.(map[string]any)
+		load[row["id"].(string)] = row
+	}
+	if load["u-lebedeva"]["received"].(float64) != 1 || load["u-orlov"]["received"].(float64) != 1 || load["u-smirnova"]["received"].(float64) != 2 ||
+		load["u-belova"]["role"] != "бадди" || load["u-kovalev"] != nil {
+		t.Fatalf("нагрузка: %v", load)
+	}
+}

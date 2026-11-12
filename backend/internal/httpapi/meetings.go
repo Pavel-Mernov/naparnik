@@ -67,3 +67,64 @@ func (s *Server) meetings(w http.ResponseWriter, _ *http.Request, u *mockdata.Us
 	}
 	writeJSON(w, 200, map[string]any{"meetings": out})
 }
+
+func (s *Server) to(r *http.Request) string {
+	var body struct {
+		To string `json:"to"`
+	}
+	_ = json.NewDecoder(r.Body).Decode(&body)
+	return body.To
+}
+
+func (s *Server) questionResult(w http.ResponseWriter, q store.Question, e *tools.Error) {
+	if e != nil {
+		writeResult(w, tools.Result{Error: e})
+		return
+	}
+	writeJSON(w, 200, map[string]any{"ok": true, "addressee_id": q.AddresseeID, "addressee": s.Store.Name(q.AddresseeID), "status": q.Status})
+}
+
+func (s *Server) notMine(w http.ResponseWriter, r *http.Request, u *mockdata.User) {
+	q, e := tools.NotMine(s.ctx(u), r.PathValue("id"), s.to(r))
+	s.questionResult(w, q, e)
+}
+
+func (s *Server) redirect(w http.ResponseWriter, r *http.Request, u *mockdata.User) {
+	q, e := tools.Redirect(s.ctx(u), r.PathValue("id"), s.to(r))
+	s.questionResult(w, q, e)
+}
+
+func (s *Server) assign(w http.ResponseWriter, r *http.Request, u *mockdata.User) {
+	q, e := tools.AssignOpen(s.ctx(u), r.PathValue("id"), s.to(r))
+	s.questionResult(w, q, e)
+}
+
+func (s *Server) kbMaintenance(w http.ResponseWriter, _ *http.Request, u *mockdata.User) {
+	m, e := tools.KBMaintenance(s.ctx(u))
+	if e != nil {
+		writeResult(w, tools.Result{Error: e})
+		return
+	}
+	writeJSON(w, 200, m)
+}
+
+func (s *Server) kbDuplicate(w http.ResponseWriter, r *http.Request, u *mockdata.User) {
+	var body struct {
+		Decision string `json:"decision"`
+	}
+	_ = json.NewDecoder(r.Body).Decode(&body)
+	d, e := tools.DecideDuplicate(s.ctx(u), r.PathValue("id"), body.Decision)
+	if e != nil {
+		writeResult(w, tools.Result{Error: e})
+		return
+	}
+	writeJSON(w, 200, map[string]any{"ok": true, "duplicate": d})
+}
+
+func (s *Server) kbRemind(w http.ResponseWriter, r *http.Request, u *mockdata.User) {
+	if e := tools.RemindDraft(s.ctx(u), r.PathValue("id")); e != nil {
+		writeResult(w, tools.Result{Error: e})
+		return
+	}
+	writeJSON(w, 200, map[string]bool{"ok": true})
+}
