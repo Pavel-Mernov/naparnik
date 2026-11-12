@@ -4,10 +4,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactElement } from "react";
 import {
   Alert, Avatar, Badge, Box, BottomNavigation, BottomNavigationAction, Button, Container, IconButton, LinearProgress,
-  ListItemText, Menu, MenuItem, Popover, Snackbar, Stack, TextField, Typography, useMediaQuery,
+  Divider, ListItemText, Menu, MenuItem, Popover, Snackbar, Stack, TextField, Typography, useMediaQuery,
 } from "@mui/material";
 import {
-  DescriptionOutlined, ForumOutlined, HomeOutlined, MenuBookOutlined,
+  AccountCircleOutlined, DescriptionOutlined, ForumOutlined, HomeOutlined, MenuBookOutlined,
   NotificationsNoneOutlined, TaskAltOutlined,
 } from "@mui/icons-material";
 import avitoLogo from "@/shared/assets/logo.svg";
@@ -15,8 +15,9 @@ import avitoLogoDark from "@/shared/assets/logo-dark.svg";
 import { AppProviders } from "@/app/providers";
 import { ThemeToggle } from "@/features/toggle-theme";
 import { ChatDrawer, type ChatMessage, type Lookup } from "@/widgets/chat";
+import { ProfileAvatar, ProfileDialog } from "@/widgets/profile";
 import {
-  api, ApiError, unwrap, type ChatReply, type KbDraft, type KbFolder, type KbPage, type Me, type PlanData, type PlanStep,
+  api, ApiError, getProfile, unwrap, type ChatReply, type KbDraft, type KbFolder, type KbPage, type Me, type PlanData, type PlanStep,
   type Question, type RequestItem, type Services, type TeamOverview, type TodayData, type User,
 } from "@/shared/api";
 import { STORAGE } from "@/shared/config";
@@ -68,6 +69,9 @@ function App() {
   const [snack, setSnack] = useState("");
   const [notesAnchor, setNotesAnchor] = useState<HTMLElement | null>(null);
   const [accountAnchor, setAccountAnchor] = useState<HTMLElement | null>(null);
+  // Карточка профиля (SCR-I5a): null — закрыта, "" — своя, иначе ID сотрудника.
+  const [profileOf, setProfileOf] = useState<string | null>(null);
+  const [myPhoto, setMyPhoto] = useState<{ login: string; url: string | null }>({ login: "", url: null });
   const role = data ? primaryRole(data.me.roles) : null;
   const views = role ? viewsFor(role) : [];
   const isCurrent = (owner: string, epoch: number) => account.current === owner && generation.current === epoch;
@@ -118,6 +122,12 @@ function App() {
   useEffect(() => { void load(); return () => { loadController.current?.abort(); }; }, [load]);
   useEffect(() => () => { actions.current.forEach((c) => c.abort()); }, []);
   // Чат на экране начинается с чистого листа — и разговор с агентом на сервере тоже.
+  // Своё фото — для аватара в шапке; без фото остаются инициалы.
+  useEffect(() => {
+    const controller = new AbortController();
+    getProfile(login, undefined, { signal: controller.signal }).then((p) => setMyPhoto({ login, url: p.photo?.url ?? null })).catch(() => undefined);
+    return () => controller.abort();
+  }, [login]);
   useEffect(() => { void api(login, "/api/chat/reset", { method: "POST", body: "{}" }).catch(() => undefined); }, [login]);
 
   const switchUser = (next: string) => {
@@ -130,6 +140,7 @@ function App() {
     actions.current.forEach((c) => c.abort());
     actions.current.clear();
     localStorage.setItem(STORAGE.login, next);
+    setProfileOf(null);
     setData(null); setView("day"); setSelectedIntern(""); setBusy(false); setError(""); setSnack("");
     setChatText(""); setChatOpen(false); setChatLoading(false); setMessages([GREETING]);
     setLoading(true); setLogin(next);
@@ -206,8 +217,8 @@ function App() {
           const soft = n.id.startsWith("ans-") || (n.go === "requests" && !rejected) ? t.okSoft : rejected ? t.badSoft : undefined;
           return <Row key={n.id} title={n.text} sub={n.meta} end={newsTag(n)} onClick={() => nav(n.go)} sx={soft ? { bgcolor: soft } : undefined} />;
         }) : <Empty text="Ответы людей и статусы заявок появятся здесь." variant={0} />}</Block>} />;
-      if (role === "lead") return <TeamPage overview={data.overview} onRequests={() => nav("requests")} />;
-      if (role === "buddy") return <BuddyPage data={data} onPlan={(id) => { setSelectedIntern(id); nav("plan"); }} onQuestions={() => nav("questions")} />;
+      if (role === "lead") return <TeamPage overview={data.overview} onRequests={() => nav("requests")} onProfile={setProfileOf} />;
+      if (role === "buddy") return <BuddyPage data={data} onPlan={(id) => { setSelectedIntern(id); nav("plan"); }} onQuestions={() => nav("questions")} onProfile={setProfileOf} />;
     }
     if (view === "plan" && role === "intern") return <PlanPage plan={data.plan} title="Мой план" context={`${data.me.week}-я неделя · ${data.me.department}`} today={data.me.today} onMarkDone={(s) => void markDone(s)} />;
     if (view === "plan" && role === "buddy") {
@@ -271,10 +282,10 @@ function App() {
                 <IconButton aria-label={`Уведомления: ${notes.length}`} onClick={(e) => setNotesAnchor(e.currentTarget)}>
                   <Badge badgeContent={urgent} sx={{ "& .MuiBadge-badge": { bgcolor: "error.main", color: "#000", fontWeight: 700, borderRadius: 0 } }}><NotificationsNoneOutlined /></Badge>
                 </IconButton>
-                <Box component="button" onClick={(e) => setAccountAnchor(e.currentTarget)} aria-label="Тестовая учётка — сменить роль" sx={{
+                <Box component="button" onClick={(e) => setAccountAnchor(e.currentTarget)} aria-label="Профиль и тестовые учётки" sx={{
                   display: "flex", alignItems: "center", gap: 1, font: "inherit", border: "none", bgcolor: "transparent", color: "inherit", px: 1, py: 0.5, "&:hover": { bgcolor: t.surface },
                 }}>
-                  <Avatar sx={{ width: 32, height: 32, fontSize: 13, bgcolor: t.todaySoft, color: t.text }}>{me ? initials(me.name) : "…"}</Avatar>
+                  {me ? <ProfileAvatar login={login} photoUrl={myPhoto.login === login ? myPhoto.url : null} initials={initials(me.name)} /> : <Avatar sx={{ width: 32, height: 32, fontSize: 13, bgcolor: t.todaySoft, color: t.text }}>…</Avatar>}
                   {wide && me && <Box textAlign="left"><Typography variant="body2" fontWeight={600} lineHeight={1.2}>{me.name}</Typography><Typography variant="caption" color="text.secondary">{role && ROLE_RU[role]} · демо</Typography></Box>}
                 </Box>
               </Stack>
@@ -352,6 +363,11 @@ function App() {
         <Menu open={Boolean(accountAnchor)} anchorEl={accountAnchor} onClose={() => setAccountAnchor(null)}
           anchorOrigin={{ vertical: "bottom", horizontal: "right" }} transformOrigin={{ vertical: "top", horizontal: "right" }}
           slotProps={{ paper: { sx: { minWidth: 320, maxWidth: "calc(100vw - 24px)" } } }}>
+          {me && <MenuItem onClick={() => { setAccountAnchor(null); setProfileOf(""); }}>
+            <AccountCircleOutlined sx={{ mr: 1.5, color: t.muted }} />
+            <ListItemText primary="Мой профиль" secondary="Фото, телефон, почта" />
+          </MenuItem>}
+          {me && <Divider />}
           <Typography variant="caption" color="text.secondary" sx={{ px: 2, pt: 1.5, pb: 1, display: "block" }}>Тестовые учётки · войти как</Typography>
           {others.map((u) => <MenuItem key={u.login} onClick={() => switchUser(u.login)}>
             <Avatar sx={{ width: 28, height: 28, fontSize: 12, bgcolor: t.surface, color: t.text }}>{initials(u.name)}</Avatar>
@@ -361,6 +377,8 @@ function App() {
 
         <ChatDrawer open={chatOpen} onClose={() => setChatOpen(false)} text={chatText} setText={setChatText} messages={messages} loading={chatLoading}
           onSend={(retry) => void sendChat(retry)} login={login} look={look} onAction={() => void load()} />
+        <ProfileDialog open={profileOf !== null} login={login} userId={profileOf || undefined} onClose={() => setProfileOf(null)}
+          onChanged={(p) => { if (p.can_edit) setMyPhoto({ login, url: p.photo?.url ?? null }); }} />
         <Snackbar open={Boolean(snack)} autoHideDuration={3000} onClose={() => setSnack("")} message={snack}
           anchorOrigin={{ vertical: "bottom", horizontal: "center" }} sx={{ bottom: { xs: 88, md: 24 } }} />
       </Box>

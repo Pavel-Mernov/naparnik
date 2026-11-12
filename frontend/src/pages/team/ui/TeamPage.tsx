@@ -1,5 +1,5 @@
 // Страница руководителя (FSD: pages/team).
-import { Box, Button, LinearProgress, Stack, Typography, useTheme } from "@mui/material";
+import { Box, Button, LinearProgress, Link, Stack, Typography, useTheme } from "@mui/material";
 import type { TeamOverview } from "@/shared/api";
 import { plural, requestTitle } from "@/shared/lib";
 import { Block, Empty, PageHead, Row, StatusTag } from "@/shared/ui";
@@ -14,7 +14,8 @@ const Metric = ({ value, label, alert }: { value: number; label: string; alert?:
   );
 };
 
-export const TeamPage = ({ overview, onRequests }: { overview?: TeamOverview; onRequests: () => void }) => {
+/** onProfile — открыть карточку стажёра (SCR-I5a); без него имя — просто текст. */
+export const TeamPage = ({ overview, onRequests, onProfile }: { overview?: TeamOverview; onRequests: () => void; onProfile?: (id: string) => void }) => {
   if (!overview) return <Empty text="Обзор команды пока недоступен." />;
   const { totals } = overview;
   const behind = overview.interns.filter((i) => i.overdue_steps > 0);
@@ -34,7 +35,7 @@ export const TeamPage = ({ overview, onRequests }: { overview?: TeamOverview; on
         <Box key={i.id} sx={{ py: 2, borderBottom: 1, borderColor: "divider" }}>
           <Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" gap={1}>
             <Box>
-              <Typography fontWeight={600}>{i.name}</Typography>
+              <Typography fontWeight={600}>{onProfile ? <Link component="button" onClick={() => onProfile(i.id)} color="inherit" underline="hover" sx={{ font: "inherit", fontWeight: 600, textAlign: "left" }}>{i.name}</Link> : i.name}</Typography>
               <Typography variant="body2" color="text.secondary">{i.week}-я неделя · бадди {i.buddy} · {i.stage || (i.plan_status === "draft" ? "план готовится" : "этапы пройдены")}</Typography>
             </Box>
             <Stack direction="row" gap={1} alignItems="center">

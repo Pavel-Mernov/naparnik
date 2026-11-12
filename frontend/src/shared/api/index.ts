@@ -152,3 +152,47 @@ export const unwrap = <T>(value: ApiEnvelope<T>): T => {
   if (!value.ok || value.data === undefined) throw new Error(value.error?.message ?? "Нет данных");
   return value.data;
 };
+
+// ---------- Профили сотрудников (US-38, spec/05 «Профили сотрудников») ----------
+export type Profile = {
+  id: string;
+  name: string;
+  initials: string;
+  photo: { url: string; updated_at: string } | null;
+  status: string;
+  position: string;
+  department: string;
+  phone: string;
+  email: string;
+  start_date?: string;
+  week?: number;
+  buddy?: string;
+  lead?: string;
+  can_edit: boolean;
+};
+
+export const MAX_PHOTO_BYTES = 512 * 1024;
+
+export const getProfile = (login: string, id?: string, init: RequestInit = {}) =>
+  api<{ ok: boolean; profile: Profile }>(login, id ? `/api/profiles/${encodeURIComponent(id)}` : "/api/profile", init).then((x) => x.profile);
+
+export const updatePhone = (login: string, phone: string) =>
+  api<{ ok: boolean; profile: Profile }>(login, "/api/profile", { method: "PATCH", body: JSON.stringify({ phone }) }).then((x) => x.profile);
+
+export const deletePhoto = (login: string) =>
+  api<{ ok: boolean; profile: Profile }>(login, "/api/profile/photo", { method: "DELETE" }).then((x) => x.profile);
+
+/** Фото — тело запроса как есть (не JSON): тип бэкенд определяет по содержимому. */
+export const uploadPhoto = async (login: string, file: Blob): Promise<Profile> => {
+  const response = await fetch("/api/profile/photo", { method: "PUT", headers: { "X-User": login, "Content-Type": file.type || "application/octet-stream" }, body: file });
+  const payload = (await response.json().catch(() => ({}))) as ApiEnvelope<never> & { profile?: Profile };
+  if (!response.ok || !payload.profile) throw new ApiError(response.status, payload.error?.message ?? "Не удалось загрузить фото");
+  return payload.profile;
+};
+
+/** Фото отдаётся только с X-User, поэтому <img> получает object URL; вызывающий освобождает его. */
+export const fetchPhoto = async (login: string, url: string, signal?: AbortSignal): Promise<string> => {
+  const response = await fetch(url, { headers: { "X-User": login }, signal });
+  if (!response.ok) throw new ApiError(response.status, "Фото недоступно");
+  return URL.createObjectURL(await response.blob());
+};

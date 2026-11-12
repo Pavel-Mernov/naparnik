@@ -1,9 +1,10 @@
 // Страница бадди (FSD: pages/buddy).
-import { Box, Button, LinearProgress, Stack, Typography } from "@mui/material";
+import { Box, Button, LinearProgress, Link, Stack, Typography } from "@mui/material";
 import type { DataState } from "@/shared/lib";
 import { Block, Empty, PageHead } from "@/shared/ui";
 
-export const BuddyPage = ({ data, onPlan, onQuestions }: { data: DataState; onPlan: (id: string) => void; onQuestions: () => void }) => {
+/** onProfile — открыть карточку стажёра (SCR-I5a); без него имя — просто текст. */
+export const BuddyPage = ({ data, onPlan, onQuestions, onProfile }: { data: DataState; onPlan: (id: string) => void; onQuestions: () => void; onProfile?: (id: string) => void }) => {
   const stuck = data.managedPlans.filter((i) => i.plan?.steps.some((s) => s.status === "Overdue"));
   const routed = data.questions.filter((q) => q.asked_by !== data.me.id && q.status === "Sent").length;
   return <>
@@ -16,7 +17,7 @@ export const BuddyPage = ({ data, onPlan, onQuestions }: { data: DataState; onPl
         return <Box key={i.id} sx={{ py: 2, borderBottom: 1, borderColor: "divider" }}>
           <Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" gap={1.5}>
             <Box>
-              <Typography fontWeight={600}>{i.name}</Typography>
+              <Typography fontWeight={600}>{onProfile ? <Link component="button" onClick={() => onProfile(i.id)} color="inherit" underline="hover" sx={{ font: "inherit", fontWeight: 600, textAlign: "left" }}>{i.name}</Link> : i.name}</Typography>
               <Typography variant="body2" color="text.secondary">{i.plan ? (overdue.length ? `Застрял: ${overdue.map((s) => s.title).join("; ")}` : `Дальше: ${i.plan.next_step?.title ?? "все шаги пройдены"}`) : "План готовится"}</Typography>
             </Box>
             <Button variant="text" onClick={() => onPlan(i.id)} sx={{ alignSelf: { sm: "center" } }}>Открыть план</Button>
