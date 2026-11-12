@@ -17,4 +17,3 @@ dist/
 htmlcov/
 .ruff_cache/
 coverage.out
-frontend/coverage/
