@@ -53,6 +53,7 @@ type stubSession struct {
 	accessSystem      string // последний разрешённый доступ, чтобы понять «сделай за меня»
 	accessCreate      bool
 	accessExplanation string
+	wantDay           bool // спросили дату отгула — следующий ответ с датой продолжает оформление
 }
 
 func (s *stubSession) wait(ctx context.Context) error {
@@ -130,6 +131,10 @@ func (s *stubSession) SendUser(ctx context.Context, text string) (Step, error) {
 	}
 	s.question = text
 	low := strings.ToLower(strings.TrimSpace(text))
+	if s.wantDay && ParseDay(text, s.stub.today) != "" && !strings.Contains(low, "отгул") {
+		low = "отгул " + low // «в пятницу» после «На какую дату нужен отгул?»
+	}
+	s.wantDay = false
 	s.accessExplanation = ""
 	s.accessCreate = accessOrder.MatchString(low) && !accessNoOrder.MatchString(low)
 	previousSystem := s.accessSystem
@@ -144,6 +149,10 @@ func (s *stubSession) SendUser(ctx context.Context, text string) (Step, error) {
 		calls = append(calls, s.call("find_expert", map[string]any{"question": text}))
 	case strings.Contains(low, "отгул"):
 		day := ParseDay(text, s.stub.today)
+		if day == "" && s.allowed["create_absence_request"] {
+			s.wantDay = true
+			return Step{Text: "На какую дату нужен отгул? Например: «в пятницу» или «2026-11-20»."}, nil
+		}
 		if day == "" {
 			return Step{Text: "На какую дату нужен отгул?"}, nil
 		}
@@ -310,6 +319,9 @@ func (s *stubSession) describe(tool string, raw json.RawMessage) (string, *ToolC
 		}
 		_ = json.Unmarshal(raw, &d)
 		if !d.Found {
+			if !s.allowed["find_expert"] {
+				return "В базе ответа на это нет. Подскажут коллеги — список в «Кто есть кто».", nil
+			}
 			c := s.call("find_expert", map[string]any{"question": s.question})
 			return "", &c
 		}
@@ -326,6 +338,9 @@ func (s *stubSession) describe(tool string, raw json.RawMessage) (string, *ToolC
 			Reason      string `json:"reason"`
 		}
 		_ = json.Unmarshal(raw, &d)
+		if !s.allowed["send_question"] || d.AddresseeID == "" {
+			return fmt.Sprintf("По этой теме лучше спросить: %s — %s.", d.Name, d.Reason), nil
+		}
 		c := s.call("send_question", map[string]any{"text": s.question, "addressee_id": d.AddresseeID, "reason": d.Reason})
 		return "", &c
 	case "get_today":

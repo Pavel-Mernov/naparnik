@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"regexp"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -47,21 +48,33 @@ type Reply struct {
 	Sources  []Source `json:"sources"`
 	Degraded bool     `json:"degraded"` // модель не ответила — показан запасной ответ (BR-70)
 	Retry    bool     `json:"retry"`    // показать кнопку «Повторить», вопрос сохранён
-	ToolLog  []string `json:"-"`        // для журнала событий (BR-73)
-	Trace    []string `json:"-"`        // вызовы с аргументами и коротким итогом — для прогона evals
+	// Actions — быстрые действия, когда модель недоступна: та же дорога «черновик → подтвердить» через правила (BR-70).
+	Actions []QuickAction `json:"actions,omitempty"`
+	ToolLog []string      `json:"-"` // для журнала событий (BR-73)
+	Trace   []string      `json:"-"` // вызовы с аргументами и коротким итогом — для прогона evals
 
 	searched, found, expertAsked bool // искал ли в базе в этом ходе, нашёл ли, подбирал ли человека
 
+}
+
+// QuickAction — кнопка в чате: нажатие отправляет Text как сообщение пользователя.
+type QuickAction struct {
+	Label string `json:"label"`
+	Text  string `json:"text"`
 }
 
 type Agent struct {
 	Store    *store.Store
 	Provider llm.Provider
 	Timeout  time.Duration
+	// Backup — правила вместо модели (llm.Stub stub_ok): если модель упала или молчит, вопрос не теряется,
+	// а проходит по тем же инструментам и проверкам. nil — только фрагменты базы.
+	Backup llm.Provider
 
 	mu        sync.Mutex
 	userLocks map[string]*sync.Mutex
 	sessions  map[string]*chat // история разговора по логину: «сделай за меня» помнит, о чём шла речь
+	backups   map[string]*chat // разговор с правилами, пока модель недоступна: «на какую дату?» → «в пятницу»
 }
 
 // chat — разговор пользователя с моделью. Ограничен по числу реплик, чтобы контекст не рос бесконечно.
@@ -72,8 +85,15 @@ type chat struct {
 
 const maxTurns = 20
 
+// backupTimeout — правилам внешний API не нужен; отдельный срок, потому что срок модели уже истёк.
+const backupTimeout = 5 * time.Second
+
 func New(s *store.Store, p llm.Provider, timeout time.Duration) *Agent {
-	return &Agent{Store: s, Provider: p, Timeout: timeout, userLocks: map[string]*sync.Mutex{}, sessions: map[string]*chat{}}
+	a := &Agent{Store: s, Provider: p, Timeout: timeout, userLocks: map[string]*sync.Mutex{}, sessions: map[string]*chat{}, backups: map[string]*chat{}}
+	if s != nil {
+		a.Backup = llm.NewStub("stub_ok", s.Today)
+	}
+	return a
 }
 
 func (a *Agent) contextFor(u *mockdata.User) string {
@@ -127,6 +147,7 @@ func (a *Agent) Ask(ctx context.Context, login, text string) (Reply, error) {
 	for _, t := range tools.For(u) {
 		specs = append(specs, llm.ToolSpec{Name: t.Name, Description: t.Description, Schema: t.Schema})
 	}
+	parent := ctx
 	ctx, cancel := context.WithTimeout(ctx, a.Timeout)
 	defer cancel()
 
@@ -151,8 +172,11 @@ func (a *Agent) Ask(ctx context.Context, login, text string) (Reply, error) {
 		a.mu.Lock()
 		delete(a.sessions, login)
 		a.mu.Unlock()
-		return a.fallback(tc, text, err), nil
+		return a.degraded(parent, login, tc, specs, text, err), nil
 	}
+	a.mu.Lock()
+	delete(a.backups, login) // модель снова отвечает — разговор с правилами больше не нужен
+	a.mu.Unlock()
 	reply.Text = honestMiss(tc, &reply, step.Text, text)
 	if step.Refused {
 		reply.Text = "С этим запросом помочь не могу."
@@ -297,13 +321,74 @@ func canDraft(u *mockdata.User) bool {
 	return false
 }
 
-// fallback — BR-70 и режим stub_error: модель недоступна → найденные фрагменты базы без пересказа.
+func degradedReason(err error) string {
+	if strings.Contains(err.Error(), context.DeadlineExceeded.Error()) {
+		return "Модель не ответила вовремя."
+	}
+	return "Модель сейчас недоступна."
+}
+
+// degraded — BR-70: модель упала или молчит. Вопрос проходит по правилам через те же инструменты, права
+// и черновики с подтверждением — стажёр получает тот же порядок действий. Правила не справились —
+// фрагменты базы без пересказа. В обоих случаях — кнопки быстрых действий.
+func (a *Agent) degraded(ctx context.Context, login string, tc tools.Ctx, specs []llm.ToolSpec, text string, cause error) Reply {
+	if a.Backup != nil {
+		a.mu.Lock()
+		c := a.backups[login]
+		if c == nil || c.turns >= maxTurns {
+			c = &chat{session: a.Backup.Start(SystemPrompt, a.contextFor(tc.User), specs)}
+			a.backups[login] = c
+		}
+		c.turns++
+		a.mu.Unlock()
+		bctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), backupTimeout)
+		defer cancel()
+		reply := Reply{Drafts: []Draft{}, Sources: []Source{}, Degraded: true}
+		step, err := a.run(bctx, c.session, tc, &reply, text)
+		if err == nil && !step.Refused && strings.TrimSpace(step.Text) != "" {
+			reply.Text = degradedReason(cause) + " Отвечаю в упрощённом режиме, по правилам.\n\n" + honestMiss(tc, &reply, step.Text, text)
+			reply.Retry = len(reply.Drafts) == 0 // «Повторить» спросит модель ещё раз; с черновиком повтор не нужен
+			if len(reply.Drafts) == 0 {
+				reply.Actions = quickActions(tc.User, text)
+			}
+			return reply
+		}
+		a.mu.Lock()
+		delete(a.backups, login)
+		a.mu.Unlock()
+	}
+	r := a.fallback(tc, text, cause)
+	r.Actions = quickActions(tc.User, text)
+	return r
+}
+
+// quickActions — частые действия роли фразами, которые понимают и модель, и правила.
+func quickActions(u *mockdata.User, question string) []QuickAction {
+	can := map[string]bool{}
+	for _, t := range tools.For(u) {
+		can[t.Name] = true
+	}
+	var out []QuickAction
+	if can["send_question"] && strings.TrimSpace(question) != "" && !strings.HasPrefix(strings.ToLower(question), "не помогло") {
+		out = append(out, QuickAction{"Спросить человека", "Не помогло, нужен человек: " + question})
+	}
+	if can["get_today"] {
+		out = append(out, QuickAction{"Что сегодня по плану", "Что мне сегодня делать?"})
+	}
+	if can["create_absence_request"] {
+		out = append(out, QuickAction{"Оформить отгул", "Нужен отгул"})
+	}
+	if can["get_required_accesses"] {
+		out = append(out, QuickAction{"Какие доступы нужны", "Какие доступы мне нужны?"})
+	}
+	same := strings.ToLower(strings.TrimSpace(question))
+	return slices.DeleteFunc(out, func(x QuickAction) bool { return strings.ToLower(x.Text) == same }) // не повторять только что отправленное
+}
+
+// fallback — последний рубеж BR-70: ни модели, ни правил → найденные фрагменты базы без пересказа.
 func (a *Agent) fallback(tc tools.Ctx, text string, err error) Reply {
 	reply := Reply{Drafts: []Draft{}, Sources: []Source{}, Degraded: true, Retry: true}
-	reason := "Модель сейчас недоступна."
-	if ctxErr := context.DeadlineExceeded; strings.Contains(err.Error(), ctxErr.Error()) {
-		reason = "Модель не ответила вовремя."
-	}
+	reason := degradedReason(err)
 	hits := tools.SearchKB(tc, text)
 	if len(hits) == 0 {
 		reply.Text = reason + " Твой вопрос сохранён — нажми «Повторить». План и заявки работают без модели."
@@ -324,6 +409,7 @@ func (a *Agent) Reset(login string) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	delete(a.sessions, login)
+	delete(a.backups, login)
 }
 
 // Confirm — человек нажал «Подтвердить»: выполнить черновик и вернуть квитанцию (BR-43).

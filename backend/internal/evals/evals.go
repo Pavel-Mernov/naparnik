@@ -152,6 +152,9 @@ func Run(ctx context.Context, a *agent.Agent, s *store.Store, items []Item, mode
 			}
 			res.Checks = append(res.Checks, mark+msg)
 		}
+		if mode != "stub" {
+			ok(!reply.Degraded, "ответила модель, а не запасной режим (BR-70)")
+		}
 		srcIDs := []string{}
 		for _, src := range reply.Sources {
 			srcIDs = append(srcIDs, src.PageID)

@@ -171,6 +171,7 @@ export const ChatDrawer = ({ open, onClose, text, setText, messages, loading, on
               <Box key={`${m.role}-${index}`} alignSelf={m.role === "user" ? "flex-end" : "stretch"}
                 sx={{ maxWidth: m.role === "user" ? "92%" : "100%", width: m.role === "assistant" ? "100%" : undefined }}>
                 <Box sx={{ px: 2, py: 1.5, bgcolor: m.role === "user" ? t.inverse : t.surface, color: m.role === "user" ? t.onInverse : t.text }}>
+                  {m.reply?.degraded && <Typography variant="caption" sx={{ display: "block", color: t.muted, fontWeight: 600, mb: 0.5 }}>Упрощённый режим · без модели</Typography>}
                   {m.role === "user" ? <Typography>{m.text}</Typography> : <Markdown text={m.text} />}
                 </Box>
                 {m.reply?.sources.map((s) => (
@@ -181,6 +182,13 @@ export const ChatDrawer = ({ open, onClose, text, setText, messages, loading, on
                 ))}
                 {m.reply?.drafts.map((d) => <DraftCard key={d.id} draft={d} login={login} look={look} onDone={onAction} />)}
                 {m.reply && m.reply.sources.length > 0 && !m.reply.drafts.length && <Feedback onNotHelpful={() => onSend(`Не помогло, нужен человек: ${messages[index - 1]?.text ?? ""}`)} />}
+                {m.reply?.actions && m.reply.actions.length > 0 && index === messages.length - 1 && !loading && (
+                  <Stack direction="row" gap={1} mt={1} flexWrap="wrap" aria-label="Быстрые действия">
+                    {m.reply.actions.map((x) => (
+                      <Button key={x.label} variant="outlined" size="small" sx={{ minHeight: 36 }} onClick={() => onSend(x.text)}>{x.label}</Button>
+                    ))}
+                  </Stack>
+                )}
                 {m.retryText && <Button variant="text" size="small" sx={{ mt: 1, minHeight: 36 }} onClick={() => onSend(m.retryText)}>Повторить</Button>}
                 {intro && !loading && (
                   <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1, mt: 2 }}>

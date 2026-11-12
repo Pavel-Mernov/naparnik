@@ -127,15 +127,68 @@ func (panicProvider) Start(string, string, []llm.ToolSpec) llm.Session {
 	panic("модель не должна вызываться")
 }
 
-// SC-26, BR-70: модель недоступна или молчит — запасной ответ из базы, вопрос сохранён.
+// SC-26, BR-70: модель недоступна или молчит — тот же порядок действий по правилам, вопрос не теряется.
 func TestFallback(t *testing.T) {
 	r := ask(t, newAgent(t, "stub_error", time.Second), "intern.sokolov", "Что такое витрина и где лежит витрина объявлений?")
-	if !r.Degraded || !r.Retry || len(r.Sources) == 0 || !strings.Contains(r.Text, "без пересказа") {
+	if !r.Degraded || !r.Retry || len(r.Sources) == 0 || !strings.Contains(r.Text, "упрощённом режиме") || len(r.Actions) == 0 {
 		t.Fatalf("stub_error: %+v", r)
 	}
-	r = ask(t, newAgent(t, "stub_timeout", 30*time.Millisecond), "intern.sokolov", "zzz qqq")
-	if !r.Degraded || !strings.Contains(r.Text, "не ответила вовремя") || !strings.Contains(r.Text, "Повторить") {
+	r = ask(t, newAgent(t, "stub_timeout", 30*time.Millisecond), "intern.sokolov", "Что мне сегодня делать?")
+	if !r.Degraded || !strings.Contains(r.Text, "не ответила вовремя") || !strings.Contains(r.Text, "Неделя") {
 		t.Fatalf("stub_timeout: %+v", r)
+	}
+	// Без правил — последний рубеж: фрагменты базы без пересказа и «Повторить».
+	a := newAgent(t, "stub_error", time.Second)
+	a.Backup = nil
+	r = ask(t, a, "intern.sokolov", "Что такое витрина и где лежит витрина объявлений?")
+	if !r.Degraded || !r.Retry || len(r.Sources) == 0 || !strings.Contains(r.Text, "без пересказа") || len(r.Actions) == 0 {
+		t.Fatalf("без правил: %+v", r)
+	}
+	r = ask(t, a, "intern.sokolov", "zzz qqq")
+	if !strings.Contains(r.Text, "Повторить") {
+		t.Fatalf("без правил, пусто: %+v", r)
+	}
+}
+
+// BR-70, BR-43: модель упала — отгул всё равно оформляется в два сообщения через черновик и подтверждение.
+func TestFallbackKeepsActions(t *testing.T) {
+	a := newAgent(t, "stub_error", time.Second)
+	r := ask(t, a, "intern.sokolov", "Нужен отгул")
+	if !r.Degraded || len(r.Drafts) != 0 || !strings.Contains(r.Text, "На какую дату") {
+		t.Fatalf("уточнение даты: %+v", r)
+	}
+	r = ask(t, a, "intern.sokolov", "в пятницу")
+	if len(r.Drafts) != 1 || r.Drafts[0].Tool != "create_absence_request" || r.Retry || len(r.Actions) != 0 {
+		t.Fatalf("черновик отгула: %+v", r)
+	}
+	if len(a.Store.Requests("u-sokolov")) != 0 {
+		t.Fatal("без подтверждения ничего не уходит")
+	}
+	if res := a.Confirm("intern.sokolov", r.Drafts[0].ID); !res.OK || len(a.Store.Requests("u-sokolov")) != 1 {
+		t.Fatalf("подтверждение: %+v", res)
+	}
+	// Вопроса нет в базе — правила готовят вопрос человеку, тоже черновиком.
+	r = ask(t, a, "intern.sokolov", "Как согласовать бюджет на рекламу в Тайланде?")
+	if len(r.Drafts) != 1 || r.Drafts[0].Tool != "send_question" || !strings.HasPrefix(strings.SplitN(r.Text, "\n\n", 2)[1], "В базе ответа на это нет") {
+		t.Fatalf("вопрос человеку: %+v", r)
+	}
+}
+
+// Кнопки быстрых действий — только то, что роли доступно.
+func TestQuickActionsByRole(t *testing.T) {
+	a := newAgent(t, "stub_error", time.Second)
+	intern := ask(t, a, "intern.sokolov", "Что такое витрина?")
+	labels := []string{}
+	for _, x := range intern.Actions {
+		labels = append(labels, x.Label)
+	}
+	if strings.Join(labels, "|") != "Спросить человека|Что сегодня по плану|Оформить отгул|Какие доступы нужны" ||
+		intern.Actions[0].Text != "Не помогло, нужен человек: Что такое витрина?" {
+		t.Fatalf("стажёр: %+v", intern.Actions)
+	}
+	lead := ask(t, a, "lead.kovalev", "Как согласовать бюджет на рекламу в Тайланде?")
+	if len(lead.Actions) != 0 || len(lead.Drafts) != 0 || strings.Contains(lead.Text, "недоступно") {
+		t.Fatalf("руководитель: %+v", lead)
 	}
 }
 

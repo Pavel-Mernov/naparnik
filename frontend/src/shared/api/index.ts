@@ -119,6 +119,8 @@ export type ChatReply = {
   sources: Array<{ page_id: string; title: string; author: string; updated_at: string; label?: string }>;
   degraded: boolean;
   retry: boolean;
+  /** Модель недоступна: частые действия роли, нажатие отправляет text как сообщение (BR-70). */
+  actions?: Array<{ label: string; text: string }>;
 };
 
 type ApiEnvelope<T> = { ok: boolean; data?: T; error?: { code: string; message: string } };
