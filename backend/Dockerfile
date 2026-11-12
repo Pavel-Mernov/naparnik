@@ -5,7 +5,7 @@ FROM golang:1.27-alpine AS build
 WORKDIR /src/backend
 COPY backend/go.mod backend/go.sum ./
 RUN --mount=type=secret,id=proxy_ca,required=false \
-    if [ -f /run/secrets/proxy_ca ]; then \
+    if [ -s /run/secrets/proxy_ca ]; then \
       SSL_CERT_FILE=/run/secrets/proxy_ca go mod download; \
     else \
       go mod download; \

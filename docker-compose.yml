@@ -79,6 +79,7 @@ volumes:
   redis-data:
 
 secrets:
-  # В Codex Cloud это CA прокси; локально используется системный bundle.
+  # В Codex Cloud это CA прокси (CODEX_PROXY_CERT). Локально — пустой файл из репозитория: он есть на любой ОС
+  # (на macOS нет /etc/ssl/certs/ca-certificates.crt), а пустой Dockerfile пропускает и берёт системные сертификаты образа.
   proxy_ca:
-    file: ${CODEX_PROXY_CERT:-/etc/ssl/certs/ca-certificates.crt}
+    file: ${CODEX_PROXY_CERT:-./docker/no-proxy-ca.pem}
