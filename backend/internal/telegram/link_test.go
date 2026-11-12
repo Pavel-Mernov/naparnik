@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/worker4556/naparnik/backend/internal/cache"
+	"github.com/worker4556/naparnik/backend/internal/flags"
 	"github.com/worker4556/naparnik/backend/internal/store"
 )
 
@@ -95,5 +96,28 @@ func TestRestoreLinks(t *testing.T) {
 	third.Restore(ctx)
 	if _, ok := s3.TelegramChat("u-sokolov"); ok {
 		t.Fatal("после /stop привязка не возвращается")
+	}
+}
+
+// Флаг telegram=off: ничего не отправляется, уведомления ждут в вебе и уйдут после включения.
+func TestTelegramFlagOff(t *testing.T) {
+	api := &fakeAPI{}
+	srv := api.server(t)
+	defer srv.Close()
+	svc, s := newService(t, srv, "live")
+	svc.cfg.IgnoreHours = true
+	s.LinkTelegram("u-sokolov", 9)
+	s.Notify(store.Notification{ID: "x", UserID: "u-sokolov", Text: "привет", TG: "pending"})
+	t.Setenv("FEATURE_FLAGS", "telegram=off")
+	old := flags.Default
+	flags.Default = flags.FromEnv()
+	_ = svc.Flush(context.Background())
+	if len(api.sent) != 0 {
+		t.Fatal("выключено, но отправлено")
+	}
+	flags.Default = old
+	_ = svc.Flush(context.Background())
+	if len(api.sent) != 1 {
+		t.Fatal("после включения — отправлено", len(api.sent))
 	}
 }

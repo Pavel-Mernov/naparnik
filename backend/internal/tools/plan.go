@@ -97,7 +97,7 @@ func getToday(c Ctx, _ map[string]any) Result {
 	}
 	day := c.Store.Today.Format("2006-01-02")
 	var events []map[string]string
-	for _, e := range c.Store.Data.Calendar.Events {
+	for _, e := range calendarEvents(c) {
 		if strings.HasPrefix(e.Start, day) && containsStr(e.Participants, c.User.ID) {
 			events = append(events, map[string]string{"title": e.Title, "start": e.Start[11:16]})
 		}

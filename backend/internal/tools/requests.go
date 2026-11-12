@@ -1,6 +1,7 @@
 package tools
 
 import (
+	"github.com/worker4556/naparnik/backend/internal/adapters"
 	"strings"
 	"time"
 
@@ -12,7 +13,7 @@ import (
 const SelfServiceHint = "раздел «Заявки» → кнопка «Оформить самому»"
 
 func requestType(c Ctx, t string) (mockdata.RequestType, bool) {
-	for _, rt := range c.Store.Data.Absence.RequestTypes {
+	for _, rt := range absenceCatalog(c).RequestTypes {
 		if rt.Type == t {
 			return rt, true
 		}
@@ -35,7 +36,7 @@ func getAbsenceRules(c Ctx, args map[string]any) Result {
 	if !found {
 		return fail("validation", "Неизвестный тип отсутствия.")
 	}
-	ss := c.Store.Data.Absence.SelfService
+	ss := absenceCatalog(c).SelfService
 	data := map[string]any{"type": rt.Type, "title": rt.Title, "self_service": ss, "approver": c.Store.Name(c.User.LeadID),
 		"self_service_in_app": SelfServiceHint}
 	if p, found := pageBody(c, ss.SourcePage); found {
@@ -64,7 +65,7 @@ func precheckAbsence(c Ctx, args map[string]any) Result {
 		ws = append(ws, warning{"SHORT_NOTICE", "По тестовой инструкции отгул подают за 2 рабочих дня"})
 	}
 	date := day.Format(time.DateOnly)
-	for _, e := range c.Store.Data.Calendar.Events {
+	for _, e := range calendarEvents(c) {
 		if strings.HasPrefix(e.Start, date) && containsStr(e.Participants, c.User.ID) && e.Type != "deadline" {
 			ws = append(ws, warning{"MEETING_CONFLICT", "В этот день у тебя встреча: " + e.Title})
 		}
@@ -86,14 +87,18 @@ func createAbsenceRequest(c Ctx, args map[string]any) Result {
 	if !valid || !day.After(c.Store.Today) {
 		return fail("validation", "Укажи будущую дату")
 	}
-	if mockFail("absence") {
-		return fail("unavailable", "Сервис отсутствий временно недоступен. Черновик сохранён — можно повторить.")
+	ctx, cancel := svcCtx()
+	defer cancel()
+	rc, err := c.svc().Absence.Submit(ctx, adapters.AbsenceSubmit{Key: "abs:" + c.User.ID + ":" + rt.Type + ":" + day.Format(time.DateOnly),
+		EmployeeID: c.User.ID, ApproverID: c.User.LeadID, Type: rt.Type, Date: day.Format(time.DateOnly), Comment: str(args, "comment")})
+	if err != nil {
+		return serviceError(err, "Сервис отсутствий")
 	}
-	r := &store.Request{ID: c.Store.NextID("ABS"), Kind: "absence", Type: rt.Type, Date: day.Format(time.DateOnly),
-		Comment: str(args, "comment"), EmployeeID: c.User.ID, ApproverID: c.User.LeadID, Status: "pending",
+	r := &store.Request{ID: rc.ID, Kind: "absence", Type: rt.Type, Date: day.Format(time.DateOnly),
+		Comment: str(args, "comment"), EmployeeID: c.User.ID, ApproverID: c.User.LeadID, Status: rc.Status,
 		CreatedAt: time.Now().Format(time.RFC3339)}
 	created(c, r)
-	return Result{OK: true, Data: r, Receipt: map[string]string{"id": r.ID, "status": "pending", "approver": c.Store.Name(r.ApproverID)}}
+	return Result{OK: true, Data: r, Receipt: map[string]string{"id": r.ID, "status": r.Status, "approver": c.Store.Name(r.ApproverID)}}
 }
 
 func listMyRequests(c Ctx, _ map[string]any) Result {
@@ -103,7 +108,7 @@ func listMyRequests(c Ctx, _ map[string]any) Result {
 // accessStatus — статус каждой системы для стажёра: выданные из сервиса доступов и его заявки поверх.
 func accessStatus(c Ctx) map[string]string {
 	status := map[string]string{}
-	for _, st := range c.Store.Data.Access.CurrentState[c.User.ID] {
+	for _, st := range grantedAccess(c) {
 		status[st.System] = st.Status
 	}
 	for _, r := range c.Store.Requests(c.User.ID) {
@@ -126,9 +131,10 @@ func getRequiredAccesses(c Ctx, _ map[string]any) Result {
 }
 
 func findSystem(c Ctx, id string) *mockdata.System {
-	for i := range c.Store.Data.Access.Systems {
-		if c.Store.Data.Access.Systems[i].ID == id {
-			return &c.Store.Data.Access.Systems[i]
+	systems := accessCatalog(c).Systems
+	for i := range systems {
+		if systems[i].ID == id {
+			return &systems[i]
 		}
 	}
 	return nil
@@ -151,14 +157,18 @@ func requestAccess(c Ctx, args map[string]any) Result {
 		return Result{Error: e}
 	}
 	sys := findSystem(c, str(args, "system"))
-	if mockFail("access") {
-		return fail("unavailable", "Сервис доступов временно недоступен. Черновик сохранён — можно повторить.")
+	ctx, cancel := svcCtx()
+	defer cancel()
+	rc, err := c.svc().Access.Submit(ctx, adapters.AccessSubmit{Key: "acc:" + c.User.ID + ":" + sys.ID, EmployeeID: c.User.ID,
+		ApproverID: c.User.LeadID, System: sys.ID, Reason: str(args, "reason")})
+	if err != nil {
+		return serviceError(err, "Сервис доступов")
 	}
-	r := &store.Request{ID: c.Store.NextID("ACC"), Kind: "access", System: sys.ID, Title: sys.Title, Comment: str(args, "reason"),
-		EmployeeID: c.User.ID, ApproverID: c.User.LeadID, Status: "pending", CreatedAt: time.Now().Format(time.RFC3339)}
+	r := &store.Request{ID: rc.ID, Kind: "access", System: sys.ID, Title: sys.Title, Comment: str(args, "reason"),
+		EmployeeID: c.User.ID, ApproverID: c.User.LeadID, Status: rc.Status, CreatedAt: time.Now().Format(time.RFC3339)}
 	if step := relatedAccessStep(c, sys.ID); step != nil {
 		r.StepID = step.ID // SC-27: после выдачи доступа шаг предлагается отметить
 	}
 	created(c, r)
-	return Result{OK: true, Data: r, Receipt: map[string]string{"id": r.ID, "status": "pending", "approver": c.Store.Name(r.ApproverID)}}
+	return Result{OK: true, Data: r, Receipt: map[string]string{"id": r.ID, "status": r.Status, "approver": c.Store.Name(r.ApproverID)}}
 }

@@ -146,6 +146,18 @@ npm --prefix frontend run build        # TypeScript и сборка React
 
 Тесты не обращаются к внешней модели: используется заглушка, для Claude и DeepSeek — локальный тестовый HTTP-сервер.
 
+### Подключение настоящих сервисов, аналитика, флаги
+
+Инструменты агента работают с сервисами через интерфейсы ([spec/09](docs/spec/09-adapters.md)); по умолчанию за ними имитации на мок-данных.
+
+| Переменная | Что |
+|---|---|
+| `ABSENCE_SERVICE_URL`, `ABSENCE_SERVICE_TOKEN` | Настоящий сервис отсутствий по REST (`GET /catalog`, `POST /requests` с `Idempotency-Key`) вместо имитации |
+| `EVENTS_URL`, `EVENTS_TOKEN` / `EVENTS_FILE` | Выгрузка журнала событий пачками в коллектор (Clickstream, REST-прокси Kafka) или в JSONL-файл |
+| `FEATURE_FLAGS`, `FLAGS_FILE` | Флаги `practice`, `glossary`, `meetings`, `telegram`, `watchers`; файл перечитывается на лету, можно по ролям |
+
+Состояние флагов и выгрузки — `GET /api/health`.
+
 ### MCP-сервер инструментов
 
 Рекомендация кейса — действия агента через MCP. Те же инструменты, что у агента в чате, доступны любому MCP-клиенту (stdio, JSON-RPC 2.0):

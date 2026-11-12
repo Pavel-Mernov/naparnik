@@ -13,6 +13,7 @@ import (
 	"crypto/rand"
 	"encoding/json"
 	"fmt"
+	"github.com/worker4556/naparnik/backend/internal/flags"
 	"log"
 	"net/http"
 	"os"
@@ -263,6 +264,9 @@ func firstName(name string) string { return strings.Split(name, " ")[0] }
 // Flush отправляет накопившиеся уведомления: рабочие часы (BR-52), сводка обычных вопросов (BR-20),
 // неподключённым — пропуск (уведомление остаётся в вебе, BR-53). Отправляет один экземпляр backend.
 func (t *Service) Flush(ctx context.Context) error {
+	if !flags.On(flags.Telegram, nil) {
+		return nil // выключено флагом: уведомления копятся в вебе и уйдут, когда флаг включат
+	}
 	if ok, err := t.kv.Lock(ctx, "tg:flush", 20*time.Second); err != nil || !ok {
 		return err
 	}
@@ -438,7 +442,9 @@ func (t *Service) Schedule() error {
 					Text: "▶️ Встреча началась — запись включена?\nПосле встречи отметь в карточке вопроса, была ли запись, а ответ я оформлю сам."})
 			}
 		}
-		s.Watch(now) // SLA вопросов (BR-18) и простой стажёра (BR-85)
+		if flags.On(flags.Watchers, nil) {
+			s.Watch(now) // SLA вопросов (BR-18), простой стажёра (BR-85), автоактивация плана (BR-81)
+		}
 		return nil
 	})
 }

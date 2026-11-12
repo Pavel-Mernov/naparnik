@@ -196,6 +196,7 @@ func (s *Store) Transaction(fn func(*Store) error) error {
 	if err := work.decode(raw); err != nil {
 		return err
 	}
+	before := len(work.events)
 	if err := fn(work); err != nil {
 		return err
 	}
@@ -212,6 +213,7 @@ func (s *Store) Transaction(fn func(*Store) error) error {
 			return err
 		}
 	}
+	exportEvents(work.events[before:]) // только после коммита: откатившееся событие наружу не уходит
 	return s.decode(raw)
 }
 

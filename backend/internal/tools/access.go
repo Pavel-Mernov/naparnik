@@ -36,7 +36,7 @@ func getAccessRules(c Ctx, args map[string]any) Result {
 
 // BR-40: ссылка только на существующий шаг собственного плана, а не чужой или весь план.
 func relatedAccessStep(c Ctx, system string) *accessPlanStep {
-	for _, state := range c.Store.Data.Access.CurrentState[c.User.ID] {
+	for _, state := range grantedAccess(c) {
 		if state.System != system || state.RelatedStep == "" {
 			continue
 		}

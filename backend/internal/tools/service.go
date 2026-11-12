@@ -77,9 +77,9 @@ func createSelf(c Ctx, kind string, args map[string]any) Result {
 // reasonCodes — коды причин отказа для сервиса заявки.
 func reasonCodes(c Ctx, kind string) []mockdata.ReasonCode {
 	if kind == "access" {
-		return c.Store.Data.Access.ReasonCodes
+		return accessCatalog(c).ReasonCodes
 	}
-	return c.Store.Data.Absence.ReasonCodes
+	return absenceCatalog(c).ReasonCodes
 }
 
 // Decide — согласующий одобряет или отклоняет заявку (status_flow в мок-данных сервисов).
@@ -167,11 +167,11 @@ func decide(c Ctx, id, decision, reason, comment string) (store.Request, *Error)
 // с N-й недели» (заявку раньше срока руководитель может отклонить с кодом NOT_NEEDED_YET).
 // Чужие системы и системы с ПДн не показываются (BR-40). Остальным ролям — только справочник кодов.
 func Catalog(c Ctx) map[string]any {
-	abs := c.Store.Data.Absence
+	abs := absenceCatalog(c)
 	out := map[string]any{
 		"absence": map[string]any{"types": abs.RequestTypes, "self_service": abs.SelfService, "reason_codes": abs.ReasonCodes,
 			"approver": c.Store.Name(c.User.LeadID)},
-		"access": map[string]any{"systems": []map[string]string{}, "reason_codes": c.Store.Data.Access.ReasonCodes},
+		"access": map[string]any{"systems": []map[string]string{}, "reason_codes": accessCatalog(c).ReasonCodes},
 	}
 	if store.HasRole(c.User, store.RoleIntern) {
 		out["access"].(map[string]any)["systems"] = requestableSystems(c)
@@ -191,7 +191,7 @@ type SystemView struct {
 func requestableSystems(c Ctx) []SystemView {
 	week, status := c.Store.Week(c.User), accessStatus(c)
 	var out []SystemView
-	for _, s := range c.Store.Data.Access.Systems {
+	for _, s := range accessCatalog(c).Systems {
 		if checkAccess(c, s.ID) != nil || s.WeekFrom == nil {
 			continue
 		}

@@ -31,12 +31,16 @@ func main() {
 	}
 	srv := &http.Server{
 		Addr:              ":" + port,
-		Handler:           (&httpapi.Server{Agent: a.Agent, Store: a.Store, StaticDir: static, TG: a.TG, KV: a.KV, ChatLimit: a.ChatLimit}).Handler(),
+		Handler:           (&httpapi.Server{Agent: a.Agent, Store: a.Store, StaticDir: static, TG: a.TG, KV: a.KV, ChatLimit: a.ChatLimit, Events: a.Events}).Handler(),
 		ReadHeaderTimeout: 5 * time.Second,
 	}
 	log.Printf("AI-buddy: http://localhost:%s, модель %s/%s (%s), демо-дата %s", port, a.LLM.Provider, a.LLM.Model, a.LLM.Mode,
 		a.Store.Today.Format(time.DateOnly))
 	log.Printf("кэш: %s", a.KV.Kind())
+	if a.Events != nil {
+		go a.Events.Run(context.Background()) // выгрузка журнала событий в аналитику
+		log.Printf("события: выгрузка включена")
+	}
 	go a.TG.Run(context.Background()) // напоминания и Telegram в фоне; сбой Telegram не влияет на веб (BR-53)
 	log.Fatal(srv.ListenAndServe())
 }

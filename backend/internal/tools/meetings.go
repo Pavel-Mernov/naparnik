@@ -1,6 +1,7 @@
 package tools
 
 import (
+	"github.com/worker4556/naparnik/backend/internal/flags"
 	"strings"
 	"time"
 
@@ -37,7 +38,7 @@ func busy(c Ctx, userID string) [][2]time.Time {
 			out = append(out, [2]time.Time{s, e})
 		}
 	}
-	for _, e := range c.Store.Data.Calendar.Events {
+	for _, e := range calendarEvents(c) {
 		if containsStr(e.Participants, userID) {
 			end := e.End
 			if end == "" {
@@ -48,7 +49,7 @@ func busy(c Ctx, userID string) [][2]time.Time {
 			add(e.Start, end)
 		}
 	}
-	for _, r := range c.Store.Data.Calendar.Busy[userID] {
+	for _, r := range calendarBusy(c, userID) {
 		add(r.Start, r.End)
 	}
 	for _, m := range c.Store.Meetings() {
@@ -71,7 +72,18 @@ func free(slot time.Time, ranges [][2]time.Time) bool {
 
 // MeetingSlots — 3 слота по 30 минут в пересечении рабочих часов обоих (BR-41), начиная со следующего рабочего дня:
 // первый свободный до обеда и после обеда каждого дня — чтобы было из чего выбрать.
+// meetingsOff — встречи выключены флагом.
+func meetingsOff(c Ctx) *Error {
+	if !flags.On(flags.Meetings, c.User.Roles) {
+		return &Error{Code: "forbidden", Message: "Встречи по вопросам сейчас выключены."}
+	}
+	return nil
+}
+
 func MeetingSlots(c Ctx, questionID string) ([]string, *Error) {
+	if e := meetingsOff(c); e != nil {
+		return nil, e
+	}
 	q, e := questionFor(c, questionID)
 	if e != nil {
 		return nil, e
@@ -134,6 +146,9 @@ func earlier(a, b time.Time) time.Time {
 
 // ScheduleMeeting — эксперт выбрал слот (US-14). Встреча создаётся только по его решению (BR-41).
 func ScheduleMeeting(c Ctx, questionID, slot string) (store.Meeting, *Error) {
+	if e := meetingsOff(c); e != nil {
+		return store.Meeting{}, e
+	}
 	return atomic(c, func(c Ctx) (store.Meeting, *Error) {
 		q, e := questionFor(c, questionID)
 		if e != nil {

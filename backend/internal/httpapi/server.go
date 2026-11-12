@@ -6,6 +6,8 @@ package httpapi
 
 import (
 	"encoding/json"
+	"github.com/worker4556/naparnik/backend/internal/adapters"
+	"github.com/worker4556/naparnik/backend/internal/flags"
 	"net/http"
 	"strings"
 	"time"
@@ -21,10 +23,11 @@ import (
 type Server struct {
 	Agent     *agent.Agent
 	Store     *store.Store
-	StaticDir string            // каталог фронта; пусто — фронт не отдаётся
-	TG        *telegram.Service // уведомления в Telegram; nil — только веб
-	KV        cache.KV          // Redis или память: коды привязки, лимит запросов к модели
-	ChatLimit int               // запросов к модели в минуту на пользователя; 0 — без лимита
+	StaticDir string             // каталог фронта; пусто — фронт не отдаётся
+	TG        *telegram.Service  // уведомления в Telegram; nil — только веб
+	KV        cache.KV           // Redis или память: коды привязки, лимит запросов к модели
+	ChatLimit int                // запросов к модели в минуту на пользователя; 0 — без лимита
+	Events    *adapters.Exporter // выгрузка журнала событий; nil — не выгружается
 }
 
 func (s *Server) Handler() http.Handler {
@@ -39,7 +42,12 @@ func (s *Server) Handler() http.Handler {
 		if s.KV != nil {
 			kind = s.KV.Kind()
 		}
-		writeJSON(w, 200, map[string]any{"status": "ok", "cache": map[string]any{"kind": kind, "kb_hits": hits, "kb_misses": misses}})
+		out := map[string]any{"status": "ok", "cache": map[string]any{"kind": kind, "kb_hits": hits, "kb_misses": misses},
+			"flags": flags.Default.Snapshot()}
+		if s.Events != nil {
+			out["events"] = s.Events.Stats()
+		}
+		writeJSON(w, 200, out)
 	})
 	mux.HandleFunc("GET /api/me", s.auth(s.me))
 	mux.HandleFunc("GET /api/practices", s.auth(s.practices))

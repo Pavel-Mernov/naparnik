@@ -61,11 +61,24 @@ const (
 var Now = time.Now
 
 // Emit записывает событие и уведомления, которые из него следуют.
+// EventSink — куда отправлять события после сохранения (в Авито — Clickstream или Kafka). nil — никуда.
+// Вызывается после коммита транзакции и не блокирует её: реализация сама буферизует и отправляет.
+var EventSink func([]LogEvent)
+
+func exportEvents(evs []LogEvent) {
+	if EventSink != nil && len(evs) > 0 {
+		EventSink(append([]LogEvent(nil), evs...))
+	}
+}
+
 func (s *Store) Emit(typ, actor, object string, meta map[string]string) LogEvent {
 	e := LogEvent{ID: s.NextID("EV"), At: Now().Format(time.RFC3339), Type: typ, Actor: actor, Object: object, Meta: meta}
 	s.mu.Lock()
 	s.events = append(s.events, e)
 	s.mu.Unlock()
+	if !s.inTransaction {
+		exportEvents([]LogEvent{e}) // вне транзакции событие уже сохранено
+	}
 	for _, n := range s.notificationsFor(e) {
 		s.Notify(n)
 	}

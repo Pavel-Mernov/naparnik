@@ -10,8 +10,7 @@
 package tools
 
 import (
-	"os"
-	"slices"
+	"github.com/worker4556/naparnik/backend/internal/flags"
 	"strings"
 	"time"
 
@@ -72,10 +71,6 @@ func schema(props map[string]any, required ...string) map[string]any {
 }
 
 func prop(typ, descr string) map[string]any { return map[string]any{"type": typ, "description": descr} }
-
-func mockFail(service string) bool {
-	return slices.Contains(strings.Split(os.Getenv("MOCK_FAIL"), ","), service)
-}
 
 var allRoles = []string{store.RoleIntern, store.RoleBuddy, store.RoleExpert, store.RoleLead}
 
@@ -139,7 +134,17 @@ func ByName(name string) (Tool, bool) {
 	return Tool{}, false
 }
 
+// toolFlags — какой feature flag выключает инструмент (FEATURE_FLAGS, FLAGS_FILE).
+var toolFlags = map[string]string{
+	"get_practice": flags.Practice, "advance_practice": flags.Practice,
+	"explain_term": flags.Glossary, "suggest_term": flags.Glossary, "get_role_knowledge": flags.Glossary,
+}
+
+// Allowed — роль пользователя и флаг функции (выключенный инструмент не видит ни модель, ни MCP).
 func Allowed(t Tool, u *mockdata.User) bool {
+	if f := toolFlags[t.Name]; f != "" && !flags.On(f, u.Roles) {
+		return false
+	}
 	for _, r := range t.Roles {
 		if store.HasRole(u, r) {
 			return true

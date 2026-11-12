@@ -4,8 +4,12 @@ package app
 import (
 	"context"
 	"fmt"
+	"github.com/worker4556/naparnik/backend/internal/adapters"
+	"github.com/worker4556/naparnik/backend/internal/flags"
+	"log"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/worker4556/naparnik/backend/internal/agent"
@@ -21,9 +25,10 @@ type App struct {
 	Store     *store.Store
 	Agent     *agent.Agent
 	LLM       llm.Config
-	KV        cache.KV          // Redis (REDIS_URL) или память
-	TG        *telegram.Service // уведомления в Telegram (TG_BOT_TOKEN; без него — режим log)
-	ChatLimit int               // LLM_RATE_PER_MIN, по умолчанию 20
+	KV        cache.KV           // Redis (REDIS_URL) или память
+	TG        *telegram.Service  // уведомления в Telegram (TG_BOT_TOKEN; без него — режим log)
+	ChatLimit int                // LLM_RATE_PER_MIN, по умолчанию 20
+	Events    *adapters.Exporter // выгрузка журнала событий (EVENTS_URL / EVENTS_FILE); nil — не выгружается
 }
 
 // New: MOCK_DATA_DIR (по умолчанию ../docs/04-mock-data), DEMO_TODAY (по умолчанию из мок-данных), LLM_* — см. .env.example.
@@ -63,10 +68,54 @@ func New() (*App, error) {
 		return nil, fmt.Errorf("redis: %w", err)
 	}
 	tools.KBCache = kv // кэш поиска по базе и подбора эксперта
+	tools.Services = Services()
+	flags.Default = flags.FromEnv()
 	limit := 20
 	if v, err := strconv.Atoi(os.Getenv("LLM_RATE_PER_MIN")); err == nil {
 		limit = v
 	}
+	events, err := EventsExporter()
+	if err != nil {
+		return nil, err
+	}
 	return &App{Store: s, Agent: agent.New(s, llm.New(cfg, today), cfg.Timeout), LLM: cfg,
-		KV: kv, TG: telegram.New(telegram.ConfigFromEnv(), s, kv), ChatLimit: limit}, nil
+		KV: kv, TG: telegram.New(telegram.ConfigFromEnv(), s, kv), ChatLimit: limit, Events: events}, nil
+}
+
+// Services — какие реализации корпоративных сервисов подключить (BR-74). По умолчанию — имитации на мок-данных;
+// ABSENCE_SERVICE_URL — настоящий сервис отсутствий по REST (токен — ABSENCE_SERVICE_TOKEN).
+func Services() func(*store.Store) adapters.Set {
+	var absence adapters.AbsenceService
+	if url := os.Getenv("ABSENCE_SERVICE_URL"); url != "" {
+		absence = adapters.NewHTTPAbsence(strings.TrimRight(url, "/"), os.Getenv("ABSENCE_SERVICE_TOKEN"))
+		log.Printf("сервис отсутствий: %s", url)
+	}
+	return func(s *store.Store) adapters.Set {
+		set := adapters.NewMockSet(s.Data, s.NextID)
+		if absence != nil {
+			set.Absence = absence
+		}
+		return set
+	}
+}
+
+// EventsExporter — выгрузка журнала событий в аналитику: EVENTS_URL — HTTP-коллектор (Clickstream-шлюз,
+// REST-прокси Kafka; токен EVENTS_TOKEN), EVENTS_FILE — JSONL-файл. Без них — только журнал в PostgreSQL.
+func EventsExporter() (*adapters.Exporter, error) {
+	var w adapters.Writer
+	switch {
+	case os.Getenv("EVENTS_URL") != "":
+		w = adapters.HTTPCollector{URL: os.Getenv("EVENTS_URL"), Token: os.Getenv("EVENTS_TOKEN")}
+	case os.Getenv("EVENTS_FILE") != "":
+		f, err := os.OpenFile(os.Getenv("EVENTS_FILE"), os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o644)
+		if err != nil {
+			return nil, err
+		}
+		w = &adapters.JSONLines{Out: f}
+	default:
+		return nil, nil
+	}
+	exp := adapters.NewExporter(w, 10000)
+	store.EventSink = exp.Sink
+	return exp, nil
 }

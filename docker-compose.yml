@@ -46,6 +46,13 @@ services:
       REDIS_URL: redis://redis:6379/0
       # Демо: уведомления в Telegram сразу, без ожидания рабочих часов и сводок. Для правил BR-20/BR-52 — false в .env
       NOTIFY_IGNORE_HOURS: ${NOTIFY_IGNORE_HOURS:-true}
+      # Сервисы, аналитика и флаги — см. .env.example (пусто — имитации, без выгрузки, всё включено)
+      ABSENCE_SERVICE_URL: ${ABSENCE_SERVICE_URL:-}
+      ABSENCE_SERVICE_TOKEN: ${ABSENCE_SERVICE_TOKEN:-}
+      EVENTS_URL: ${EVENTS_URL:-}
+      EVENTS_TOKEN: ${EVENTS_TOKEN:-}
+      EVENTS_FILE: ${EVENTS_FILE:-}
+      FEATURE_FLAGS: ${FEATURE_FLAGS:-}
     depends_on:
       postgres:
         condition: service_healthy

@@ -461,7 +461,7 @@ func SourcesFor(c Ctx, tool string, args map[string]any) []Hit {
 		}
 	}
 	if tool == "get_absence_rules" {
-		ids = []string{c.Store.Data.Absence.SelfService.SourcePage}
+		ids = []string{absenceCatalog(c).SelfService.SourcePage}
 	}
 	if tool == "get_access_rules" && strings.Contains(strings.ToLower(str(args, "system")), "redash") {
 		ids = append([]string{"kb-15"}, ids...)
