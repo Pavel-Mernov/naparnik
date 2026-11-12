@@ -132,8 +132,8 @@ func (s *Server) call(name string, args map[string]any) map[string]any {
 			res, isErr = tools.Result{Error: &tools.Error{Code: "unavailable", Message: "Не удалось сохранить черновик."}}, true
 			break
 		}
-		res = map[string]any{"ok": true, "status": "needs_confirmation", "draft_id": id, "draft": args,
-			"confirm": fmt.Sprintf("Подтверждает человек: Напарник (%s) или POST /api/drafts/%s/confirm от его имени.", s.WebURL, id)}
+		res = map[string]any{"ok": true, "status": "needs_confirmation", "draft_id": id, "version": 1, "draft": args,
+			"confirm": fmt.Sprintf("Подтверждает человек: Напарник (%s) или POST /api/drafts/%s/confirm {\"version\":1} от его имени.", s.WebURL, id)}
 	default:
 		r := tools.Run(c, name, args)
 		res, isErr = r, !r.OK
