@@ -159,6 +159,9 @@ export const QuestionsPage = ({ data, role, login, onAsk, onAnswer, onApprove, o
               <Markdown text={q.answer} />
               {q.page_id && <Typography variant="caption" color="text.secondary">Ответ сохранён в базе знаний — следующему стажёру Напарник ответит сразу</Typography>}
             </Box>}
+            {meetingOf(q)?.recording_url && <Button component="a" href={meetingOf(q)!.recording_url} target="_blank" rel="noopener noreferrer" variant="text" sx={{ mt: 1 }}>
+              Открыть запись встречи
+            </Button>}
             {q.reason && !q.answer && <Typography variant="caption" color="text.secondary">Почему {q.addressee}: {q.reason}</Typography>}
           </Box>)) : <Empty text={role === "intern" ? "Вопросов людям пока нет. Спроси Напарника — он сначала поищет в базе." : "Здесь появятся вопросы, на которые ты ответил."} action={role === "intern" ? <Button variant="text" onClick={onAsk}>Спросить</Button> : undefined} />}
       </Block>

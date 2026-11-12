@@ -8,6 +8,7 @@ import (
 
 	"github.com/worker4556/naparnik/backend/internal/mockdata"
 	"github.com/worker4556/naparnik/backend/internal/store"
+	"github.com/worker4556/naparnik/backend/internal/tools"
 )
 
 // notifications — центр уведомлений и состояние Telegram у текущей учётки.
@@ -63,26 +64,11 @@ func (s *Server) feedback(w http.ResponseWriter, r *http.Request, u *mockdata.Us
 		PageID string `json:"page_id"`
 		Value  string `json:"value"`
 	}
-	_ = json.NewDecoder(r.Body).Decode(&body)
-	if body.Value != "helped" && body.Value != "not_helped" && body.Value != "stale" {
-		writeJSON(w, 422, errBody("validation", "Оценка: helped, not_helped или stale."))
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		writeJSON(w, 422, errBody("validation", "Не получилось прочитать оценку."))
 		return
 	}
-	author, title := "", ""
-	for _, p := range s.Store.Pages() {
-		if p.ID == body.PageID {
-			author, title = p.AuthorID, p.Title
-		}
-	}
-	err := s.Store.Transaction(func(st *store.Store) error {
-		st.Emit(store.EvAnswerFeedback, u.ID, body.PageID, map[string]string{"value": body.Value, "author": author, "page_title": title})
-		return nil
-	})
-	if err != nil {
-		writeJSON(w, 503, errBody("unavailable", "Не получилось сохранить оценку."))
-		return
-	}
-	writeJSON(w, 200, map[string]bool{"ok": true})
+	writeResult(w, tools.Feedback(s.ctx(u), body.PageID, body.Value))
 }
 
 // metrics — метрики пользы из журнала событий (09-METRICS): руководителю отдела.

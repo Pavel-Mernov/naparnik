@@ -66,6 +66,7 @@ func (s *Store) restore(v snapshot) error {
 	if s.tgLinks == nil {
 		s.tgLinks = map[string]int64{}
 	}
+	s.cleanMeetingContent()
 	return nil
 }
 

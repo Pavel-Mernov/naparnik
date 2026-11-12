@@ -48,7 +48,8 @@ func kbKey(c Ctx, kind, query string) string {
 	sort.Strings(stems)
 	q := strings.Join(stems, " ")
 	sum := sha256.Sum256([]byte(q))
-	return "kb:" + kind + ":" + c.User.ID + ":" + kbVersion(c) + ":" + hex.EncodeToString(sum[:8])
+	// Новый namespace не читает ответы прежней версии с URL записей в тексте.
+	return "kb:public-v2:" + kind + ":" + c.User.ID + ":" + kbVersion(c) + ":" + hex.EncodeToString(sum[:8])
 }
 
 // cached достаёт значение из кэша или считает его и кладёт. Сбой кэша не ломает ответ — просто считаем.

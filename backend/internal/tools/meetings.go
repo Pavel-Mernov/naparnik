@@ -181,7 +181,7 @@ func fixtureFor(c Ctx, q store.Question) *mockdata.MeetingFixture {
 }
 
 // FinishMeeting — встреча прошла (в проде — сигнал ВКС; в демо — отметка организатора).
-// Запись есть → выжимка только по исходному вопросу с таймкодами и ссылкой (BR-36) → черновик страницы, стажёр видит ответ.
+// Запись есть → выжимка только по исходному вопросу с таймкодами без URL записи (BR-36) → черновик страницы, стажёр видит ответ.
 // Записи нет → один раз предлагаем ответить текстом (BR-37).
 func FinishMeeting(c Ctx, meetingID string, recorded bool) (store.Meeting, *Error) {
 	return atomic(c, func(c Ctx) (store.Meeting, *Error) {
@@ -214,9 +214,9 @@ func FinishMeeting(c Ctx, meetingID string, recorded bool) (store.Meeting, *Erro
 			if fx.Recording != nil {
 				url = fx.Recording.URL
 			}
-			body += "\n\nОтвет на встрече: " + strings.Join(fx.ExpectedSummary.AnswerTimecodes, ", ") + ". Запись (только участникам): " + url
+			body += "\n\nОтвет на встрече: " + strings.Join(fx.ExpectedSummary.AnswerTimecodes, ", ") + "."
 		} else {
-			body = "Встреча записана: " + url + ".\nРасшифровки этой записи в демо нет — допиши ответ своими словами перед публикацией."
+			body = "Встреча записана.\nРасшифровки этой записи в демо нет — допиши ответ своими словами перед публикацией."
 		}
 		folder, similar := placePage(c, title)
 		page := mockdata.Page{ID: nextPageID(c), Space: c.Store.Data.Team.Department.KBSpaceID, Folder: folder, Type: "meeting", Status: "Draft",

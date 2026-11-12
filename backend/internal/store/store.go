@@ -249,6 +249,7 @@ func (s *Store) UpdateQuestion(id string, fn func(*Question)) (Question, bool) {
 	for _, q := range s.questions {
 		if q.ID == id {
 			fn(q)
+			q.Answer = s.publicMeetingText(q.Answer)
 			return *q, true
 		}
 	}
@@ -265,6 +266,7 @@ func (s *Store) Pages() []mockdata.Page {
 func (s *Store) AddPage(p mockdata.Page) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	p.Body = s.publicMeetingText(p.Body)
 	s.pages = append(s.pages, p)
 }
 
@@ -275,6 +277,7 @@ func (s *Store) UpdatePage(id string, fn func(*mockdata.Page)) (mockdata.Page, b
 	for i := range s.pages {
 		if s.pages[i].ID == id {
 			fn(&s.pages[i])
+			s.pages[i].Body = s.publicMeetingText(s.pages[i].Body)
 			return s.pages[i], true
 		}
 	}
