@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { PlanStep, Question, RequestItem } from "@/shared/api";
-import { buildNotes, dueText, initials, plural, relDay, requestTitle, statusOf } from "./helpers";
+import { answerDue, buildNotes, dueText, initials, plural, relDay, requestTitle, statusOf } from "./helpers";
 import { viewLabel, viewsFor, primaryRole } from "./state";
 
 const step = (p: Partial<PlanStep>): PlanStep => ({ id: "s-1", title: "Шаг", stage: "st", owner: "intern", due_date: "2026-11-11", status: "Today", source: "", ...p });
@@ -72,5 +72,19 @@ describe("уведомления — из данных, срочное перв�
     expect(buildNotes({ meId: "u-o", today: "2026-11-11", steps: [], questions: [q({})], requests: [], drafts: [{ id: "kb-20", title: "Конверсия" }], events: [] })
       .filter((n) => n.urgent)).toHaveLength(2);
     expect(buildNotes({ meId: "u-l", today: "2026-11-11", steps: [], questions: [], requests: [r({})], drafts: [], events: [] })[0].go).toBe("requests");
+  });
+});
+
+describe("срок ответа на вопрос (SC-23)", () => {
+  it("показывает срок только у ждущего ответа и отмечает просрочку", () => {
+    expect(answerDue({ status: "Answered", due_at: "2026-11-12T14:00:00+03:00" })).toBe("");
+    expect(answerDue({ status: "Sent" })).toBe("");
+    expect(answerDue({ status: "Sent", due_at: "2026-11-12T14:00:00+03:00" })).toMatch(/^ответить до .*12/);
+    expect(answerDue({ status: "Sent", due_at: "2026-11-12T14:00:00+03:00", overdue: true })).toMatch(/^срок ответа истёк/);
+  });
+  it("просроченный входящий вопрос выделен в уведомлениях", () => {
+    const q = { id: "q1", asked_by: "u2", addressee_id: "u1", addressee: "Я", title: "Где дашборд?", urgent: false, status: "Sent", overdue: true } as Question;
+    const notes = buildNotes({ meId: "u1", today: "2026-11-12", steps: [], questions: [q], requests: [], drafts: [], events: [] });
+    expect(notes[0]).toMatchObject({ text: "Тебе вопрос — срок ответа истёк", urgent: true });
   });
 });

@@ -58,6 +58,10 @@ func TeamDashboard(c Ctx) Result {
 				v.PlanStatus = plan.Status
 			}
 		}
+		// Жизненный цикл плана (BR-81): draft → approved | auto_activated — из состояния плана, а не из трекера.
+		if p, ok := c.Store.Plan(intern.ID); ok {
+			v.PlanStatus = p.Status
+		}
 		mine, done := 0, 0
 		for _, step := range planViews(c, intern.ID) {
 			if step.Owner != store.RoleIntern {

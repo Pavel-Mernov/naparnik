@@ -2,11 +2,14 @@
 import { useState } from "react";
 import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, Stack, TextField, Typography, useMediaQuery, useTheme } from "@mui/material";
 import type { KbDraft, Question } from "@/shared/api";
-import type { DataState, Role } from "@/shared/lib";
+import { answerDue, type DataState, type Role } from "@/shared/lib";
 import { AiTag, Block, Empty, PageHead, Row, StatusTag } from "@/shared/ui";
 import { Markdown } from "@/widgets/chat";
 
 const questionTitle = (q: Question) => (q.text_hidden ? "Текст скрыт настройками стажёра" : q.title || q.text || "Вопрос");
+
+/** Статус вопроса; просроченный (SC-23) — красная плашка «Просрочен» вместо «Ждёт ответа». */
+const QuestionStatus = ({ q }: { q: Question }) => q.status === "Sent" && q.overdue ? <StatusTag status="Overdue" label="Просрочен" /> : <StatusTag status={q.status} />;
 
 const Incoming = ({ q, from, onAnswer }: { q: Question; from: string; onAnswer: (q: Question, text: string) => Promise<boolean> }) => {
   const { t } = useTheme();
@@ -15,8 +18,8 @@ const Incoming = ({ q, from, onAnswer }: { q: Question; from: string; onAnswer: 
   return (
     <Box sx={{ border: `2px solid ${t.line}`, p: { xs: 2, md: 2.5 }, mb: 2 }}>
       <Stack direction="row" justifyContent="space-between" gap={2} mb={1}>
-        <Typography variant="body2" color="text.secondary">{from}{q.urgent ? " · срочно" : ""}</Typography>
-        <StatusTag status={q.status} />
+        <Typography variant="body2" color="text.secondary">{from}{q.urgent ? " · срочно" : ""}{answerDue(q) ? ` · ${answerDue(q)}` : ""}</Typography>
+        <QuestionStatus q={q} />
       </Stack>
       <Typography variant="h3" component="h3" mb={1}>{questionTitle(q)}</Typography>
       {q.text && q.text !== q.title && <Box sx={{ color: "text.secondary", mb: 2 }}><Markdown text={q.text} /></Box>}
@@ -93,9 +96,9 @@ export const QuestionsPage = ({ data, role, onAsk, onAnswer, onApprove }: {
             <Stack direction="row" justifyContent="space-between" gap={2}>
               <Box minWidth={0}>
                 <Typography fontWeight={500}>{questionTitle(q)}</Typography>
-                <Typography variant="body2" color="text.secondary">{q.asked_by === data.me.id ? `Кому: ${q.addressee}` : `${name(q.asked_by)} → ${q.addressee}`}{q.urgent ? " · срочно" : ""}</Typography>
+                <Typography variant="body2" color="text.secondary">{q.asked_by === data.me.id ? `Кому: ${q.addressee}` : `${name(q.asked_by)} → ${q.addressee}`}{q.urgent ? " · срочно" : ""}{answerDue(q) ? ` · ${answerDue(q)}` : ""}</Typography>
               </Box>
-              <StatusTag status={q.status} />
+              <QuestionStatus q={q} />
             </Stack>
             {q.answer && <Box sx={{ mt: 1.5, pl: 2, borderLeft: 3, borderColor: "success.main" }}>
               <Typography variant="body2" fontWeight={600} mb={0.5}>Ответ · {q.addressee}</Typography>

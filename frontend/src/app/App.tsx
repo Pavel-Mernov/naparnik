@@ -16,6 +16,7 @@ import { AppProviders } from "@/app/providers";
 import { ThemeToggle } from "@/features/toggle-theme";
 import { ChatDrawer, type ChatMessage, type Lookup } from "@/widgets/chat";
 import { ProfileAvatar, ProfileDialog } from "@/widgets/profile";
+import { PlanDraftDialog } from "@/widgets/plan-draft";
 import {
   api, ApiError, getProfile, unwrap, type ChatReply, type KbDraft, type KbFolder, type KbPage, type Me, type PlanData, type PlanStep,
   type Question, type RequestItem, type Services, type TeamOverview, type TodayData, type User,
@@ -71,6 +72,8 @@ function App() {
   const [accountAnchor, setAccountAnchor] = useState<HTMLElement | null>(null);
   // Карточка профиля (SCR-I5a): null — закрыта, "" — своя, иначе ID сотрудника.
   const [profileOf, setProfileOf] = useState<string | null>(null);
+  // Черновик плана стажёра (SC-20): ID стажёра или "" — закрыт.
+  const [planDraftOf, setPlanDraftOf] = useState("");
   const [myPhoto, setMyPhoto] = useState<{ login: string; url: string | null }>({ login: "", url: null });
   const role = data ? primaryRole(data.me.roles) : null;
   const views = role ? viewsFor(role) : [];
@@ -140,7 +143,7 @@ function App() {
     actions.current.forEach((c) => c.abort());
     actions.current.clear();
     localStorage.setItem(STORAGE.login, next);
-    setProfileOf(null);
+    setProfileOf(null); setPlanDraftOf("");
     setData(null); setView("day"); setSelectedIntern(""); setBusy(false); setError(""); setSnack("");
     setChatText(""); setChatOpen(false); setChatLoading(false); setMessages([GREETING]);
     setLoading(true); setLogin(next);
@@ -217,8 +220,8 @@ function App() {
           const soft = n.id.startsWith("ans-") || (n.go === "requests" && !rejected) ? t.okSoft : rejected ? t.badSoft : undefined;
           return <Row key={n.id} title={n.text} sub={n.meta} end={newsTag(n)} onClick={() => nav(n.go)} sx={soft ? { bgcolor: soft } : undefined} />;
         }) : <Empty text="Ответы людей и статусы заявок появятся здесь." variant={0} />}</Block>} />;
-      if (role === "lead") return <TeamPage overview={data.overview} onRequests={() => nav("requests")} onProfile={setProfileOf} />;
-      if (role === "buddy") return <BuddyPage data={data} onPlan={(id) => { setSelectedIntern(id); nav("plan"); }} onQuestions={() => nav("questions")} onProfile={setProfileOf} />;
+      if (role === "lead") return <TeamPage overview={data.overview} onRequests={() => nav("requests")} onProfile={setProfileOf} onPlanDraft={setPlanDraftOf} />;
+      if (role === "buddy") return <BuddyPage data={data} onPlan={(id) => { setSelectedIntern(id); nav("plan"); }} onQuestions={() => nav("questions")} onProfile={setProfileOf} onPlanDraft={setPlanDraftOf} />;
     }
     if (view === "plan" && role === "intern") return <PlanPage plan={data.plan} title="Мой план" context={`${data.me.week}-я неделя · ${data.me.department}`} today={data.me.today} onMarkDone={(s) => void markDone(s)} />;
     if (view === "plan" && role === "buddy") {
@@ -379,6 +382,8 @@ function App() {
           onSend={(retry) => void sendChat(retry)} login={login} look={look} onAction={() => void load()} />
         <ProfileDialog open={profileOf !== null} login={login} userId={profileOf || undefined} onClose={() => setProfileOf(null)}
           onChanged={(p) => { if (p.can_edit) setMyPhoto({ login, url: p.photo?.url ?? null }); }} />
+        <PlanDraftDialog open={Boolean(planDraftOf)} login={login} internId={planDraftOf} onClose={() => setPlanDraftOf("")}
+          onDone={(m) => { setSnack(m); void load(); }} />
         <Snackbar open={Boolean(snack)} autoHideDuration={3000} onClose={() => setSnack("")} message={snack}
           anchorOrigin={{ vertical: "bottom", horizontal: "center" }} sx={{ bottom: { xs: 88, md: 24 } }} />
       </Box>

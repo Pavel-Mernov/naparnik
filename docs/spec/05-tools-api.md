@@ -95,7 +95,7 @@ HTTP-коды в API: `forbidden` → 403, `not_found` → 404, `validation` →
 | GET | `/api/kb/maintenance` | владелец базы: открытые вопросы, черновики без «Ок», «устарело», дубли (SC-22) |
 | POST | `/api/kb/duplicates/{id}` | `{decision: merge \| not_duplicate}` — объединить (старая ведёт на общую, авторы уведомлены, BR-39) или «не дубль» |
 | POST | `/api/kb/drafts/{id}/remind` | напомнить автору черновика |
-| GET | `/api/plans/{internId}/draft` | черновик или состояние плана — бадди и руководитель стажёра (SC-20) |
+| GET | `/api/plans/{internId}/draft` | черновик или состояние плана — бадди и руководитель стажёра (SC-20): `status`, `can_edit`, `can_approve`, `auto_activate_at`, `stages`, `steps` |
 | PATCH | `/api/plans/{internId}/draft` | `{steps: [{step_id, due_date?, removed?}], comment?}` — правка бадди |
 | POST | `/api/plans/{internId}/approve` | утверждение руководителем |
 | GET | `/api/profile` | своя карточка |

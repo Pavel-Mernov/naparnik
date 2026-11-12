@@ -46,6 +46,10 @@ export const longDate = (iso: string) => day(iso).toLocaleDateString("ru-RU", { 
 export const shortDateTime = (iso: string) =>
   new Date(iso).toLocaleString("ru-RU", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 
+/** Срок ответа на вопрос (SC-23, BR-18): «ответить до 12 нояб., 14:00» или «срок ответа истёк …». */
+export const answerDue = (q: Pick<Question, "status" | "due_at" | "overdue">) =>
+  q.status !== "Sent" || !q.due_at ? "" : q.overdue ? `срок ответа истёк ${shortDateTime(q.due_at)}` : `ответить до ${shortDateTime(q.due_at)}`;
+
 export const ABSENCE: Record<string, string> = { day_off: "Отгул", vacation: "Отпуск", sick_leave: "Больничный" };
 
 export const requestTitle = (r: RequestItem) => r.kind === "absence"
@@ -65,7 +69,7 @@ export const buildNotes = (p: {
   p.steps.filter((s) => s.status === "Overdue").forEach((s) =>
     out.push({ id: `o-${s.id}`, text: `Просрочен шаг: ${s.title}`, meta: dueText(s, p.today), urgent: true, go: "day" }));
   p.questions.filter((q) => q.addressee_id === p.meId && q.status === "Sent").forEach((q) =>
-    out.push({ id: `in-${q.id}`, text: "Тебе вопрос", meta: q.text_hidden ? "текст скрыт" : q.title || q.text || "", urgent: true, go: "questions" }));
+    out.push({ id: `in-${q.id}`, text: q.overdue ? "Тебе вопрос — срок ответа истёк" : "Тебе вопрос", meta: q.text_hidden ? "текст скрыт" : q.title || q.text || "", urgent: true, go: "questions" }));
   p.drafts.forEach((d) =>
     out.push({ id: `d-${d.id}`, text: "Проверь, я занёс твой ответ в базу", meta: d.title, urgent: true, go: "questions" }));
   p.requests.filter((r) => r.status === "pending" && r.approver_id === p.meId).forEach((r) =>

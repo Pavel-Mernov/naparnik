@@ -15,10 +15,12 @@ const Metric = ({ value, label, alert }: { value: number; label: string; alert?:
 };
 
 /** onProfile — открыть карточку стажёра (SCR-I5a); без него имя — просто текст. */
-export const TeamPage = ({ overview, onRequests, onProfile }: { overview?: TeamOverview; onRequests: () => void; onProfile?: (id: string) => void }) => {
+/** onPlanDraft — открыть черновик плана на утверждение (SC-20). */
+export const TeamPage = ({ overview, onRequests, onProfile, onPlanDraft }: { overview?: TeamOverview; onRequests: () => void; onProfile?: (id: string) => void; onPlanDraft?: (id: string) => void }) => {
   if (!overview) return <Empty text="Обзор команды пока недоступен." />;
   const { totals } = overview;
   const behind = overview.interns.filter((i) => i.overdue_steps > 0);
+  const unapproved = (s: string) => s === "draft" || s === "auto_activated";
   const pending = overview.requests.filter((r) => r.status === "pending");
   const title = behind.length ? `${behind.length} ${plural(behind.length, "стажёр отстаёт", "стажёра отстают", "стажёров отстают")} от плана` : "Все стажёры идут по плану";
   return <>
@@ -40,7 +42,8 @@ export const TeamPage = ({ overview, onRequests, onProfile }: { overview?: TeamO
             </Box>
             <Stack direction="row" gap={1} alignItems="center">
               {i.overdue_steps > 0 && <StatusTag status="Overdue" label={`Просрочено: ${i.overdue_steps}`} />}
-              {i.plan_status !== "approved" && <StatusTag status="Draft" label="План на согласовании" />}
+              {unapproved(i.plan_status) && <StatusTag status={i.plan_status === "draft" ? "Draft" : "pending"} label={i.plan_status === "draft" ? "План на согласовании" : "План не утверждён"} />}
+              {unapproved(i.plan_status) && onPlanDraft && <Button variant="text" size="small" onClick={() => onPlanDraft(i.id)}>Утвердить план</Button>}
             </Stack>
           </Stack>
           <Stack direction="row" alignItems="center" gap={1.5} mt={1.5}>

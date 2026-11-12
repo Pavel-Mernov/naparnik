@@ -42,7 +42,7 @@ export default defineConfig({
         "src/api.ts", "src/helpers.ts", "src/state.ts",
         "src/components/ui.tsx", "src/components/PersonDialog.tsx",
         "src/shared/api/index.ts", "src/shared/lib/**/*.{ts,tsx}",
-        "src/widgets/profile/ui/ProfileDialog.tsx",
+        "src/widgets/profile/ui/ProfileDialog.tsx", "src/widgets/plan-draft/ui/PlanDraftDialog.tsx",
       ],
       exclude: ["src/**/*.test.{ts,tsx}", "src/test/**", "src/**/index.ts"],
       thresholds: { lines: 80, functions: 80, statements: 80, branches: 80 },

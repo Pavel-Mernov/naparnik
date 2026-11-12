@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/worker4556/naparnik/backend/internal/mockdata"
 	"github.com/worker4556/naparnik/backend/internal/store"
 )
 
@@ -20,17 +21,18 @@ type PlanDraftStep struct {
 }
 
 type PlanDraftView struct {
-	InternID   string          `json:"intern_id"`
-	Intern     string          `json:"intern"`
-	Status     string          `json:"status"`
-	CreatedAt  string          `json:"created_at,omitempty"`
-	EditedBy   string          `json:"edited_by,omitempty"`
-	Comment    string          `json:"comment,omitempty"`
-	ApprovedBy string          `json:"approved_by,omitempty"`
-	AutoAt     string          `json:"auto_activate_at,omitempty"` // когда активируется без решения
-	CanEdit    bool            `json:"can_edit"`
-	CanApprove bool            `json:"can_approve"`
-	Steps      []PlanDraftStep `json:"steps"`
+	InternID   string           `json:"intern_id"`
+	Intern     string           `json:"intern"`
+	Status     string           `json:"status"`
+	CreatedAt  string           `json:"created_at,omitempty"`
+	EditedBy   string           `json:"edited_by,omitempty"`
+	Comment    string           `json:"comment,omitempty"`
+	ApprovedBy string           `json:"approved_by,omitempty"`
+	AutoAt     string           `json:"auto_activate_at,omitempty"` // когда активируется без решения
+	CanEdit    bool             `json:"can_edit"`
+	CanApprove bool             `json:"can_approve"`
+	Stages     []mockdata.Stage `json:"stages"` // названия этапов для группировки шагов на экране
+	Steps      []PlanDraftStep  `json:"steps"`
 }
 
 type PlanEdit struct {
@@ -62,7 +64,7 @@ func GetPlanDraft(c Ctx, internID string) (PlanDraftView, *Error) {
 		return PlanDraftView{}, &Error{Code: "not_found", Message: "Плана для этого стажёра нет."}
 	}
 	v := PlanDraftView{InternID: internID, Intern: c.Store.Name(internID), Status: p.Status, CreatedAt: p.CreatedAt, EditedBy: c.Store.Name(p.EditedBy),
-		Comment: p.Comment, ApprovedBy: c.Store.Name(p.ApprovedBy), Steps: []PlanDraftStep{},
+		Comment: p.Comment, ApprovedBy: c.Store.Name(p.ApprovedBy), Stages: c.Store.Data.Template.Stages, Steps: []PlanDraftStep{},
 		CanEdit: isBuddy && p.Status == store.PlanDraft, CanApprove: isLead && p.Status != store.PlanApproved}
 	if p.ApprovedBy == "" || p.ApprovedBy == "system" {
 		v.ApprovedBy = ""

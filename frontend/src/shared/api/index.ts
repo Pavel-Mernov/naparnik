@@ -29,6 +29,9 @@ export type PlanData = {
   steps: PlanStep[];
   progress_pct: number;
   next_step?: PlanStep;
+  /** BR-81: draft | approved | auto_activated; approval — пометка «не утверждён». */
+  plan_status?: string;
+  approval?: string;
 };
 
 export type TodayData = {
@@ -50,6 +53,9 @@ export type Question = {
   reason?: string;
   urgent: boolean;
   status: string;
+  /** Срок ответа текущего адресата (BR-18, SC-23) — только у вопроса в статусе Sent. */
+  due_at?: string;
+  overdue?: boolean;
 };
 
 export type RequestItem = {
@@ -196,3 +202,30 @@ export const fetchPhoto = async (login: string, url: string, signal?: AbortSigna
   if (!response.ok) throw new ApiError(response.status, "Фото недоступно");
   return URL.createObjectURL(await response.blob());
 };
+
+// ---------- Черновик плана адаптации (SC-20, BR-81, spec/05 «Черновик плана») ----------
+export type PlanDraftStep = { id: string; title: string; stage: string; owner: string; due_date: string; removed?: boolean };
+export type PlanDraft = {
+  intern_id: string;
+  intern: string;
+  status: "draft" | "approved" | "auto_activated" | string;
+  created_at?: string;
+  edited_by?: string;
+  comment?: string;
+  approved_by?: string;
+  auto_activate_at?: string;
+  can_edit: boolean;
+  can_approve: boolean;
+  stages: Array<{ id: string; title: string; order: number }>;
+  steps: PlanDraftStep[];
+};
+export type PlanDraftEdit = { step_id?: string; due_date?: string; removed?: boolean };
+
+export const getPlanDraft = (login: string, internId: string, init: RequestInit = {}) =>
+  api<PlanDraft>(login, `/api/plans/${encodeURIComponent(internId)}/draft`, init);
+
+export const editPlanDraft = (login: string, internId: string, steps: PlanDraftEdit[], comment: string) =>
+  api<PlanDraft>(login, `/api/plans/${encodeURIComponent(internId)}/draft`, { method: "PATCH", body: JSON.stringify({ steps, comment }) });
+
+export const approvePlan = (login: string, internId: string) =>
+  api<PlanDraft>(login, `/api/plans/${encodeURIComponent(internId)}/approve`, { method: "POST", body: "{}" });

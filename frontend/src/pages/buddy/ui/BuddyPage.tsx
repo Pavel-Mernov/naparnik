@@ -4,7 +4,8 @@ import type { DataState } from "@/shared/lib";
 import { Block, Empty, PageHead } from "@/shared/ui";
 
 /** onProfile — открыть карточку стажёра (SCR-I5a); без него имя — просто текст. */
-export const BuddyPage = ({ data, onPlan, onQuestions, onProfile }: { data: DataState; onPlan: (id: string) => void; onQuestions: () => void; onProfile?: (id: string) => void }) => {
+/** onPlanDraft — черновик плана: бадди правит сроки и шаги до утверждения (SC-20). */
+export const BuddyPage = ({ data, onPlan, onQuestions, onProfile, onPlanDraft }: { data: DataState; onPlan: (id: string) => void; onQuestions: () => void; onProfile?: (id: string) => void; onPlanDraft?: (id: string) => void }) => {
   const stuck = data.managedPlans.filter((i) => i.plan?.steps.some((s) => s.status === "Overdue"));
   const routed = data.questions.filter((q) => q.asked_by !== data.me.id && q.status === "Sent").length;
   return <>
@@ -18,9 +19,11 @@ export const BuddyPage = ({ data, onPlan, onQuestions, onProfile }: { data: Data
           <Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" gap={1.5}>
             <Box>
               <Typography fontWeight={600}>{onProfile ? <Link component="button" onClick={() => onProfile(i.id)} color="inherit" underline="hover" sx={{ font: "inherit", fontWeight: 600, textAlign: "left" }}>{i.name}</Link> : i.name}</Typography>
-              <Typography variant="body2" color="text.secondary">{i.plan ? (overdue.length ? `Застрял: ${overdue.map((s) => s.title).join("; ")}` : `Дальше: ${i.plan.next_step?.title ?? "все шаги пройдены"}`) : "План готовится"}</Typography>
+              <Typography variant="body2" color="text.secondary">{i.plan ? (overdue.length ? `Застрял: ${overdue.map((s) => s.title).join("; ")}` : `Дальше: ${i.plan.next_step?.title ?? "все шаги пройдены"}`) : "План готовится: черновик у тебя, утвердит руководитель"}{i.plan?.plan_status === "auto_activated" ? " · план не утверждён руководителем" : ""}</Typography>
             </Box>
-            <Button variant="text" onClick={() => onPlan(i.id)} sx={{ alignSelf: { sm: "center" } }}>Открыть план</Button>
+            {i.plan || !onPlanDraft
+              ? <Button variant="text" onClick={() => onPlan(i.id)} sx={{ alignSelf: { sm: "center" } }}>Открыть план</Button>
+              : <Button variant="contained" onClick={() => onPlanDraft(i.id)} sx={{ alignSelf: { sm: "center" } }}>Проверить черновик</Button>}
           </Stack>
           {i.plan && <Stack direction="row" alignItems="center" gap={1.5} mt={1.5}>
             <LinearProgress variant="determinate" value={i.plan.progress_pct} aria-label={`Прогресс ${i.name}`} sx={{ flex: 1 }} />

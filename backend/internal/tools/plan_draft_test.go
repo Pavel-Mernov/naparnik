@@ -84,6 +84,12 @@ func TestPlanAutoActivation(t *testing.T) {
 	if d := data(t, Run(intern, "get_plan", nil)); d["approval"] == nil || d["plan_status"] != store.PlanAutoActivated {
 		t.Fatal(d)
 	}
+	// Обзор руководителя показывает тот же статус, что и план (а не исходный из трекера).
+	for _, i := range TeamDashboard(ctxFor(t, s, "lead.kovalev")).Data.(teamOverview).Interns {
+		if i.ID == "u-egorova" && i.PlanStatus != store.PlanAutoActivated {
+			t.Fatal("обзор команды:", i.PlanStatus)
+		}
+	}
 	reminded := false
 	for _, n := range s.NotificationsFor("u-kovalev") {
 		reminded = reminded || strings.Contains(n.Text, "«не утверждён»")
