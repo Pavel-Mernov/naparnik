@@ -32,8 +32,9 @@ func (a *Agent) Remember(login, question string, r Reply) error {
 	if err != nil {
 		return err
 	}
+	// ПДн и секреты в историю не попадают (BR-61, BR-72): Напарник обещает «никуда не сохраняю».
 	return a.Store.Transaction(func(s *store.Store) error {
-		s.AppendChat(u.ID, question, raw)
+		s.AppendChat(u.ID, MaskPII(question), raw)
 		return nil
 	})
 }

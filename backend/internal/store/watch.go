@@ -86,9 +86,10 @@ func (s *Store) Watch(now time.Time) {
 		if q.Urgent {
 			kind = "двух рабочих часов (срочный)"
 		}
+		// Без темы вопроса: уведомление уходит и в Telegram (BR-51), саму тему адресат видит во «Вопросах».
 		if s.Notify(Notification{ID: "sla1:" + key, UserID: q.AddresseeID, Type: "sla_expired", View: "questions", TG: "pending", Urgent: q.Urgent,
-			Text: fmt.Sprintf("⏳ Вопрос от %s ждёт ответа дольше %s: «%s».\nЧто сделать: ответь текстом, назначь встречу или нажми «Не ко мне» — я найду другого.",
-				asker, kind, q.Title)}) {
+			Text: fmt.Sprintf("⏳ Вопрос от %s ждёт ответа дольше %s.\nЧто сделать: открой его во «Вопросах» — ответь текстом, назначь встречу или нажми «Не ко мне», я найду другого.",
+				asker, kind)}) {
 			s.Emit(EvQuestionOverdue, "system", q.ID, map[string]string{"to": q.AddresseeID, "stage": "addressee"})
 		}
 		// Ещё через SLA — бадди стажёра с предложением переадресовать (если бадди сам не адресат).
@@ -98,12 +99,19 @@ func (s *Store) Watch(now time.Time) {
 			hours = to2.WorkingHours
 		}
 		buddy := s.UserBuddy(q.AskedBy)
-		if buddy == "" || buddy == q.AddresseeID || now.Before(AddWorking(hours, due, due.Sub(since))) {
+		// Второй срок — ещё один такой же рабочий срок после первого (BR-18), а не календарная разница:
+		// иначе ночи и выходные считались рабочими часами и бадди узнавал о вопросе на дни позже.
+		sla := WorkingDay(hours)
+		if q.Urgent {
+			sla = UrgentSLA
+		}
+		if buddy == "" || buddy == q.AddresseeID || now.Before(AddWorking(hours, due, sla)) {
 			continue
 		}
+		// Без темы: бадди мог не видеть текст вопросов стажёра (BR-86), а уведомление уходит и в Telegram (BR-51).
 		if s.Notify(Notification{ID: "sla2:" + key, UserID: buddy, Type: "sla_expired", View: "questions", TG: "pending",
-			Text: fmt.Sprintf("⏳ Вопрос %s · %s без ответа уже два срока: «%s».\nЧто сделать: переадресуй его другому эксперту или ответь сам — стажёр ждёт.",
-				asker, to, q.Title)}) {
+			Text: fmt.Sprintf("⏳ Вопрос %s · %s без ответа уже два срока.\nЧто сделать: открой «Вопросы стажёров» — переадресуй его другому эксперту или ответь сам, стажёр ждёт.",
+				asker, to)}) {
 			s.Emit(EvQuestionOverdue, "system", q.ID, map[string]string{"to": buddy, "stage": "buddy"})
 		}
 	}

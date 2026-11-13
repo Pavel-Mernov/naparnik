@@ -133,9 +133,9 @@
 				
 				<option value="file38">github.com/worker4556/naparnik/backend/internal/store/store.go (96.5%)</option>
 				
-				<option value="file39">github.com/worker4556/naparnik/backend/internal/store/watch.go (94.6%)</option>
+				<option value="file39">github.com/worker4556/naparnik/backend/internal/store/watch.go (94.8%)</option>
 				
-				<option value="file40">github.com/worker4556/naparnik/backend/internal/telegram/telegram.go (91.7%)</option>
+				<option value="file40">github.com/worker4556/naparnik/backend/internal/telegram/telegram.go (91.0%)</option>
 				
 				<option value="file41">github.com/worker4556/naparnik/backend/internal/tools/access.go (100.0%)</option>
 				
@@ -1315,9 +1315,19 @@ func containsPII(text string) bool {
         <span class="cov8" title="1">return false</span>
 }
 
-// MaskPII — для логов и журнала событий (BR-72).
+// maskOnly — что ещё прячем при сохранении (история чата, журнал), хотя в модель это не блокируется:
+// телефон, почта, секреты и токены (BR-72).
+var maskOnly = []*regexp.Regexp{
+        regexp.MustCompile(`(?:\+7|\b8)[\s(-]*\d{3}[\s)-]*\d{3}[\s-]?\d{2}[\s-]?\d{2}\b`), // телефон
+        regexp.MustCompile(`[\w.+-]+@[\w-]+\.[\w.-]+`),                                    // почта
+        regexp.MustCompile(`\b(?:sk|pk|ghp|xox[bp])[-_][A-Za-z0-9_-]{12,}\b`),             // ключи API
+        regexp.MustCompile(`(?i)(парол[ья]|password|token|токен)\s*[:=]\s*\S+`),           // «пароль: …»
+}
+
+// MaskPII — перед сохранением: история чата, журнал событий (BR-72). Номера карт, паспорта, СНИЛС,
+// телефоны, почта и секреты заменяются на «***».
 func MaskPII(text string) string {
-        <span class="cov8" title="1">for _, re := range piiPatterns[:3] </span>{
+        <span class="cov8" title="1">for _, re := range append(append([]*regexp.Regexp{}, piiPatterns[:3]...), maskOnly...) </span>{
                 <span class="cov8" title="1">text = re.ReplaceAllString(text, "***")
 </span>        }
         <span class="cov8" title="1">return text</span>
@@ -1373,8 +1383,9 @@ func (a *Agent) Remember(login, question string, r Reply) error {
         if err != nil </span>{
                 <span class="cov0" title="0">return err
 </span>        }
+        // ПДн и секреты в историю не попадают (BR-61, BR-72): Напарник обещает «никуда не сохраняю».
         <span class="cov8" title="1">return a.Store.Transaction(func(s *store.Store) error </span>{
-                <span class="cov8" title="1">s.AppendChat(u.ID, question, raw)
+                <span class="cov8" title="1">s.AppendChat(u.ID, MaskPII(question), raw)
                 return nil
 </span>        })
 }
@@ -6683,9 +6694,10 @@ func (s *Store) Watch(now time.Time) {
                 if q.Urgent </span>{
                         <span class="cov8" title="1">kind = "двух рабочих часов (срочный)"
 </span>                }
+                // Без темы вопроса: уведомление уходит и в Telegram (BR-51), саму тему адресат видит во «Вопросах».
                 <span class="cov8" title="1">if s.Notify(Notification{ID: "sla1:" + key, UserID: q.AddresseeID, Type: "sla_expired", View: "questions", TG: "pending", Urgent: q.Urgent,
-                        Text: fmt.Sprintf("⏳ Вопрос от %s ждёт ответа дольше %s: «%s».\nЧто сделать: ответь текстом, назначь встречу или нажми «Не ко мне» — я найду другого.",
-                                asker, kind, q.Title)}) </span>{
+                        Text: fmt.Sprintf("⏳ Вопрос от %s ждёт ответа дольше %s.\nЧто сделать: открой его во «Вопросах» — ответь текстом, назначь встречу или нажми «Не ко мне», я найду другого.",
+                                asker, kind)}) </span>{
                         <span class="cov8" title="1">s.Emit(EvQuestionOverdue, "system", q.ID, map[string]string{"to": q.AddresseeID, "stage": "addressee"})
 </span>                }
                 // Ещё через SLA — бадди стажёра с предложением переадресовать (если бадди сам не адресат).
@@ -6695,12 +6707,19 @@ func (s *Store) Watch(now time.Time) {
                         <span class="cov8" title="1">hours = to2.WorkingHours
 </span>                }
                 <span class="cov8" title="1">buddy := s.UserBuddy(q.AskedBy)
-                if buddy == "" || buddy == q.AddresseeID || now.Before(AddWorking(hours, due, due.Sub(since))) </span>{
+</span>                // Второй срок — ещё один такой же рабочий срок после первого (BR-18), а не календарная разница:
+                // иначе ночи и выходные считались рабочими часами и бадди узнавал о вопросе на дни позже.
+                <span class="cov8" title="1">sla := WorkingDay(hours)
+                if q.Urgent </span>{
+                        <span class="cov8" title="1">sla = UrgentSLA
+</span>                }
+                <span class="cov8" title="1">if buddy == "" || buddy == q.AddresseeID || now.Before(AddWorking(hours, due, sla)) </span>{
                         <span class="cov8" title="1">continue</span>
                 }
+                // Без темы: бадди мог не видеть текст вопросов стажёра (BR-86), а уведомление уходит и в Telegram (BR-51).
                 <span class="cov8" title="1">if s.Notify(Notification{ID: "sla2:" + key, UserID: buddy, Type: "sla_expired", View: "questions", TG: "pending",
-                        Text: fmt.Sprintf("⏳ Вопрос %s · %s без ответа уже два срока: «%s».\nЧто сделать: переадресуй его другому эксперту или ответь сам — стажёр ждёт.",
-                                asker, to, q.Title)}) </span>{
+                        Text: fmt.Sprintf("⏳ Вопрос %s · %s без ответа уже два срока.\nЧто сделать: открой «Вопросы стажёров» — переадресуй его другому эксперту или ответь сам, стажёр ждёт.",
+                                asker, to)}) </span>{
                         <span class="cov8" title="1">s.Emit(EvQuestionOverdue, "system", q.ID, map[string]string{"to": buddy, "stage": "buddy"})
 </span>                }
         }
@@ -7274,11 +7293,11 @@ func (t *Service) poll(ctx context.Context) {
                 <span class="cov8" title="1">var ups []update
                 if err := t.call(ctx, "getUpdates", map[string]any{"offset": offset, "timeout": 25, "allowed_updates": []string{"message"}}, &amp;ups); err != nil </span>{
                         // Ошибку видно в журнале (раньше глоталась): например, Conflict — тот же бот опрашивает другой экземпляр.
-                        <span class="cov8" title="1">if msg := err.Error(); msg != lastErr &amp;&amp; ctx.Err() == nil </span>{
+                        <span class="cov0" title="0">if msg := err.Error(); msg != lastErr &amp;&amp; ctx.Err() == nil </span>{
                                 <span class="cov0" title="0">log.Printf("telegram: %v", err)
                                 lastErr = msg
 </span>                        }
-                        <span class="cov8" title="1">time.Sleep(5 * time.Second)
+                        <span class="cov0" title="0">time.Sleep(5 * time.Second)
                         continue</span>
                 }
                 <span class="cov8" title="1">lastErr = ""
@@ -7290,7 +7309,7 @@ func (t *Service) poll(ctx context.Context) {
                         <span class="cov8" title="1">reply := t.Handle(ctx, u.Message.Chat.ID, u.Message.Text)
                         log.Printf("telegram: входящее %q → %s", command(u.Message.Text), firstLine(reply))
                         if err := t.send(ctx, u.Message.Chat.ID, reply); err != nil </span>{
-                                <span class="cov0" title="0">log.Printf("telegram: %v", err)
+                                <span class="cov8" title="1">log.Printf("telegram: %v", err)
 </span>                        }
                 }
         }

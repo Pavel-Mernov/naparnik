@@ -48,11 +48,11 @@ internal/agent/drafts.go:90:		EditQuestionDraft		100.0%
 internal/agent/drafts.go:128:		CancelDraft			90.9%
 internal/agent/drafts.go:148:		Confirm				88.9%
 internal/agent/guard.go:36:		containsPII			100.0%
-internal/agent/guard.go:46:		MaskPII				100.0%
-internal/agent/guard.go:55:		guard				100.0%
+internal/agent/guard.go:56:		MaskPII				100.0%
+internal/agent/guard.go:65:		guard				100.0%
 internal/agent/history.go:26:		Remember			77.8%
-internal/agent/history.go:42:		History				77.8%
-internal/agent/history.go:71:		NewConversation			85.7%
+internal/agent/history.go:43:		History				77.8%
+internal/agent/history.go:72:		NewConversation			85.7%
 internal/agent/practice.go:11:		ApprovePractice			66.7%
 internal/agent/practice.go:18:		GeneratePractice		83.3%
 internal/agent/practice.go:38:		SyncPractices			90.0%
@@ -288,7 +288,7 @@ internal/store/watch.go:18:		AddWorking			85.7%
 internal/store/watch.go:42:		WorkingDay			66.7%
 internal/store/watch.go:50:		QuestionSLA			92.9%
 internal/store/watch.go:74:		Watch				100.0%
-internal/store/watch.go:115:		watchIdle			100.0%
+internal/store/watch.go:123:		watchIdle			100.0%
 internal/telegram/telegram.go:37:	ConfigFromEnv			100.0%
 internal/telegram/telegram.go:54:	firstEnv			100.0%
 internal/telegram/telegram.go:72:	New				100.0%
@@ -313,7 +313,7 @@ internal/telegram/telegram.go:366:	Schedule			93.4%
 internal/telegram/telegram.go:465:	eventTip			62.5%
 internal/telegram/telegram.go:482:	contains			100.0%
 internal/telegram/telegram.go:492:	Run				88.9%
-internal/telegram/telegram.go:525:	poll				78.9%
+internal/telegram/telegram.go:525:	poll				68.4%
 internal/tools/access.go:17:		getAccessRules			100.0%
 internal/tools/access.go:38:		relatedAccessStep		100.0%
 internal/tools/answers.go:24:		AnswerQuestion			100.0%
@@ -480,4 +480,4 @@ internal/tools/tools.go:207:		Check				100.0%
 internal/tools/transaction.go:16:	atomic				92.3%
 internal/tools/transaction.go:36:	atomicResult			100.0%
 internal/tools/transaction.go:46:	CreateSelfOnce			61.9%
-total:										(statements)			93.7%
+total:										(statements)			93.6%

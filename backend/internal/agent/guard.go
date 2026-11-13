@@ -42,9 +42,19 @@ func containsPII(text string) bool {
 	return false
 }
 
-// MaskPII — для логов и журнала событий (BR-72).
+// maskOnly — что ещё прячем при сохранении (история чата, журнал), хотя в модель это не блокируется:
+// телефон, почта, секреты и токены (BR-72).
+var maskOnly = []*regexp.Regexp{
+	regexp.MustCompile(`(?:\+7|\b8)[\s(-]*\d{3}[\s)-]*\d{3}[\s-]?\d{2}[\s-]?\d{2}\b`), // телефон
+	regexp.MustCompile(`[\w.+-]+@[\w-]+\.[\w.-]+`),                                    // почта
+	regexp.MustCompile(`\b(?:sk|pk|ghp|xox[bp])[-_][A-Za-z0-9_-]{12,}\b`),             // ключи API
+	regexp.MustCompile(`(?i)(парол[ья]|password|token|токен)\s*[:=]\s*\S+`),           // «пароль: …»
+}
+
+// MaskPII — перед сохранением: история чата, журнал событий (BR-72). Номера карт, паспорта, СНИЛС,
+// телефоны, почта и секреты заменяются на «***».
 func MaskPII(text string) string {
-	for _, re := range piiPatterns[:3] {
+	for _, re := range append(append([]*regexp.Regexp{}, piiPatterns[:3]...), maskOnly...) {
 		text = re.ReplaceAllString(text, "***")
 	}
 	return text

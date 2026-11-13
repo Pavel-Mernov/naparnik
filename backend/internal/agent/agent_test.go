@@ -392,3 +392,23 @@ func TestConfidentialNotSentToModel(t *testing.T) {
 		t.Fatalf("упрощённый режим: %s", off.Text)
 	}
 }
+
+// BR-61, BR-72: персональные данные и секреты не сохраняются в историю чата — только маска.
+func TestHistoryMasksPII(t *testing.T) {
+	a := newAgent(t, "stub_ok", time.Second)
+	msg := "карта 4276 1234 5678 9012, телефон +7 (900) 123-45-67, почта ivan@example.com, ключ sk-abcdef1234567890XYZ, пароль: qwerty123"
+	r := ask(t, a, "intern.sokolov", msg)
+	if err := a.Remember("intern.sokolov", msg, r); err != nil {
+		t.Fatal(err)
+	}
+	h := a.History("intern.sokolov")
+	saved := h.Turns[len(h.Turns)-1].Question
+	for _, secret := range []string{"4276", "123-45-67", "ivan@example.com", "sk-abcdef", "qwerty123"} {
+		if strings.Contains(saved, secret) {
+			t.Fatalf("в истории осталось %q: %s", secret, saved)
+		}
+	}
+	if !strings.Contains(saved, "***") {
+		t.Fatalf("маски нет: %s", saved)
+	}
+}

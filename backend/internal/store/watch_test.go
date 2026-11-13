@@ -67,15 +67,16 @@ func TestQuestionSLA(t *testing.T) {
 	s.Watch(due)
 	s.Watch(due.Add(time.Hour)) // повтор не дублирует
 	n := notes(s, "u-orlov", "sla_expired")
-	if len(n) != 1 || !strings.Contains(n[0].Text, "Расхождение конверсии") || n[0].TG != "pending" {
+	// BR-51: тема вопроса в уведомление не попадает — оно уходит и в Telegram.
+	if len(n) != 1 || strings.Contains(n[0].Text, "Расхождение конверсии") || n[0].TG != "pending" {
 		t.Fatal(n)
 	}
 	if len(notes(s, "u-belova", "sla_expired")) != 0 {
 		t.Fatal("бадди — только после второго срока")
 	}
 	s.Watch(AddWorking(orlov.WorkingHours, due, day))
-	if b := notes(s, "u-belova", "sla_expired"); len(b) != 1 || !strings.Contains(b[0].Text, "переадресуй") {
-		t.Fatal(b)
+	if b := notes(s, "u-belova", "sla_expired"); len(b) != 1 || !strings.Contains(b[0].Text, "переадресуй") || strings.Contains(b[0].Text, "Расхождение конверсии") {
+		t.Fatal(b) // BR-86: бадди мог не видеть текст вопросов стажёра — темы в уведомлении нет
 	}
 	// Ответил — сторож молчит; переадресация начинает отсчёт заново.
 	s.UpdateQuestion(q.ID, func(q *Question) { q.Status = "Answered" })
@@ -128,5 +129,29 @@ func TestIdleSignal(t *testing.T) {
 	s.Watch(at("2026-11-17 11:30"))
 	if len(notes(s, "u-belova", "idle_signal")) != 2 {
 		t.Fatal("новый простой — новый сигнал")
+	}
+}
+
+// BR-18: второй срок — ещё один рабочий день после первого, а не календарная разница с ночами и выходными.
+// Вопрос в пятницу 18:00 эксперту с часами 10–19: первый срок — пн 18:00, бадди — вт 18:00 (а не через 9 дней).
+func TestQuestionSLASecondDeadlineOverWeekend(t *testing.T) {
+	defer func(old func() time.Time) { Now = old }(Now)
+	s := watchStore(t)
+	sent := at("2026-11-13 18:00") // пятница
+	Now = func() time.Time { return sent }
+	q := &Question{ID: "Q-902", AskedBy: "u-sokolov", AddresseeID: "u-lebedeva", Title: "Тема", Status: "Sent"}
+	s.AddQuestion(q)
+	s.Emit(EvQuestionSent, "u-sokolov", q.ID, map[string]string{"to": "u-lebedeva"})
+	_, due, ok := s.QuestionSLA(*q)
+	if !ok || !due.Equal(at("2026-11-16 18:00")) {
+		t.Fatalf("первый срок: %v", due)
+	}
+	s.Watch(at("2026-11-17 17:59"))
+	if len(notes(s, "u-belova", "sla_expired")) != 0 {
+		t.Fatal("бадди — не раньше второго срока")
+	}
+	s.Watch(at("2026-11-17 18:00"))
+	if len(notes(s, "u-belova", "sla_expired")) != 1 {
+		t.Fatal("бадди — во вторник 18:00, через один рабочий день после первого срока")
 	}
 }

@@ -30,17 +30,21 @@ export default defineConfig({
   test: {
     environment: "jsdom",
     setupFiles: ["./src/test/setup.ts"],
-    // Интеграционные сценарии печатают текст и проходят несколько экранов; под подсчётом покрытия они медленнее.
-    testTimeout: 15000,
+    // Интеграционные сценарии печатают текст и проходят несколько экранов; под подсчётом покрытия и на занятой
+    // машине они медленнее. Половина ядер на воркеры — иначе сценарии мешают друг другу и падают по таймауту.
+    testTimeout: 30000,
+    maxWorkers: "50%",
     include: ["src/**/*.test.{ts,tsx}"],
     coverage: {
       provider: "v8",
       reporter: ["text", "html", "json-summary", "lcov"],
       reportsDirectory: "coverage",
       // Весь код приложения, который загружает index.html (src/app/main.tsx и всё, что он импортирует).
-      // Не считаются только тесты, тестовые помощники, точка входа и barrel-файлы с одними реэкспортами.
+      // Не считаются только тесты, тестовые помощники, точка входа и barrel-файлы с одними реэкспортами
+      // (index.ts слайсов). index.ts с кодом — API-клиент, тема, конфиг в shared — считаются.
       include: ["src/**/*.{ts,tsx}"],
-      exclude: ["src/**/*.test.{ts,tsx}", "src/test/**", "src/app/main.tsx", "src/**/index.ts"],
+      exclude: ["src/**/*.test.{ts,tsx}", "src/test/**", "src/app/main.tsx",
+        "src/{pages,widgets,entities,features}/**/index.ts", "src/shared/lib/index.ts"],
       thresholds: { lines: 80, functions: 80, statements: 80, branches: 80 },
     },
   },

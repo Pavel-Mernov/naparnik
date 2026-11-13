@@ -223,5 +223,4 @@ export const KnowledgeSkeleton = () => {
   );
 };
 
-export { MascotBadge } from "./Mascot";
 
