@@ -115,3 +115,78 @@ cut[leftover, 3] = 0
 print("leftover removed", int(leftover.sum()))
 Image.fromarray(cut.astype(np.uint8)).save(f"{out}/figure.png")
 print("circle box", round(cx2,1), round(cy2,1), round(r2,1))
+
+# 6) Закрытые и полуприкрытые глаза — слои поверх фигуры того же размера (eyes-closed.png, eyes-half.png).
+#    Глаз = белок (самая большая белая область в зоне глаз, без зубов) + зрачки, которые его касаются.
+#    Закрываем: глаз заливается мехом соседних участков (inpaint), сверху — фактура шерсти со лба;
+#    по форме глаза рисуется тёмная линия сомкнутых век.
+fig = cut.astype(np.uint8)
+Rf, Gf, Bf, Af = [fig[...,i].astype(int) for i in range(4)]
+zone = (xx >= 140) & (xx <= 450) & (yy >= 90) & (yy <= 270)
+whites = ((Rf > 190) & (Gf > 190) & (Bf > 190) & (Af > 200) & zone).astype(np.uint8)
+n_w, lab_w, st_w, _ = cv2.connectedComponentsWithStats(whites)
+eye_white = lab_w == 1 + np.argmax(st_w[1:, cv2.CC_STAT_AREA])
+dark = ((Rf < 60) & (Gf < 60) & (Bf < 70) & (Af > 200) & zone).astype(np.uint8)
+n_d, lab_d, st_d, cen_d = cv2.connectedComponentsWithStats(dark)
+near = cv2.dilate(eye_white.astype(np.uint8), np.ones((9, 9), np.uint8)).astype(bool)
+pupils = np.zeros_like(eye_white)
+for k in range(1, n_d):
+    comp = lab_d == k
+    rim = comp & ~cv2.erode(comp.astype(np.uint8), np.ones((3, 3), np.uint8)).astype(bool)
+    touch = (rim & near).sum() / max(1, rim.sum())
+    if st_d[k, cv2.CC_STAT_AREA] > 300 and touch > 0.45:   # зрачок почти весь окружён белком, нос — нет
+        pupils |= comp
+nose = np.zeros_like(eye_white)
+for k in range(1, n_d):
+    comp = lab_d == k
+    if st_d[k, cv2.CC_STAT_AREA] > 300 and not (comp & pupils).any():
+        nose |= comp
+nose = cv2.dilate(nose.astype(np.uint8), np.ones((9, 9), np.uint8)).astype(bool)
+eye = cv2.morphologyEx((eye_white | pupils).astype(np.uint8), cv2.MORPH_CLOSE, np.ones((9, 9), np.uint8)).astype(bool)
+eye = ndimage.binary_fill_holes(eye)  # блики внутри зрачков — тоже глаз
+eye = cv2.dilate(eye.astype(np.uint8), np.ones((5, 5), np.uint8)).astype(bool) & zone & ~nose
+print("eye px", int(eye.sum()), "pupils px", int(pupils.sum()))
+
+# Фактура шерсти: лоб над глазами, высокочастотная составляющая, плиткой.
+fy0, fy1, fx0, fx1 = 370, 440, 210, 330   # ровный мех груди
+patch = fig[fy0:fy1, fx0:fx1, :3].astype(np.float32)
+detail = patch - cv2.GaussianBlur(patch, (0, 0), 3)
+tile = np.tile(detail, (H // detail.shape[0] + 2, W // detail.shape[1] + 2, 1))[:H, :W]
+
+FUR_TOP = np.array([30, 95, 205], np.float32)   # мех брови над глазом
+FUR_LOW = np.array([16, 62, 160], np.float32)   # к краю века темнее
+
+def lids_layer(fraction, name):
+    layer = np.zeros((H, W, 4), np.uint8)
+    for lo, hi in [(140, 300), (300, 451)]:          # каждый глаз отдельно
+        eye1 = eye & (xx >= lo) & (xx < hi)
+        cols = [x for x in range(lo, hi) if eye1[:, x].any()]
+        if len(cols) < 20:
+            continue
+        cols = np.array(cols)
+        top = np.array([np.nonzero(eye1[:, x])[0].min() for x in cols], float)
+        bot = np.array([np.nonzero(eye1[:, x])[0].max() for x in cols], float)
+        smooth = lambda v: np.convolve(np.pad(v, 12, mode="edge"), np.ones(25) / 25, mode="valid")
+        frac_line = 0.62 if fraction > 0.9 else fraction
+        edge = smooth(top + fraction * (bot - top))          # докуда опускается веко
+        line = smooth(top + frac_line * (bot - top))          # где сомкнуты веки
+        for x, t0, e in zip(cols, top, edge):
+            ys_ = np.arange(int(t0), int(e) + 1)
+            ys_ = ys_[eye1[ys_, x]]
+            if not len(ys_):
+                continue
+            k = np.clip((ys_ - t0) / max(1, e - t0), 0, 1)[:, None]
+            color = FUR_TOP * (1 - k) + FUR_LOW * k + tile[ys_, x] * 0.7
+            layer[ys_, x, :3] = np.clip(color, 0, 255).astype(np.uint8)
+            layer[ys_, x, 3] = 255
+        sel = slice(5, -5)
+        pts = np.c_[cols[sel], line[sel]].astype(np.int32).reshape(-1, 1, 2)
+        if fraction > 0.9:
+            cv2.polylines(layer, [pts + [0, 5]], False, (70, 130, 230, 170), 4, cv2.LINE_AA)  # нижнее веко чуть светлее
+        cv2.polylines(layer, [pts], False, (10, 26, 80, 255), 8, cv2.LINE_AA)
+    a = cv2.GaussianBlur(layer[..., 3].astype(np.float32), (5, 5), 0)
+    layer[..., 3] = np.where(a > 10, np.maximum(a, np.where(layer[..., 3] > 0, 210, 0)), 0).astype(np.uint8)
+    Image.fromarray(layer).save(f"{out}/{name}")
+
+lids_layer(1.0, "eyes-closed.png")
+lids_layer(0.5, "eyes-half.png")

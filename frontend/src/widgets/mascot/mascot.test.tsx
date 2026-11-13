@@ -72,11 +72,12 @@ describe("Mascot3D", () => {
 
   it("сон: веки закрыты и «z z Z»; дремота: веки полуприкрыты; думает: облачко «…»", () => {
     const { container, unmount } = draw("sleeping");
-    expect(container.querySelectorAll('[data-lid="1"]')).toHaveLength(2);
+    expect(container.querySelector('[data-eyes="closed"]')).not.toBeNull();
     expect(screen.getByText("Z")).toBeInTheDocument();
     unmount();
     const drowsy = draw("drowsy");
-    expect(drowsy.container.querySelectorAll('[data-lid="0.6"]')).toHaveLength(2);
+    expect(drowsy.container.querySelector('[data-eyes="half"]')).not.toBeNull();
+    expect(drowsy.container.querySelector('[data-eyes-half="true"]')).not.toBeNull();
     drowsy.unmount();
     const thinking = draw("thinking");
     expect(thinking.container.querySelectorAll('[data-mood="thinking"] span').length).toBeGreaterThanOrEqual(3);

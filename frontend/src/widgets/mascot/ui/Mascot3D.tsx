@@ -13,6 +13,8 @@ import { useEffect, useRef, type ReactNode } from "react";
 import { Box, keyframes } from "@mui/material";
 import figureImg from "@/shared/assets/mascot/figure.png";
 import pawImg from "@/shared/assets/mascot/paw.png";
+import eyesClosedImg from "@/shared/assets/mascot/eyes-closed.png";
+import eyesHalfImg from "@/shared/assets/mascot/eyes-half.png";
 import type { MascotMood } from "../model/types";
 
 const ASPECT = 480 / 526;
@@ -45,8 +47,9 @@ const pawShrug = keyframes`0%,100%{transform:rotate(0)}30%,70%{transform:rotate(
 const pawStretch = keyframes`0%{transform:rotate(-40deg) translateY(20%)}60%{transform:rotate(8deg) translateY(-10%)}100%{transform:rotate(0)}`;
 
 // ---------- лицо и прочее ----------
-const blink = keyframes`0%,92%,100%{transform:scaleY(0)}95%{transform:scaleY(1)}`;
-const blinkTwice = keyframes`0%,80%,88%,100%{transform:scaleY(0)}84%,92%{transform:scaleY(1)}`; // «эй, тут для тебя кое-что есть»
+// Моргание — на мгновение показываем закрытые глаза; двойное — «эй, тут для тебя кое-что есть».
+const blink = keyframes`0%,93%,100%{opacity:0}94.5%,97%{opacity:1}`;
+const blinkTwice = keyframes`0%,78%,100%{opacity:0}79.5%,82%{opacity:1}84%{opacity:0}86%,88.5%{opacity:1}90.5%{opacity:0}`;
 const zzz = keyframes`0%{opacity:0;transform:translate(0,0) scale(.5) rotate(-10deg)}15%{opacity:1}100%{opacity:0;transform:translate(90%,-170%) scale(1.3) rotate(12deg)}`;
 const dots = keyframes`0%,20%{opacity:.2}50%{opacity:1}100%{opacity:.2}`;
 const letterWiggle = keyframes`0%,100%{transform:rotate(14deg)}50%{transform:rotate(4deg)}`;
@@ -79,14 +82,8 @@ const PAW_MOTION: Partial<Record<MascotMood, string>> = {
 };
 /** Поза лапы: никнет в дремоте; во сне — под одеялом. */
 const PAW_POSE: Partial<Record<MascotMood, string>> = { drowsy: "rotate(-22deg) translateY(8%)", sleeping: "rotate(-40deg) translateY(25%)" };
-/** Насколько закрыты веки: 0 — открыты, 1 — закрыты. */
-const LIDS: Partial<Record<MascotMood, number>> = { drowsy: 0.6, sleeping: 1 };
-
-// Глаза на исходнике 526×480: веки — овалы цвета меха, опускаются сверху.
-const EYES = [
-  { left: "33%", top: "17.5%", width: "22.5%", height: "23%", rotate: "8deg" },
-  { left: "55.5%", top: "25.5%", width: "22%", height: "22.5%", rotate: "8deg" },
-];
+/** Глаза: открыты, полуприкрыты (дремлет), закрыты (спит). Слои из scripts/mascot_layers.py точно по фигуре. */
+const EYES: Partial<Record<MascotMood, "half" | "closed">> = { drowsy: "half", sleeping: "closed" };
 
 /** Письмо в лапе: конверт с печатью; у напоминания — восклицательный знак. */
 const Letter = ({ alert }: { alert: boolean }) => (
@@ -132,7 +129,7 @@ export const Mascot3D = ({ size, mood = "idle", interactive = true, badge }: {
   }, [interactive]);
 
   const asleep = mood === "sleeping";
-  const lids = LIDS[mood] ?? 0;
+  const eyes = EYES[mood] ?? "open";
   const letter = LETTER.includes(mood);
   const blinkAnim = letter ? `${blinkTwice} 2.6s ease-in-out infinite` : `${blink} 6s ease-in-out infinite`;
   const stripe = Math.max(3, Math.round(size * 0.07));
@@ -175,27 +172,16 @@ export const Mascot3D = ({ size, mood = "idle", interactive = true, badge }: {
             filter: asleep ? "saturate(.9) brightness(.97)" : "drop-shadow(0 6px 10px rgba(0, 60, 160, .25))" }}>
             <Box component="img" src={figureImg} alt="" draggable={false}
               sx={{ width: "100%", height: "100%", display: "block", objectFit: "contain", maxWidth: "none", userSelect: "none" }} />
-            {/* Веки: моргание; двойное — когда есть письмо; тяжелеют — дремлет; закрыты — спит */}
-            {EYES.map((e, i) => (
-              <Box key={i} aria-hidden data-lid={lids} sx={{
-                position: "absolute", left: e.left, top: e.top, width: e.width, height: e.height, transform: `rotate(${e.rotate})`,
-                borderRadius: "50%", overflow: "hidden", pointerEvents: "none",
-              }}>
-                <Box sx={{
-                  position: "absolute", inset: "-4%", transformOrigin: "50% 0", borderRadius: "0 0 50% 50% / 0 0 38% 38%",
-                  // Мех века: светлее к середине, мягкий край растворяется в шерсти вокруг глаза
-                  background: "radial-gradient(85% 75% at 50% 30%, #3b74ea 0%, #2a5fd8 45%, #1c48b8 80%, #163c9c 100%)",
-                  maskImage: "radial-gradient(closest-side, #000 84%, rgba(0,0,0,.55) 94%, transparent 100%)",
-                  WebkitMaskImage: "radial-gradient(closest-side, #000 84%, rgba(0,0,0,.55) 94%, transparent 100%)",
-                  transform: lids ? `scaleY(${lids})` : "scaleY(0)", transition: "transform .7s ease-in-out",
-                  animation: lids ? undefined : blinkAnim, animationDelay: lids ? undefined : `${i * 0.04}s`,
-                }} />
-                {lids === 1 && <Box sx={{
-                  position: "absolute", left: "16%", right: "16%", top: "34%", height: "32%",
-                  borderBottom: `${Math.max(2, Math.round(size / 30))}px solid rgba(8, 24, 78, .85)`, borderRadius: "0 0 50% 50%",
-                }} />}
-              </Box>
-            ))}
+            {/* Глаза: мех брови опускается на глаз; моргает, тяжелеют в дремоте, закрыты во сне */}
+            <Box component="img" src={eyesHalfImg} alt="" aria-hidden data-eyes-half={eyes === "half"} draggable={false} sx={{
+              position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none",
+              opacity: eyes === "half" ? 1 : 0, transition: "opacity .7s ease-in-out",
+            }} />
+            <Box component="img" src={eyesClosedImg} alt="" aria-hidden data-eyes={eyes} draggable={false} sx={{
+              position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none",
+              opacity: eyes === "closed" ? 1 : 0, transition: "opacity .7s ease-in-out",
+              animation: eyes === "open" ? blinkAnim : undefined,
+            }} />
             {/* Лапа: отдельный слой, вращается вокруг запястья */}
             <Box data-paw={mood} sx={{
               position: "absolute", left: `${PAW.left * 100}%`, top: `${PAW.top * 100}%`, width: `${PAW.width * 100}%`, height: `${PAW.height * 100}%`,
