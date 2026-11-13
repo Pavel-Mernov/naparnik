@@ -19,7 +19,7 @@ import { ProfileAvatar, ProfileDialog } from "@/widgets/profile";
 import { PlanDraftDialog } from "@/widgets/plan-draft";
 import {
   api, ApiError, getProfile, unwrap, type ChatReply, type KbDraft, type KbFolder, type KbPage, type Me, type PlanData, type PlanStep,
-  type Question, type RequestItem, type Services, type TeamOverview, type TodayData, type User,
+  type Question, type RequestItem, type Services, type TeamOverview, type TodayData, type User, type ChatHistory, type ChatTurn,
 } from "@/shared/api";
 import { STORAGE } from "@/shared/config";
 import { makeTheme, tokens, type Mode } from "@/shared/theme";
@@ -37,6 +37,12 @@ const ICONS: Record<View, ReactElement> = {
   day: <HomeOutlined />, plan: <TaskAltOutlined />, questions: <ForumOutlined />, knowledge: <MenuBookOutlined />, requests: <DescriptionOutlined />,
 };
 const GREETING: ChatMessage = { role: "assistant", text: "Привет! Спроси про команду, процессы или задачи. Могу оформить отгул или доступ — без твоего «Подтвердить» ничего не отправлю." };
+
+/** Сохранённые ходы текущего разговора — обратно в окно чата. */
+const turnsToMessages = (turns: ChatTurn[]): ChatMessage[] => turns.flatMap((x): ChatMessage[] => [
+  { role: "user", text: x.question },
+  { role: "assistant", text: x.reply.text, reply: x.reply, retryText: x.reply.retry ? x.question : undefined },
+]);
 
 const initialMode = (): Mode => {
   try { const saved = localStorage.getItem(STORAGE.theme); if (saved === "light" || saved === "dark") return saved; } catch { /* приватный режим */ }
@@ -66,6 +72,9 @@ function App() {
   const [chatText, setChatText] = useState("");
   const [chatLoading, setChatLoading] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([GREETING]);
+  // Вопросы Напарнику хранит сервер: окно чата и «Мои вопросы» переживают закрытие чата, перезагрузку и перезапуск.
+  const [asked, setAsked] = useState<ChatTurn[]>([]);
+  const conversation = useRef(0);
   const [busy, setBusy] = useState(false);
   const [snack, setSnack] = useState("");
   const [notesAnchor, setNotesAnchor] = useState<HTMLElement | null>(null);
@@ -131,7 +140,30 @@ function App() {
     getProfile(login, undefined, { signal: controller.signal }).then((p) => setMyPhoto({ login, url: p.photo?.url ?? null })).catch(() => undefined);
     return () => controller.abort();
   }, [login]);
-  useEffect(() => { void api(login, "/api/chat/reset", { method: "POST", body: "{}" }).catch(() => undefined); }, [login]);
+  useEffect(() => {
+    const controller = new AbortController();
+    api<ChatHistory>(login, "/api/chat/history", { signal: controller.signal }).then((h) => {
+      if (account.current !== login) return;
+      conversation.current = h.conversation;
+      setAsked(h.turns);
+      // Если человек уже успел написать, пока грузилась история, его сообщения не затираем.
+      setMessages((m) => (m.length > 1 ? m : [GREETING, ...turnsToMessages(h.turns.filter((x) => x.conversation === h.conversation))]));
+    }).catch(() => undefined);
+    return () => controller.abort();
+  }, [login]);
+
+  /** «Новый разговор»: окно чата пустеет, модель забывает контекст, сохранённые вопросы остаются. */
+  const newConversation = async () => {
+    const owner = login;
+    try {
+      await api(owner, "/api/chat/reset", { method: "POST", body: "{}" });
+      if (account.current !== owner) return;
+      conversation.current++;
+      setMessages([GREETING]);
+    } catch (e) {
+      setSnack(e instanceof Error ? e.message : "Не получилось начать новый разговор");
+    }
+  };
 
   const switchUser = (next: string) => {
     setAccountAnchor(null);
@@ -145,7 +177,7 @@ function App() {
     localStorage.setItem(STORAGE.login, next);
     setProfileOf(null); setPlanDraftOf("");
     setData(null); setView("day"); setSelectedIntern(""); setBusy(false); setError(""); setSnack("");
-    setChatText(""); setChatOpen(false); setChatLoading(false); setMessages([GREETING]);
+    setChatText(""); setChatOpen(false); setChatLoading(false); setMessages([GREETING]); setAsked([]);
     setLoading(true); setLogin(next);
   };
 
@@ -160,7 +192,10 @@ function App() {
     setMessages((m) => [...m, { role: "user", text }]); setChatLoading(true);
     try {
       const reply = await api<ChatReply>(owner, "/api/chat/messages", { method: "POST", body: JSON.stringify({ text }), signal: controller.signal });
-      if (isCurrent(owner, epoch)) setMessages((m) => [...m, { role: "assistant", text: reply.text, reply, retryText: reply.retry ? text : undefined }]);
+      if (isCurrent(owner, epoch)) {
+        setMessages((m) => [...m, { role: "assistant", text: reply.text, reply, retryText: reply.retry ? text : undefined }]);
+        setAsked((a) => [...a, { id: `local-${Date.now()}`, conversation: conversation.current, question: text, at: new Date().toISOString(), reply }]);
+      }
     } catch (e) {
       if (isCurrent(owner, epoch)) setMessages((m) => [...m, { role: "assistant", text: e instanceof Error ? e.message : "Не получилось ответить", retryText: text }]);
     } finally {
@@ -214,7 +249,7 @@ function App() {
   const page = () => {
     if (!data || !role) return null;
     if (view === "day") {
-      if (role === "intern") return <DayPage data={data} onMarkDone={(s) => void markDone(s)} onAsk={openChat} onOpenPlan={() => nav("plan")} onOpenQuestions={() => nav("questions")}
+      if (role === "intern") return <DayPage data={data} asked={asked} onMarkDone={(s) => void markDone(s)} onAsk={openChat} onOpenPlan={() => nav("plan")} onOpenQuestions={() => nav("questions")}
         waiting={<Block title="Новости">{news.length ? news.map((n) => {
           const rejected = n.go === "requests" && /отклонен/i.test(n.text);
           const soft = n.id.startsWith("ans-") || (n.go === "requests" && !rejected) ? t.okSoft : rejected ? t.badSoft : undefined;
@@ -231,7 +266,7 @@ function App() {
         picker={data.managedPlans.length > 1 && <TextField select size="small" label="Стажёр" value={selectedIntern} onChange={(e) => setSelectedIntern(e.target.value)} sx={{ minWidth: 220 }}>
           {data.managedPlans.map((i) => <MenuItem key={i.id} value={i.id}>{i.name}</MenuItem>)}</TextField>} />;
     }
-    if (view === "questions" || (view === "day" && role === "expert")) return <QuestionsPage data={data} role={role} onAsk={() => openChat()}
+    if (view === "questions" || (view === "day" && role === "expert")) return <QuestionsPage data={data} role={role} asked={asked} onAsk={() => openChat()} onOpenChat={() => setChatOpen(true)}
       onAnswer={(q, text) => perform(`/api/questions/${q.id}/answer`, "POST", { text }, "Ответ ушёл стажёру. Проверь страницу для базы")}
       onApprove={async (d, title, body) => { await perform(`/api/kb/pages/${d.id}/approve`, "POST", { title, body }, "Страница опубликована в базе знаний"); }} />;
     if (view === "knowledge") return <KnowledgePage data={data} onAsk={openChat} />;
@@ -393,7 +428,7 @@ function App() {
         </Menu>
 
         <ChatDrawer open={chatOpen} onClose={() => setChatOpen(false)} text={chatText} setText={setChatText} messages={messages} loading={chatLoading}
-          onSend={(retry) => void sendChat(retry)} login={login} look={look} onAction={() => void load()} />
+          onSend={(retry) => void sendChat(retry)} login={login} look={look} onAction={() => void load()} onReset={() => void newConversation()} />
         <ProfileDialog open={profileOf !== null} login={login} userId={profileOf || undefined} onClose={() => setProfileOf(null)}
           onChanged={(p) => { if (p.can_edit) setMyPhoto({ login, url: p.photo?.url ?? null }); }} />
         <PlanDraftDialog open={Boolean(planDraftOf)} login={login} internId={planDraftOf} onClose={() => setPlanDraftOf("")}

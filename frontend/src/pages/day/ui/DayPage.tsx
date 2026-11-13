@@ -1,7 +1,7 @@
 // Страница «Мой день» (FSD: pages/day).
 import type { ReactNode } from "react";
 import { Box, Button, Stack, Typography, useTheme } from "@mui/material";
-import type { PlanStep } from "@/shared/api";
+import type { ChatTurn, PlanStep } from "@/shared/api";
 import { longDate, plural } from "@/shared/lib";
 import type { DataState } from "@/shared/lib";
 import { Block, Empty, PageHead, Row, StatusTag } from "@/shared/ui";
@@ -17,8 +17,8 @@ const TodayBlock = ({ steps, today, onMarkDone, onHelp }: {
   </Block>
 );
 
-export const DayPage = ({ data, onMarkDone, onAsk, onOpenPlan, onOpenQuestions, waiting }: {
-  data: DataState; onMarkDone: (s: PlanStep) => void; onAsk: (text: string) => void; onOpenPlan: () => void; onOpenQuestions?: () => void; waiting: ReactNode;
+export const DayPage = ({ data, asked = [], onMarkDone, onAsk, onOpenPlan, onOpenQuestions, waiting }: {
+  data: DataState; asked?: ChatTurn[]; onMarkDone: (s: PlanStep) => void; onAsk: (text: string) => void; onOpenPlan: () => void; onOpenQuestions?: () => void; waiting: ReactNode;
 }) => {
   const { t } = useTheme();
   const first = data.me.name.split(" ")[0];
@@ -61,7 +61,7 @@ export const DayPage = ({ data, onMarkDone, onAsk, onOpenPlan, onOpenQuestions, 
             </Stack>)) : <Typography color="text.secondary">Сегодня без встреч.</Typography>}
         </Block>
         <Block title="Мои вопросы" aside={onOpenQuestions && <Button variant="text" size="small" sx={{ minHeight: 36 }} onClick={onOpenQuestions}>Все</Button>}>
-          {data.questions.length ? data.questions.slice(-3).reverse().map((q) => (
+          {data.questions.slice(-3).reverse().map((q) => (
             <Row
               key={q.id}
               title={q.title || q.text || "Вопрос"}
@@ -69,8 +69,11 @@ export const DayPage = ({ data, onMarkDone, onAsk, onOpenPlan, onOpenQuestions, 
               end={<StatusTag status={q.status} />}
               onClick={onOpenQuestions}
               sx={q.status === "Answered" ? { bgcolor: t.okSoft } : q.status === "Sent" ? { bgcolor: t.waitSoft } : undefined}
-            />))
-            : <Empty text="Вопросов людям пока нет. Спроси Напарника — он сначала поищет в базе." variant={1} />}
+            />))}
+          {/* Вопросы людям важнее; свободные строки занимают последние вопросы Напарнику — они тоже не теряются. */}
+          {(data.questions.length >= 3 ? [] : asked.slice(-(3 - data.questions.length))).reverse().map((x) => (
+            <Row key={x.id} title={x.question} sub={x.reply.sources.length ? `Напарник ответил по базе: ${x.reply.sources[0].title}` : "Ответил Напарник"} onClick={onOpenQuestions} />))}
+          {!data.questions.length && !asked.length && <Empty text="Вопросов пока нет. Спроси Напарника — он сначала поищет в базе." variant={1} />}
         </Block>
         {waiting}
       </Stack>

@@ -1,7 +1,7 @@
 // Вопросы людям. Адресат отвечает прямо здесь (US-10), автор проверяет страницу в базе перед публикацией (BR-30).
 import { useState } from "react";
 import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, Stack, TextField, Typography, useMediaQuery, useTheme } from "@mui/material";
-import type { KbDraft, Question } from "@/shared/api";
+import type { ChatTurn, KbDraft, Question } from "@/shared/api";
 import { answerDue, type DataState, type Role } from "@/shared/lib";
 import { AiTag, Block, Empty, PageHead, Row, StatusTag } from "@/shared/ui";
 import { Markdown } from "@/widgets/chat";
@@ -57,8 +57,45 @@ const DraftDialog = ({ draft, folder, onClose, onApprove }: { draft: KbDraft | n
   );
 };
 
-export const QuestionsPage = ({ data, role, onAsk, onAnswer, onApprove }: {
-  data: DataState; role: Role; onAsk: () => void;
+const askedAt = (iso: string) => {
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime()) ? "" : d.toLocaleString("ru-RU", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" });
+};
+
+/** Что стало с вопросом Напарнику: ответ из базы, черновик, упрощённый режим. */
+const askedSummary = (x: ChatTurn) => {
+  const drafts = x.reply.drafts;
+  if (drafts.some((d) => d.status === "confirmed")) return "Напарник оформил — подтверждено";
+  if (drafts.some((d) => !d.status || d.status === "pending")) return "Черновик ждёт подтверждения";
+  if (x.reply.sources.length) return `Ответ из базы: ${x.reply.sources[0].title}`;
+  if (x.reply.degraded) return "Ответ в упрощённом режиме";
+  return "Ответил Напарник";
+};
+
+/** Вопросы Напарнику — сохраняются на сервере, новые сверху; ответ раскрывается по нажатию. */
+export const AskedList = ({ asked, onOpenChat }: { asked: ChatTurn[]; onOpenChat?: () => void }) => {
+  const [open, setOpen] = useState("");
+  const { t } = useTheme();
+  return <>
+    {[...asked].reverse().map((x) => (
+      <Box key={x.id} sx={{ py: 1.5, borderBottom: 1, borderColor: "divider", "&:last-child": { borderBottom: "none" } }}>
+        <Box component="button" onClick={() => setOpen(open === x.id ? "" : x.id)} aria-expanded={open === x.id}
+          sx={{ all: "unset", cursor: "pointer", display: "block", width: "100%", "&:focus-visible": { outline: `2px solid ${t.ai}` } }}>
+          <Typography fontWeight={500}>{x.question}</Typography>
+          <Typography variant="body2" color="text.secondary">{askedSummary(x)}{askedAt(x.at) ? ` · ${askedAt(x.at)}` : ""}</Typography>
+        </Box>
+        {open === x.id && <Box sx={{ mt: 1.5, pl: 2, borderLeft: 3, borderColor: t.ai }}>
+          <Markdown text={x.reply.text} />
+          {x.reply.sources.map((s) => <Typography key={s.page_id} variant="caption" color="text.secondary" sx={{ display: "block" }}>
+            Источник: {s.title} · {s.author} · {s.updated_at}{s.label ? ` · ${s.label}` : ""}</Typography>)}
+          {onOpenChat && <Button variant="text" size="small" sx={{ mt: 1, minHeight: 36 }} onClick={onOpenChat}>Открыть чат</Button>}
+        </Box>}
+      </Box>))}
+  </>;
+};
+
+export const QuestionsPage = ({ data, role, asked = [], onAsk, onOpenChat, onAnswer, onApprove }: {
+  data: DataState; role: Role; asked?: ChatTurn[]; onAsk: () => void; onOpenChat?: () => void;
   onAnswer: (q: Question, text: string) => Promise<boolean>; onApprove: (d: KbDraft, title: string, body: string) => Promise<void>;
 }) => {
   const [draft, setDraft] = useState<KbDraft | null>(null);
@@ -79,14 +116,14 @@ export const QuestionsPage = ({ data, role, onAsk, onAnswer, onApprove }: {
   // Одна CTA: в пустом состоянии — внутри Empty (фокус), когда список есть — в шапке (как у Авито)
   const askBtn = () => <Button variant="contained" onClick={onAsk}>Спросить Напарника</Button>;
   return <>
-    <PageHead context={context} title={title} action={role === "intern" && all.length > 0 ? askBtn() : undefined} />
+    <PageHead context={context} title={title} action={role === "intern" && (all.length > 0 || asked.length > 0) ? askBtn() : undefined} />
     <Stack gap={5}>
       {data.drafts.length > 0 && <Block title="Проверь, я занёс твой ответ в базу" aside={<AiTag />}>
         {data.drafts.map((d) => <Row key={d.id} title={d.title} sub="Черновик страницы — опубликую после твоего «Ок»" onClick={() => setDraft(d)}
           end={<Button variant="text" size="small" sx={{ minHeight: 36, bgcolor: "transparent", "&:hover": { bgcolor: t.surfaceHover } }}>Проверить</Button>} />)}
       </Block>}
       {incoming.length > 0 && <Block title="Ждут ответа">{incoming.map((q) => <Incoming key={q.id} q={q} from={`От ${name(q.asked_by)}`} onAnswer={onAnswer} />)}</Block>}
-      <Block title={role === "buddy" ? "Маршрут вопросов стажёров" : all.length ? "Все вопросы" : "Пока пусто"}>
+      <Block title={role === "buddy" ? "Маршрут вопросов стажёров" : all.length ? "Все вопросы" : asked.length ? "Вопросы людям" : "Пока пусто"}>
         {all.length > 0 && <Stack direction={{ xs: "column", sm: "row" }} gap={1} mb={1.5}>
           <TextField size="small" placeholder="Найти вопрос" value={search} onChange={(e) => setSearch(e.target.value)} aria-label="Поиск вопросов" sx={{ flex: 1 }} />
           <Stack direction="row" gap={0.75} flexWrap="wrap">{chip("", "Все")}{chip("Sent", "Ждут ответа")}{chip("Answered", "Есть ответ")}</Stack>
@@ -108,9 +145,12 @@ export const QuestionsPage = ({ data, role, onAsk, onAnswer, onApprove }: {
             {q.reason && !q.answer && <Typography variant="caption" color="text.secondary">Почему {q.addressee}: {q.reason}</Typography>}
           </Box>)) : <Empty
             text={role === "intern" ? "Вопросов людям пока нет. Сначала спроси Напарника — он поищет в базе." : "Здесь появятся вопросы, на которые ты ответил."}
-            action={role === "intern" ? askBtn() : undefined}
+            action={role === "intern" && !asked.length ? askBtn() : undefined}
           />}
       </Block>
+      {asked.length > 0 && <Block title="Спрашивал у Напарника" aside={<AiTag />}>
+        <AskedList asked={asked} onOpenChat={onOpenChat} />
+      </Block>}
     </Stack>
     <DraftDialog draft={draft} folder={data.folders.find((f) => f.id === draft?.folder)?.title} onClose={() => setDraft(null)}
       onApprove={async (d, ti, b) => { await onApprove(d, ti, b); setDraft(null); }} />

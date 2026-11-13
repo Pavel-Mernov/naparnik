@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"github.com/worker4556/naparnik/backend/internal/adapters"
 	"github.com/worker4556/naparnik/backend/internal/flags"
+	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -64,6 +65,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/dashboard/team", s.auth(s.teamDashboard))
 	mux.HandleFunc("POST /api/chat/messages", s.auth(s.chat))
 	mux.HandleFunc("POST /api/chat/reset", s.auth(s.chatReset))
+	mux.HandleFunc("GET /api/chat/history", s.auth(s.chatHistory))
 	mux.HandleFunc("GET /api/drafts", s.auth(s.drafts))
 	mux.HandleFunc("GET /api/drafts/{id}", s.auth(s.draft))
 	mux.HandleFunc("PATCH /api/drafts/{id}", s.auth(s.draftEdit))
@@ -256,12 +258,29 @@ func (s *Server) chat(w http.ResponseWriter, r *http.Request, u *mockdata.User) 
 			return nil
 		})
 	}
+	// История: вопрос не пропадает после закрытия чата, перезагрузки и перезапуска сервера.
+	if err := s.Agent.Remember(u.Login, body.Text, reply); err != nil {
+		log.Printf("chat history: %v", err)
+	}
 	writeJSON(w, 200, reply)
 }
 
+// chatReset — «Новый разговор»: окно чата пустеет, сохранённые вопросы остаются.
 func (s *Server) chatReset(w http.ResponseWriter, _ *http.Request, u *mockdata.User) {
-	s.Agent.Reset(u.Login)
+	if err := s.Agent.NewConversation(u.Login); err != nil {
+		writeJSON(w, 503, errBody("unavailable", "Не удалось начать новый разговор. Повтори."))
+		return
+	}
 	writeJSON(w, 200, map[string]bool{"ok": true})
+}
+
+// chatHistory — сохранённые вопросы Напарнику: окно чата после перезагрузки и «Мои вопросы».
+func (s *Server) chatHistory(w http.ResponseWriter, r *http.Request, u *mockdata.User) {
+	if err := s.Store.Refresh(r.Context()); err != nil {
+		writeJSON(w, 503, errBody("unavailable", "Хранилище недоступно."))
+		return
+	}
+	writeJSON(w, 200, s.Agent.History(u.Login))
 }
 
 func (s *Server) confirm(w http.ResponseWriter, r *http.Request, u *mockdata.User) {

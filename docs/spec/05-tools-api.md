@@ -76,7 +76,8 @@ HTTP-коды в API: `forbidden` → 403, `not_found` → 404, `validation` →
 | GET | `/api/kb/drafts` | черновики страниц из моих ответов |
 | POST | `/api/kb/pages/{id}/approve` | `{title?, body?}` — публикация автором |
 | GET | `/api/kb/pages` | папки и опубликованные страницы своего пространства |
-| POST | `/api/chat/reset` | начать разговор с агентом заново |
+| POST | `/api/chat/reset` | «Новый разговор»: модель забывает контекст, окно чата пустеет; сохранённые вопросы остаются |
+| GET | `/api/chat/history` | `{conversation, turns: [{id, conversation, question, at, reply}]}` — вопросы и ответы веб-чата, черновики в текущем состоянии; только свои |
 | GET | `/api/today` | день стажёра: шаги, события, встречи |
 | GET | `/api/users` | справочник учёток для переключателя и выбора людей |
 | GET | `/api/notifications` | центр уведомлений текущего пользователя ([07](07-notifications.md)) |

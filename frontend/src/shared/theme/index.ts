@@ -239,7 +239,7 @@ export const makeTheme = (mode: Mode): Theme => {
       },
       MuiPaper: { defaultProps: { elevation: 0 }, styleOverrides: { root: { backgroundImage: "none" } } },
       MuiDialog: {
-        defaultProps: { elevation: 0 },
+        defaultProps: { slotProps: { paper: { elevation: 0 } } },
         styleOverrides: {
           paper: { borderRadius: radius, border: `${stroke.thick}px solid ${t.line}`, boxShadow: "none" },
         },

@@ -115,13 +115,18 @@ export type KbFolder = { id: string; title: string; space: string };
 
 export type ChatReply = {
   text: string;
-  drafts: Array<{ id: string; tool: string; args: Record<string, unknown> }>;
+  /** status и result приходят в истории: подтверждённый черновик показывается квитанцией. */
+  drafts: Array<{ id: string; tool: string; args: Record<string, unknown>; version?: number; status?: "pending" | "confirmed" | "cancelled"; result?: { receipt?: Record<string, string> } }>;
   sources: Array<{ page_id: string; title: string; author: string; updated_at: string; label?: string }>;
   degraded: boolean;
   retry: boolean;
   /** Модель недоступна: частые действия роли, нажатие отправляет text как сообщение (BR-70). */
   actions?: Array<{ label: string; text: string }>;
 };
+
+/** Сохранённый вопрос Напарнику: окно чата после перезагрузки и «Спрашивал у Напарника». */
+export type ChatTurn = { id: string; conversation: number; question: string; at: string; reply: ChatReply };
+export type ChatHistory = { conversation: number; turns: ChatTurn[] };
 
 type ApiEnvelope<T> = { ok: boolean; data?: T; error?: { code: string; message: string } };
 

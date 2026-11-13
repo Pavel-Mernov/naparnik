@@ -1,8 +1,8 @@
 // Чат с Напарником: Markdown без HTML-вставок, читаемые черновики с «Подтвердить / Отмена»,
 // квитанция после подтверждения, «Повторить» при сбое (BR-11, BR-14, BR-43, BR-70, SC-05, SC-15).
 import { Fragment, useEffect, useRef, useState, type ReactNode } from "react";
-import { Box, Button, CircularProgress, Drawer, IconButton, Stack, TextField, Typography, useMediaQuery, useTheme } from "@mui/material";
-import { CloseRounded, SendRounded } from "@mui/icons-material";
+import { Box, Button, CircularProgress, Drawer, IconButton, Stack, TextField, Tooltip, Typography, useMediaQuery, useTheme } from "@mui/material";
+import { AddCommentOutlined, CloseRounded, SendRounded } from "@mui/icons-material";
 import { MascotBadge } from "@/shared/ui/Mascot";
 import { AiTag } from "@/shared/ui";
 import { ApiError, api, type ChatReply } from "@/shared/api";
@@ -76,17 +76,32 @@ export const describeDraft = (d: Draft, look: Lookup): { title: string; rows: Ar
 
 type DraftState = { status: "new" | "busy" | "done" | "cancelled" | "error"; note?: string; retry?: boolean };
 
+const receiptNote = (r: Record<string, string> = {}) =>
+  `Готово: ${[r.id, STATUS_RU[r.status] ?? r.status, r.approver, r.to && `${r.to}, ${r.delivery}`].filter(Boolean).join(" · ")}`;
+
+// Черновик из истории показывается в том состоянии, в каком он на сервере: квитанция, отмена или «Подтвердить».
+const initialDraftState = (d: Draft): DraftState =>
+  d.status === "confirmed" ? { status: "done", note: receiptNote(d.result?.receipt) } : d.status === "cancelled" ? { status: "cancelled" } : { status: "new" };
+
 const DraftCard = ({ draft, login, look, onDone }: { draft: Draft; login: string; look: Lookup; onDone: () => void }) => {
   const { t } = useTheme();
-  const [st, setSt] = useState<DraftState>({ status: "new" });
+  const [st, setSt] = useState<DraftState>(() => initialDraftState(draft));
   const view = describeDraft(draft, look);
+  // Отмена сохраняется на сервере — после перезагрузки черновик не просит подтверждения снова.
+  const cancel = async () => {
+    setSt({ status: "busy" });
+    try {
+      await api(login, `/api/drafts/${draft.id}`, { method: "DELETE", body: JSON.stringify({ version: draft.version ?? 1 }) });
+      setSt({ status: "cancelled" });
+    } catch (e) {
+      setSt({ status: "error", note: e instanceof Error ? e.message : "Не получилось отменить", retry: true });
+    }
+  };
   const confirm = async () => {
     setSt({ status: "busy" });
     try {
       const res = await api<{ receipt?: Record<string, string> }>(login, `/api/drafts/${draft.id}/confirm`, { method: "POST", body: "{}" });
-      const r = res.receipt ?? {};
-      const parts = [r.id, STATUS_RU[r.status] ?? r.status, r.approver, r.to && `${r.to}, ${r.delivery}`].filter(Boolean);
-      setSt({ status: "done", note: `Готово: ${parts.join(" · ")}` });
+      setSt({ status: "done", note: receiptNote(res.receipt) });
       onDone();
     } catch (e) {
       const unavailable = e instanceof ApiError && e.status === 503;
@@ -106,7 +121,7 @@ const DraftCard = ({ draft, login, look, onDone }: { draft: Draft; login: string
         <Button variant="contained" fullWidth disabled={st.status === "busy" || (st.status === "error" && !st.retry)} onClick={() => void confirm()}>
           {st.status === "busy" ? "Отправляю…" : st.status === "error" && st.retry ? "Повторить" : "Подтвердить"}
         </Button>
-        <Button variant="outlined" fullWidth disabled={st.status === "busy"} onClick={() => setSt({ status: "cancelled" })}>Отмена</Button>
+        <Button variant="outlined" fullWidth disabled={st.status === "busy"} onClick={() => void cancel()}>Отмена</Button>
       </Stack>
     </Box>
   );
@@ -137,9 +152,11 @@ const QUICK: Array<{ text: string; soft: SoftKey }> = [
 ];
 
 /** На компьютере — панель справа, на телефоне — шторка снизу (как в дизайн-системе Авито). */
-export const ChatDrawer = ({ open, onClose, text, setText, messages, loading, onSend, login, look, onAction }: {
+export const ChatDrawer = ({ open, onClose, text, setText, messages, loading, onSend, login, look, onAction, onReset }: {
   open: boolean; onClose: () => void; text: string; setText: (text: string) => void; messages: ChatMessage[]; loading: boolean;
   onSend: (text?: string) => void; login: string; look: Lookup; onAction: () => void;
+  /** «Новый разговор»: окно пустеет, вопросы остаются в «Моих вопросах». */
+  onReset?: () => void;
 }) => {
   const theme = useTheme();
   const { t } = theme;
@@ -162,6 +179,9 @@ export const ChatDrawer = ({ open, onClose, text, setText, messages, loading, on
               {loading ? "Думаю…" : "Без подтверждения ничего не отправит"}
             </Typography>
           </Box>
+          {onReset && messages.length > 1 && <Tooltip title="Новый разговор">
+            <IconButton onClick={onReset} disabled={loading} aria-label="Новый разговор"><AddCommentOutlined /></IconButton>
+          </Tooltip>}
           <IconButton onClick={onClose} aria-label="Закрыть чат"><CloseRounded /></IconButton>
         </Stack>
         <Stack gap={2} sx={{ p: 2, flex: 1, overflowY: "auto" }}>

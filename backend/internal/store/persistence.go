@@ -35,6 +35,7 @@ type snapshot struct {
 	KBDecisions   map[string]string      `json:"kb_decisions,omitempty"`
 	Plans         map[string]*PlanState  `json:"plans,omitempty"`
 	Profiles      map[string]ProfileEdit `json:"profiles,omitempty"` // правки профиля и фото (без них — из оргструктуры)
+	Chats         map[string]ChatLog     `json:"chats,omitempty"`    // история чата с Напарником
 }
 
 type ActionDraft struct {
@@ -54,7 +55,7 @@ type Operation struct {
 }
 
 func (s *Store) snapshot() snapshot {
-	return snapshot{3, s.steps, s.requests, s.questions, s.pages, s.seq, s.drafts, s.operations, s.practices, s.events, s.notifications, s.tgLinks, s.meetings, s.kbDecisions, s.plans, s.profiles}
+	return snapshot{3, s.steps, s.requests, s.questions, s.pages, s.seq, s.drafts, s.operations, s.practices, s.events, s.notifications, s.tgLinks, s.meetings, s.kbDecisions, s.plans, s.profiles, s.chats}
 }
 
 func (s *Store) restore(v snapshot) error {
@@ -79,6 +80,10 @@ func (s *Store) restore(v snapshot) error {
 	s.profiles = v.Profiles
 	if s.profiles == nil {
 		s.profiles = map[string]ProfileEdit{}
+	}
+	s.chats = v.Chats
+	if s.chats == nil {
+		s.chats = map[string]ChatLog{}
 	}
 	if s.plans == nil { // старое состояние без жизненного цикла планов — берём его из трекера
 		s.plans = map[string]*PlanState{}
