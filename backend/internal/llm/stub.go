@@ -173,6 +173,8 @@ func (s *stubSession) SendUser(ctx context.Context, text string) (Step, error) {
 		calls = append(calls, s.call("get_practice", map[string]any{}))
 	case regexp.MustCompile(`сегодня|что делать|чем заняться`).MatchString(low):
 		calls = append(calls, s.call("get_today", map[string]any{}))
+	case s.allowed["team_progress"] && teamAsk.MatchString(low): // руководитель или бадди про своих стажёров
+		calls = append(calls, s.call("team_progress", map[string]any{}))
 	case regexp.MustCompile(`план|прогресс|где я`).MatchString(low):
 		calls = append(calls, s.call("get_plan", map[string]any{}))
 	case regexp.MustCompile(`кто есть кто|кто в команде|кто за что`).MatchString(low):
@@ -182,6 +184,9 @@ func (s *stubSession) SendUser(ctx context.Context, text string) (Step, error) {
 	}
 	return s.filter(calls), nil
 }
+
+// teamAsk — руководитель или бадди спрашивает про своих стажёров.
+var teamAsk = regexp.MustCompile(`стаж[её]р|отста|не успева|подопечн|команд[аы]? .*прогресс|прогресс .*команд`)
 
 func (s *stubSession) filter(calls []ToolCall) Step {
 	var out []ToolCall
@@ -367,6 +372,34 @@ func (s *stubSession) describe(tool string, raw json.RawMessage) (string, *ToolC
 			lines = append(lines, "• "+e.Start+" — "+e.Title)
 		}
 		return fmt.Sprintf("Неделя %d. На сегодня:\n%s", d.Week, strings.Join(lines, "\n")), nil
+	case "team_progress":
+		var d struct {
+			Interns []struct {
+				Name          string   `json:"name"`
+				Progress      int      `json:"progress_pct"`
+				OverdueSteps  int      `json:"overdue_steps"`
+				OverdueTitles []string `json:"overdue_step_titles"`
+				OpenQuestions int      `json:"open_questions"`
+			} `json:"interns"`
+		}
+		_ = json.Unmarshal(raw, &d)
+		if len(d.Interns) == 0 {
+			return "За тобой пока нет стажёров.", nil
+		}
+		lines := []string{"Твои стажёры — первыми те, кто отстаёт:"}
+		for _, v := range d.Interns {
+			line := fmt.Sprintf("- %s: прогресс %d%%", v.Name, v.Progress)
+			if v.OverdueSteps > 0 {
+				line += fmt.Sprintf(", просрочено %d: %s", v.OverdueSteps, strings.Join(v.OverdueTitles, "; "))
+			} else {
+				line += ", без просрочек"
+			}
+			if v.OpenQuestions > 0 {
+				line += fmt.Sprintf(", открытых вопросов %d", v.OpenQuestions)
+			}
+			lines = append(lines, line)
+		}
+		return strings.Join(lines, "\n"), nil
 	case "get_plan":
 		var d struct {
 			Progress int                     `json:"progress_pct"`

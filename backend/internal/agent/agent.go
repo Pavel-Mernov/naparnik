@@ -108,6 +108,16 @@ func (a *Agent) contextFor(u *mockdata.User) string {
 		lines = append(lines, fmt.Sprintf("Неделя стажировки: %d.", s.Week(u)))
 		lines = append(lines, fmt.Sprintf("Бадди: %s (id %s). Руководитель: %s (id %s).", s.Name(u.BuddyID), u.BuddyID, s.Name(u.LeadID), u.LeadID))
 	}
+	// Руководителю и бадди — их стажёры с id: так get_plan(intern_id) работает по имени («как дела у Даниила»).
+	var interns []string
+	for _, other := range s.Data.Team.Users {
+		if other.ID != u.ID && store.HasRole(&other, store.RoleIntern) && (other.LeadID == u.ID || other.BuddyID == u.ID) {
+			interns = append(interns, fmt.Sprintf("%s (id %s)", other.Name, other.ID))
+		}
+	}
+	if len(interns) > 0 {
+		lines = append(lines, "Твои стажёры: "+strings.Join(interns, ", ")+".")
+	}
 	return strings.Join(lines, "\n")
 }
 
@@ -384,6 +394,9 @@ func quickActions(u *mockdata.User, question string) []QuickAction {
 	}
 	if can["create_absence_request"] {
 		out = append(out, QuickAction{"Оформить отгул", "Нужен отгул"})
+	}
+	if can["team_progress"] {
+		out = append(out, QuickAction{"Кто из стажёров отстаёт", "Кто из моих стажёров отстаёт?"})
 	}
 	if can["get_required_accesses"] {
 		out = append(out, QuickAction{"Какие доступы нужны", "Какие доступы мне нужны?"})

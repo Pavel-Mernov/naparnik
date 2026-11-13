@@ -187,8 +187,30 @@ func TestQuickActionsByRole(t *testing.T) {
 		t.Fatalf("стажёр: %+v", intern.Actions)
 	}
 	lead := ask(t, a, "lead.kovalev", "Как согласовать бюджет на рекламу в Тайланде?")
-	if len(lead.Actions) != 0 || len(lead.Drafts) != 0 || strings.Contains(lead.Text, "недоступно") {
+	if len(lead.Actions) != 1 || lead.Actions[0].Label != "Кто из стажёров отстаёт" || len(lead.Drafts) != 0 || strings.Contains(lead.Text, "недоступно") {
 		t.Fatalf("руководитель: %+v", lead)
+	}
+	// Кнопка ведёт по правилам к прогрессу стажёров — без модели тоже.
+	behind := ask(t, a, "lead.kovalev", lead.Actions[0].Text)
+	if !strings.Contains(behind.Text, "Даниил Соколов") || !strings.Contains(behind.Text, "просрочено") {
+		t.Fatalf("кто отстаёт: %s", behind.Text)
+	}
+}
+
+// Руководитель и бадди спрашивают про своих стажёров: в контексте их имена с id, инструмент отдаёт прогресс.
+func TestLeadAsksAboutInterns(t *testing.T) {
+	a := newAgent(t, "stub_ok", time.Second)
+	lead, _ := a.Store.UserByLogin("lead.kovalev")
+	if ctx := a.contextFor(lead); !strings.Contains(ctx, "Твои стажёры: ") || !strings.Contains(ctx, "Даниил Соколов (id u-sokolov)") {
+		t.Fatalf("контекст руководителя: %s", ctx)
+	}
+	r := ask(t, a, "lead.kovalev", "Кто из стажёров не успевает?")
+	if !strings.Contains(r.Text, "Даниил Соколов") || !strings.Contains(r.Text, "Запроси доступ к Redash") {
+		t.Fatalf("ответ руководителю: %s", r.Text)
+	}
+	intern, _ := a.Store.UserByLogin("intern.sokolov")
+	if strings.Contains(a.contextFor(intern), "Твои стажёры") {
+		t.Fatal("у стажёра нет своих стажёров")
 	}
 }
 

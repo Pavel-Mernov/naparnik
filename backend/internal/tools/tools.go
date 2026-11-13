@@ -89,6 +89,8 @@ func All() []Tool {
 			schema(map[string]any{}), []string{store.RoleIntern}, false, getToday},
 		{"get_plan", "План адаптации: этапы, шаги со статусами, прогресс, следующий шаг. intern_id — только для бадди и руководителя.",
 			schema(map[string]any{"intern_id": prop("string", "id стажёра")}), allRoles, false, getPlan},
+		{"team_progress", "Прогресс своих стажёров (руководителю — его стажёры, бадди — подопечные): неделя, статус плана, прогресс, просроченные шаги с названиями, число открытых вопросов. Первыми — кто отстаёт. Для вопросов «как дела у стажёров», «кто не успевает». Тексты вопросов стажёров не возвращает.",
+			schema(map[string]any{}), []string{store.RoleLead, store.RoleBuddy}, false, teamProgress},
 		{"mark_step_done", "Отметить шаг плана выполненным (после подтверждения).",
 			schema(map[string]any{"step_id": prop("string", "id шага, например s-04"), "intern_id": prop("string", "для бадди")}, "step_id"),
 			[]string{store.RoleIntern, store.RoleBuddy}, true, markStepDone},
