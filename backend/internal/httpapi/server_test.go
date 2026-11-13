@@ -196,6 +196,29 @@ func TestTodayUsersAndStatic(t *testing.T) {
 	}
 }
 
+// Без STATIC_DIR backend — только API: на «/» ссылка на интерфейс, прочие пути — 404.
+func TestRootLinksToFrontend(t *testing.T) {
+	srv, _ := newServer(t)
+	srv.FrontendURL = "http://demo.local:3000"
+	h := srv.Handler()
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, httptest.NewRequest("GET", "/", nil))
+	if rec.Code != 200 || !strings.Contains(rec.Body.String(), `href="http://demo.local:3000"`) {
+		t.Fatalf("корень: %d %s", rec.Code, rec.Body.String())
+	}
+	rec = httptest.NewRecorder()
+	h.ServeHTTP(rec, httptest.NewRequest("GET", "/app.js", nil))
+	if rec.Code != 404 {
+		t.Fatalf("прежний интерфейс больше не отдаётся: %d", rec.Code)
+	}
+	srv.FrontendURL = ""
+	rec = httptest.NewRecorder()
+	srv.Handler().ServeHTTP(rec, httptest.NewRequest("GET", "/", nil))
+	if !strings.Contains(rec.Body.String(), "http://localhost:3000") {
+		t.Fatal("по умолчанию — localhost:3000")
+	}
+}
+
 // BR-02, BR-40: в списке базы — только своё пространство.
 func TestKBPages(t *testing.T) {
 	srv, h := newServer(t)

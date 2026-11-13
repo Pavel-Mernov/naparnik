@@ -298,6 +298,20 @@ func (t *Service) Flush(ctx context.Context) error {
 				continue
 			}
 		}
+		// «Не беспокоить» (SCR-I8, BR-52): несрочное ждёт конца паузы, срочное приходит сразу.
+		if quiet := t.store.QuietUntil(userID, now); !quiet.IsZero() {
+			var later []string
+			kept := list[:0:0]
+			for _, n := range list {
+				if n.Urgent {
+					kept = append(kept, n)
+				} else {
+					later = append(later, n.ID)
+				}
+			}
+			t.mark(later, "pending", quiet.Format(time.RFC3339))
+			list = kept
+		}
 		var digest, single []store.Notification
 		for _, n := range list {
 			if n.Type == "question_new" {
@@ -355,7 +369,8 @@ func (t *Service) Schedule() error {
 	return t.store.Transaction(func(s *store.Store) error {
 		for _, u := range s.Data.Team.Users {
 			// Утренний план — стажёрам с режимом «план на день», в начале рабочего дня.
-			if u.Settings != nil && u.Settings.Proactivity == "daily_plan" {
+			settings := s.SettingsFor(&u)
+			if settings.Proactivity == "daily_plan" {
 				if start, end, ok := store.WorkingWindow(u.WorkingHours, now); ok && !now.Before(start) && now.Before(end) {
 					open, overdue, firstStep := 0, 0, ""
 					for _, st := range s.PlanSteps(u.ID) {
@@ -387,10 +402,7 @@ func (t *Service) Schedule() error {
 					}
 				}
 			}
-			reminders := []string{"1h"}
-			if u.Settings != nil && len(u.Settings.Reminders) > 0 {
-				reminders = u.Settings.Reminders
-			}
+			reminders := settings.Reminders // пустой список — человек выключил напоминания
 			for _, e := range s.Data.Calendar.Events {
 				if !contains(e.Participants, u.ID) {
 					continue

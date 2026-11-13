@@ -14,7 +14,7 @@ docker compose up --build -d
 docker compose ps
 ```
 
-Интерфейс: `http://localhost:3000`; API и HTML-версия демо: `http://localhost:8080`.
+Интерфейс: `http://localhost:3000`; API: `http://localhost:8080`.
 Без ключей работает заглушка модели. PostgreSQL стартует первым; backend ждёт
 готовности БД, frontend — готовности backend. Веб-вход через тестовые учётки.
 

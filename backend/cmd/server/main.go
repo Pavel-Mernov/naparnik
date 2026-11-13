@@ -26,13 +26,10 @@ func main() {
 	if port == "" {
 		port = "8080"
 	}
-	static := os.Getenv("STATIC_DIR")
-	if static == "" {
-		static = "../frontend/web"
-	}
+	static := os.Getenv("STATIC_DIR") // например, ../frontend/dist — собранный React; по умолчанию backend отдаёт только API
 	srv := &http.Server{
 		Addr:              ":" + port,
-		Handler:           (&httpapi.Server{Agent: a.Agent, Store: a.Store, StaticDir: static, TG: a.TG, KV: a.KV, ChatLimit: a.ChatLimit, Events: a.Events}).Handler(),
+		Handler:           (&httpapi.Server{Agent: a.Agent, Store: a.Store, StaticDir: static, FrontendURL: os.Getenv("FRONTEND_URL"), TG: a.TG, KV: a.KV, ChatLimit: a.ChatLimit, Events: a.Events}).Handler(),
 		ReadHeaderTimeout: 5 * time.Second,
 	}
 	log.Printf("AI-buddy: http://localhost:%s, модель %s/%s (%s), демо-дата %s", port, a.LLM.Provider, a.LLM.Model, a.LLM.Mode,

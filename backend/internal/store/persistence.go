@@ -28,14 +28,15 @@ type snapshot struct {
 	Operations map[string]Operation                        `json:"operations"`
 	Practices  map[string]practice.State                   `json:"practices"`
 	// Журнал событий, уведомления и привязки Telegram. В старом сохранённом состоянии их нет — это пустые списки.
-	Events        []LogEvent             `json:"events,omitempty"`
-	Notifications []Notification         `json:"notifications,omitempty"`
-	TGLinks       map[string]int64       `json:"tg_links,omitempty"`
-	Meetings      []*Meeting             `json:"meetings,omitempty"`
-	KBDecisions   map[string]string      `json:"kb_decisions,omitempty"`
-	Plans         map[string]*PlanState  `json:"plans,omitempty"`
-	Profiles      map[string]ProfileEdit `json:"profiles,omitempty"` // правки профиля и фото (без них — из оргструктуры)
-	Chats         map[string]ChatLog     `json:"chats,omitempty"`    // история чата с Напарником
+	Events        []LogEvent              `json:"events,omitempty"`
+	Notifications []Notification          `json:"notifications,omitempty"`
+	TGLinks       map[string]int64        `json:"tg_links,omitempty"`
+	Meetings      []*Meeting              `json:"meetings,omitempty"`
+	KBDecisions   map[string]string       `json:"kb_decisions,omitempty"`
+	Plans         map[string]*PlanState   `json:"plans,omitempty"`
+	Profiles      map[string]ProfileEdit  `json:"profiles,omitempty"` // правки профиля и фото (без них — из оргструктуры)
+	Chats         map[string]ChatLog      `json:"chats,omitempty"`    // история чата с Напарником
+	Settings      map[string]SettingsEdit `json:"settings,omitempty"` // настройки, поменянные человеком (SCR-I8)
 }
 
 type ActionDraft struct {
@@ -55,7 +56,7 @@ type Operation struct {
 }
 
 func (s *Store) snapshot() snapshot {
-	return snapshot{3, s.steps, s.requests, s.questions, s.pages, s.seq, s.drafts, s.operations, s.practices, s.events, s.notifications, s.tgLinks, s.meetings, s.kbDecisions, s.plans, s.profiles, s.chats}
+	return snapshot{3, s.steps, s.requests, s.questions, s.pages, s.seq, s.drafts, s.operations, s.practices, s.events, s.notifications, s.tgLinks, s.meetings, s.kbDecisions, s.plans, s.profiles, s.chats, s.settings}
 }
 
 func (s *Store) restore(v snapshot) error {
@@ -84,6 +85,10 @@ func (s *Store) restore(v snapshot) error {
 	s.chats = v.Chats
 	if s.chats == nil {
 		s.chats = map[string]ChatLog{}
+	}
+	s.settings = v.Settings
+	if s.settings == nil {
+		s.settings = map[string]SettingsEdit{}
 	}
 	if s.plans == nil { // старое состояние без жизненного цикла планов — берём его из трекера
 		s.plans = map[string]*PlanState{}

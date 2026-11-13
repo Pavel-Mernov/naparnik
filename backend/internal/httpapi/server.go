@@ -6,8 +6,10 @@ package httpapi
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/worker4556/naparnik/backend/internal/adapters"
 	"github.com/worker4556/naparnik/backend/internal/flags"
+	"html"
 	"log"
 	"net/http"
 	"strings"
@@ -22,13 +24,14 @@ import (
 )
 
 type Server struct {
-	Agent     *agent.Agent
-	Store     *store.Store
-	StaticDir string             // каталог фронта; пусто — фронт не отдаётся
-	TG        *telegram.Service  // уведомления в Telegram; nil — только веб
-	KV        cache.KV           // Redis или память: коды привязки, лимит запросов к модели
-	ChatLimit int                // запросов к модели в минуту на пользователя; 0 — без лимита
-	Events    *adapters.Exporter // выгрузка журнала событий; nil — не выгружается
+	Agent       *agent.Agent
+	Store       *store.Store
+	StaticDir   string             // каталог собранного фронта (STATIC_DIR); пусто — на «/» страница со ссылкой на интерфейс
+	FrontendURL string             // где интерфейс (FRONTEND_URL), по умолчанию http://localhost:3000
+	TG          *telegram.Service  // уведомления в Telegram; nil — только веб
+	KV          cache.KV           // Redis или память: коды привязки, лимит запросов к модели
+	ChatLimit   int                // запросов к модели в минуту на пользователя; 0 — без лимита
+	Events      *adapters.Exporter // выгрузка журнала событий; nil — не выгружается
 }
 
 func (s *Server) Handler() http.Handler {
@@ -63,7 +66,9 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /api/practices/{intern}/{practice}/generate", s.auth(s.practiceGenerate))
 	mux.HandleFunc("POST /api/practices/{intern}/{practice}/{action}", s.auth(s.practiceAction))
 	mux.HandleFunc("GET /api/dashboard/team", s.auth(s.teamDashboard))
-	mux.HandleFunc("GET /api/team", s.auth(s.teamMap)) // SC-02: карта команды
+	mux.HandleFunc("GET /api/team", s.auth(s.teamMap))      // SC-02: карта команды
+	mux.HandleFunc("GET /api/settings", s.auth(s.settings)) // SCR-I8: настройки
+	mux.HandleFunc("PATCH /api/settings", s.auth(s.editSettings))
 	mux.HandleFunc("POST /api/chat/messages", s.auth(s.chat))
 	mux.HandleFunc("POST /api/chat/reset", s.auth(s.chatReset))
 	mux.HandleFunc("GET /api/chat/history", s.auth(s.chatHistory))
@@ -115,6 +120,17 @@ func (s *Server) Handler() http.Handler {
 			// no-cache: браузер каждый раз сверяется с сервером — после обновления кода не остаётся старая версия
 			w.Header().Set("Cache-Control", "no-cache")
 			files.ServeHTTP(w, r)
+		})
+	} else {
+		// Backend — это API. Интерфейс отдаёт отдельный frontend; кто открыл адрес backend в браузере, видит ссылку на него.
+		front := s.FrontendURL
+		if front == "" {
+			front = "http://localhost:3000"
+		}
+		mux.HandleFunc("GET /{$}", func(w http.ResponseWriter, _ *http.Request) {
+			w.Header().Set("Content-Type", "text/html; charset=utf-8")
+			_, _ = fmt.Fprintf(w, `<!doctype html><meta charset="utf-8"><title>Напарник · API</title>`+
+				`<p>Это API Напарника. Интерфейс: <a href="%[1]s">%[1]s</a>. Проверка: <a href="/api/health">/api/health</a>.</p>`, html.EscapeString(front))
 		})
 	}
 	return mux
@@ -412,7 +428,7 @@ func (s *Server) questions(w http.ResponseWriter, _ *http.Request, u *mockdata.U
 		case q.AskedBy == u.ID || q.AddresseeID == u.ID:
 			out = append(out, v)
 		case asker != nil && asker.BuddyID == u.ID:
-			if asker.Settings != nil && !asker.Settings.QuestionTextVisibleBuddy {
+			if !s.Store.SettingsFor(asker).QuestionTextVisibleBuddy {
 				v.Title, v.Text, v.Answer, v.Reason, v.TextHidden = "", "", "", "", true // BR-86: скрыт и текст, и ответ
 			}
 			out = append(out, v)

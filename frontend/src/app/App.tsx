@@ -7,7 +7,7 @@ import {
   Divider, ListItemText, Menu, MenuItem, Popover, Snackbar, Stack, TextField, Typography, useMediaQuery,
 } from "@mui/material";
 import {
-  AccountCircleOutlined, DescriptionOutlined, ForumOutlined, HomeOutlined, MenuBookOutlined, SendOutlined,
+  AccountCircleOutlined, DescriptionOutlined, ForumOutlined, HomeOutlined, MenuBookOutlined, SendOutlined, SettingsOutlined,
   NotificationsNoneOutlined, TaskAltOutlined,
 } from "@mui/icons-material";
 import avitoLogo from "@/shared/assets/logo.svg";
@@ -19,6 +19,7 @@ import { ProfileAvatar, ProfileDialog } from "@/widgets/profile";
 import { PlanDraftDialog } from "@/widgets/plan-draft";
 import { TeamMapDialog } from "@/widgets/team-map";
 import { TelegramDialog } from "@/widgets/telegram";
+import { SettingsDialog } from "@/widgets/settings";
 import { PracticePanel } from "@/widgets/practice";
 import { LeadPanels } from "@/widgets/lead-panels";
 import {
@@ -95,6 +96,7 @@ function App() {
   // Карта команды (SCR-I5) и страница базы, которую открыть по ссылке из неё.
   const [teamOpen, setTeamOpen] = useState(false);
   const [tgOpen, setTgOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [serverNotes, setServerNotes] = useState<ServerNote[]>([]);
   // Практика пересчитывается после ответа Напарника: он мог начать или продвинуть её из чата.
   const [practiceRevision, setPracticeRevision] = useState(0);
@@ -201,7 +203,7 @@ function App() {
     actions.current.forEach((c) => c.abort());
     actions.current.clear();
     localStorage.setItem(STORAGE.login, next);
-    setProfileOf(null); setPlanDraftOf(""); setTeamOpen(false); setKbOpen(""); setTgOpen(false); setServerNotes([]);
+    setProfileOf(null); setPlanDraftOf(""); setTeamOpen(false); setKbOpen(""); setTgOpen(false); setSettingsOpen(false); setServerNotes([]);
     setData(null); setView("day"); setSelectedIntern(""); setBusy(false); setError(""); setSnack("");
     setChatText(""); setChatOpen(false); setChatLoading(false); setMessages([GREETING]); setAsked([]);
     setLoading(true); setLogin(next);
@@ -445,6 +447,17 @@ function App() {
               }}
             />
           </MenuItem>}
+          {me && <MenuItem onClick={() => { setAccountAnchor(null); setSettingsOpen(true); }}>
+            <SettingsOutlined sx={{ mr: 1.5, color: t.muted }} />
+            <ListItemText
+              primary="Настройки"
+              secondary={role === "intern" ? "Подсказки, бадди, напоминания" : "Напоминания, «не беспокоить»"}
+              slotProps={{
+                primary: { variant: "body1", sx: { fontSize: 14, fontWeight: (th) => th.type.weight.medium } },
+                secondary: { variant: "body2" },
+              }}
+            />
+          </MenuItem>}
           {me && <MenuItem onClick={() => { setAccountAnchor(null); setTgOpen(true); }}>
             <SendOutlined sx={{ mr: 1.5, color: t.muted }} />
             <ListItemText
@@ -477,6 +490,8 @@ function App() {
           onChanged={(p) => { if (p.can_edit) setMyPhoto({ login, url: p.photo?.url ?? null }); }} />
         <TeamMapDialog open={teamOpen} login={login} onClose={() => setTeamOpen(false)} onProfile={setProfileOf}
           onOpenPage={(id) => { setTeamOpen(false); setKbOpen(id); nav("knowledge"); }} />
+        <SettingsDialog open={settingsOpen} login={login} intern={role === "intern"} onClose={() => setSettingsOpen(false)}
+          onTelegram={() => { setSettingsOpen(false); setTgOpen(true); }} />
         <TelegramDialog open={tgOpen} login={login} onClose={() => setTgOpen(false)} onChange={setSnack} />
         <PlanDraftDialog open={Boolean(planDraftOf)} login={login} internId={planDraftOf} onClose={() => setPlanDraftOf("")}
           onDone={(m) => { setSnack(m); void load(); }} />

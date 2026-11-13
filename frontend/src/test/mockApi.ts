@@ -6,7 +6,8 @@ import fixtures from "./fixtures.json";
 
 export type ApiCall = { method: string; path: string; user: string; body: unknown };
 type Reply = { status?: number; body: unknown };
-export type Override = (call: ApiCall) => Reply | undefined;
+// Подмена ответа; Promise — ответ, который тест придерживает (запоздавший ответ старой учётки).
+export type Override = (call: ApiCall) => Reply | undefined | Promise<Reply | undefined>;
 
 const data = fixtures as Record<string, Record<string, unknown>>;
 
@@ -26,6 +27,7 @@ export const mockApi = (override?: Override) => {
   const calls: ApiCall[] = [];
   // Черновики, которые Напарник показал в чате: карточка перечитывает их с сервера, правка и отмена меняют состояние.
   const drafts = new Map<string, Draft>();
+  const settings: Record<string, Record<string, unknown>> = {};
   for (const turns of Object.values(data).map((u) => (u["/api/chat/history"] as { turns?: Array<{ reply: { drafts: Draft[] } }> } | undefined)?.turns ?? []))
     for (const t of turns) for (const d of t.reply.drafts) drafts.set(d.id, d);
   const writes = (c: ApiCall, reply?: unknown): Reply => {
@@ -37,6 +39,13 @@ export const mockApi = (override?: Override) => {
       const d = drafts.get(id)!; const b = c.body as { text: string; urgent: boolean };
       drafts.set(id, { ...d, version: (d.version ?? 1) + 1, args: { ...d.args, text: b.text, urgent: b.urgent } });
       return { body: { ok: true } };
+    }
+    if (c.path === "/api/settings" && c.method === "PATCH") {
+      const cur = (settings[c.user] ??= { ...(data[c.user]?.["/api/settings"] as { settings: Record<string, unknown> }).settings });
+      const b = c.body as Record<string, unknown>;
+      for (const k of ["proactivity", "question_text_visible_to_buddy", "reminders"]) if (k in b) cur[k] = b[k];
+      if ("quiet_hours" in b) cur.quiet_until = b.quiet_hours ? "2026-11-11T18:00:00+03:00" : undefined;
+      return { body: { ok: true, settings: cur } };
     }
     if (c.path === "/api/requests") return { body: { ok: true, data: { id: "ABS-1100" } } };
     if (c.path === "/api/telegram/link") return { body: { code: "123456", link: "https://t.me/naparnik_bot?start=123456", expires_in: 600 } };
@@ -50,7 +59,7 @@ export const mockApi = (override?: Override) => {
     try { body = typeof init.body === "string" ? JSON.parse(init.body) : init.body; } catch { body = init.body; }
     const call = { method, path: url.pathname + url.search, user: new Headers(init.headers).get("X-User") ?? "", body };
     calls.push(call);
-    const custom = override?.(call);
+    const custom = await override?.(call);
     if (custom && call.path === "/api/chat/messages" && (custom.status ?? 200) < 300) remember(custom.body);
     if (custom && !(call.path.endsWith("/confirm") && (custom.status ?? 200) < 300)) return json(custom.body, custom.status);
     if (method !== "GET") {

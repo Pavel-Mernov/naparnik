@@ -78,6 +78,8 @@ HTTP-коды в API: `forbidden` → 403, `not_found` → 404, `validation` →
 | POST | `/api/kb/pages/{id}/approve` | `{title?, body?}` — публикация автором |
 | GET | `/api/kb/pages` | папки и опубликованные страницы своего пространства |
 | POST | `/api/chat/reset` | «Новый разговор»: модель забывает контекст, окно чата пустеет; сохранённые вопросы остаются |
+| GET | `/api/settings` | свои настройки: `proactivity`, `question_text_visible_to_buddy`, `reminders`, `quiet_until?`, `working_hours` (SCR-I8) |
+| PATCH | `/api/settings` | меняются только переданные поля: `proactivity` (`daily_plan` · `deadlines_and_meetings` · `off`, только стажёр), `question_text_visible_to_buddy` (только стажёр), `reminders` (`1d`, `1h`), `quiet_hours` (0 — выключить, 1…24) |
 | GET | `/api/chat/history` | `{conversation, turns: [{id, conversation, question, at, reply}]}` — вопросы и ответы веб-чата, черновики в текущем состоянии; только свои |
 | GET | `/api/today` | день стажёра: шаги, события, встречи |
 | GET | `/api/users` | справочник учёток для переключателя и выбора людей |

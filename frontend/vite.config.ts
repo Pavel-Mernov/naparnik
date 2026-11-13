@@ -30,6 +30,8 @@ export default defineConfig({
   test: {
     environment: "jsdom",
     setupFiles: ["./src/test/setup.ts"],
+    // Интеграционные сценарии печатают текст и проходят несколько экранов; под подсчётом покрытия они медленнее.
+    testTimeout: 15000,
     include: ["src/**/*.test.{ts,tsx}"],
     coverage: {
       provider: "v8",

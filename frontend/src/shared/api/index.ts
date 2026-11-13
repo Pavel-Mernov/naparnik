@@ -25,6 +25,16 @@ export type PlanStep = {
   action?: string;
 };
 
+/** Настройки человека (SCR-I8). */
+export type Settings = {
+  proactivity: "daily_plan" | "deadlines_and_meetings" | "off" | string;
+  question_text_visible_to_buddy: boolean;
+  reminders: string[];
+  /** «Не беспокоить» до этого момента; нет — выключено. */
+  quiet_until?: string;
+  working_hours: string;
+};
+
 /** Человек на карте команды (SCR-I5, SC-02): зона ответственности, его страницы в базе, черновик сообщения. */
 export type TeamCard = {
   id: string; name: string; initials: string; photo: { url: string; updated_at: string } | null; status: string; position: string;
