@@ -3,7 +3,7 @@
 import { Fragment, useEffect, useRef, useState, type ReactNode } from "react";
 import { Box, Button, Checkbox, CircularProgress, Drawer, FormControlLabel, IconButton, Stack, TextField, Tooltip, Typography, useMediaQuery, useTheme } from "@mui/material";
 import { AddCommentOutlined, CloseRounded, SendRounded } from "@mui/icons-material";
-import { MascotBadge } from "@/shared/ui/Mascot";
+import { Mascot3D, useMascotMood } from "@/widgets/mascot";
 import { AiTag } from "@/shared/ui";
 import { ApiError, api, type ChatReply } from "@/shared/api";
 
@@ -182,6 +182,12 @@ const QUICK: Array<{ text: string; soft: SoftKey }> = [
   { text: "Нужен доступ к Redash", soft: "waitSoft" },
 ];
 
+/** Маскот в шапке чата: следит за курсором, думает, пока идёт ответ, растерян при сбое. */
+const ChatMascot = ({ loading, failed }: { loading: boolean; failed: boolean }) => {
+  const { mood } = useMascotMood({ thinking: loading, error: failed });
+  return <Mascot3D size={48} mood={mood} />;
+};
+
 /** На компьютере — панель справа, на телефоне — шторка снизу (как в дизайн-системе Авито). */
 export const ChatDrawer = ({ open, onClose, text, setText, messages, loading, onSend, login, look, onAction, onReset }: {
   open: boolean; onClose: () => void; text: string; setText: (text: string) => void; messages: ChatMessage[]; loading: boolean;
@@ -200,7 +206,7 @@ export const ChatDrawer = ({ open, onClose, text, setText, messages, loading, on
       <Stack height="100%" sx={{ bgcolor: t.bg }}>
         {mobile && <Box aria-hidden sx={{ width: 40, height: 4, bgcolor: t.line, mx: "auto", mt: 1 }} />}
         <Stack direction="row" alignItems="center" gap={1.5} sx={{ px: 2, py: 1.5, borderBottom: `1px solid ${t.line}` }}>
-          <MascotBadge size={48} />
+          <ChatMascot loading={loading} failed={Boolean(messages.length && messages[messages.length - 1].retryText && !messages[messages.length - 1].reply)} />
           <Box flex={1} minWidth={0}>
             <Stack direction="row" alignItems="center" gap={1} flexWrap="wrap">
               <Typography fontWeight={600} fontSize={17}>Напарник</Typography>

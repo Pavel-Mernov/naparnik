@@ -1,0 +1,546 @@
+
+<!doctype html>
+<html lang="en">
+
+<head>
+    <title>Code coverage report for widgets/mascot/ui/Mascot3D.tsx</title>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../../../prettify.css" />
+    <link rel="stylesheet" href="../../../base.css" />
+    <link rel="shortcut icon" type="image/x-icon" href="../../../favicon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="../../../theme.js"></script>
+    <style type='text/css'>
+        .coverage-summary .sorter {
+            background-image: url(../../../sort-arrow-sprite.png);
+        }
+    </style>
+</head>
+    
+<body>
+<div class='wrapper'>
+    <div class='pad1'>
+        
+        <label class="theme-select quiet">
+            Theme
+            <select id="themeSelect" autocomplete="off">
+                <option value="light">Light</option>
+                <option value="dark">Dark</option>
+                <option value="legacy">Legacy</option>
+            </select>
+        </label>
+
+        <h1><a href="../../../index.html">All files</a> / <a href="index.html">widgets/mascot/ui</a> Mascot3D.tsx</h1>
+        <div class='clearfix'>
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">94.11% </span>
+                <span class="quiet">Statements</span>
+                <span class='fraction'>48/51</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">95.65% </span>
+                <span class="quiet">Branches</span>
+                <span class='fraction'>22/23</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">88.88% </span>
+                <span class="quiet">Functions</span>
+                <span class='fraction'>8/9</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">100% </span>
+                <span class="quiet">Lines</span>
+                <span class='fraction'>45/45</span>
+            </div>
+        
+            
+        </div>
+        <p class="quiet">
+            Press <em>n</em> or <em>j</em> to go to the next uncovered block, <em>b</em>, <em>p</em> or <em>k</em> for the previous block.
+        </p>
+        <template id="filterTemplate">
+            <div class="quiet">
+                Filter:
+                <input type="search" id="fileSearch">
+            </div>
+        </template>
+    </div>
+    <div class='status-line high'></div>
+    <pre><table class="coverage">
+<tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
+<a name='L2'></a><a href='#L2'>2</a>
+<a name='L3'></a><a href='#L3'>3</a>
+<a name='L4'></a><a href='#L4'>4</a>
+<a name='L5'></a><a href='#L5'>5</a>
+<a name='L6'></a><a href='#L6'>6</a>
+<a name='L7'></a><a href='#L7'>7</a>
+<a name='L8'></a><a href='#L8'>8</a>
+<a name='L9'></a><a href='#L9'>9</a>
+<a name='L10'></a><a href='#L10'>10</a>
+<a name='L11'></a><a href='#L11'>11</a>
+<a name='L12'></a><a href='#L12'>12</a>
+<a name='L13'></a><a href='#L13'>13</a>
+<a name='L14'></a><a href='#L14'>14</a>
+<a name='L15'></a><a href='#L15'>15</a>
+<a name='L16'></a><a href='#L16'>16</a>
+<a name='L17'></a><a href='#L17'>17</a>
+<a name='L18'></a><a href='#L18'>18</a>
+<a name='L19'></a><a href='#L19'>19</a>
+<a name='L20'></a><a href='#L20'>20</a>
+<a name='L21'></a><a href='#L21'>21</a>
+<a name='L22'></a><a href='#L22'>22</a>
+<a name='L23'></a><a href='#L23'>23</a>
+<a name='L24'></a><a href='#L24'>24</a>
+<a name='L25'></a><a href='#L25'>25</a>
+<a name='L26'></a><a href='#L26'>26</a>
+<a name='L27'></a><a href='#L27'>27</a>
+<a name='L28'></a><a href='#L28'>28</a>
+<a name='L29'></a><a href='#L29'>29</a>
+<a name='L30'></a><a href='#L30'>30</a>
+<a name='L31'></a><a href='#L31'>31</a>
+<a name='L32'></a><a href='#L32'>32</a>
+<a name='L33'></a><a href='#L33'>33</a>
+<a name='L34'></a><a href='#L34'>34</a>
+<a name='L35'></a><a href='#L35'>35</a>
+<a name='L36'></a><a href='#L36'>36</a>
+<a name='L37'></a><a href='#L37'>37</a>
+<a name='L38'></a><a href='#L38'>38</a>
+<a name='L39'></a><a href='#L39'>39</a>
+<a name='L40'></a><a href='#L40'>40</a>
+<a name='L41'></a><a href='#L41'>41</a>
+<a name='L42'></a><a href='#L42'>42</a>
+<a name='L43'></a><a href='#L43'>43</a>
+<a name='L44'></a><a href='#L44'>44</a>
+<a name='L45'></a><a href='#L45'>45</a>
+<a name='L46'></a><a href='#L46'>46</a>
+<a name='L47'></a><a href='#L47'>47</a>
+<a name='L48'></a><a href='#L48'>48</a>
+<a name='L49'></a><a href='#L49'>49</a>
+<a name='L50'></a><a href='#L50'>50</a>
+<a name='L51'></a><a href='#L51'>51</a>
+<a name='L52'></a><a href='#L52'>52</a>
+<a name='L53'></a><a href='#L53'>53</a>
+<a name='L54'></a><a href='#L54'>54</a>
+<a name='L55'></a><a href='#L55'>55</a>
+<a name='L56'></a><a href='#L56'>56</a>
+<a name='L57'></a><a href='#L57'>57</a>
+<a name='L58'></a><a href='#L58'>58</a>
+<a name='L59'></a><a href='#L59'>59</a>
+<a name='L60'></a><a href='#L60'>60</a>
+<a name='L61'></a><a href='#L61'>61</a>
+<a name='L62'></a><a href='#L62'>62</a>
+<a name='L63'></a><a href='#L63'>63</a>
+<a name='L64'></a><a href='#L64'>64</a>
+<a name='L65'></a><a href='#L65'>65</a>
+<a name='L66'></a><a href='#L66'>66</a>
+<a name='L67'></a><a href='#L67'>67</a>
+<a name='L68'></a><a href='#L68'>68</a>
+<a name='L69'></a><a href='#L69'>69</a>
+<a name='L70'></a><a href='#L70'>70</a>
+<a name='L71'></a><a href='#L71'>71</a>
+<a name='L72'></a><a href='#L72'>72</a>
+<a name='L73'></a><a href='#L73'>73</a>
+<a name='L74'></a><a href='#L74'>74</a>
+<a name='L75'></a><a href='#L75'>75</a>
+<a name='L76'></a><a href='#L76'>76</a>
+<a name='L77'></a><a href='#L77'>77</a>
+<a name='L78'></a><a href='#L78'>78</a>
+<a name='L79'></a><a href='#L79'>79</a>
+<a name='L80'></a><a href='#L80'>80</a>
+<a name='L81'></a><a href='#L81'>81</a>
+<a name='L82'></a><a href='#L82'>82</a>
+<a name='L83'></a><a href='#L83'>83</a>
+<a name='L84'></a><a href='#L84'>84</a>
+<a name='L85'></a><a href='#L85'>85</a>
+<a name='L86'></a><a href='#L86'>86</a>
+<a name='L87'></a><a href='#L87'>87</a>
+<a name='L88'></a><a href='#L88'>88</a>
+<a name='L89'></a><a href='#L89'>89</a>
+<a name='L90'></a><a href='#L90'>90</a>
+<a name='L91'></a><a href='#L91'>91</a>
+<a name='L92'></a><a href='#L92'>92</a>
+<a name='L93'></a><a href='#L93'>93</a>
+<a name='L94'></a><a href='#L94'>94</a>
+<a name='L95'></a><a href='#L95'>95</a>
+<a name='L96'></a><a href='#L96'>96</a>
+<a name='L97'></a><a href='#L97'>97</a>
+<a name='L98'></a><a href='#L98'>98</a>
+<a name='L99'></a><a href='#L99'>99</a>
+<a name='L100'></a><a href='#L100'>100</a>
+<a name='L101'></a><a href='#L101'>101</a>
+<a name='L102'></a><a href='#L102'>102</a>
+<a name='L103'></a><a href='#L103'>103</a>
+<a name='L104'></a><a href='#L104'>104</a>
+<a name='L105'></a><a href='#L105'>105</a>
+<a name='L106'></a><a href='#L106'>106</a>
+<a name='L107'></a><a href='#L107'>107</a>
+<a name='L108'></a><a href='#L108'>108</a>
+<a name='L109'></a><a href='#L109'>109</a>
+<a name='L110'></a><a href='#L110'>110</a>
+<a name='L111'></a><a href='#L111'>111</a>
+<a name='L112'></a><a href='#L112'>112</a>
+<a name='L113'></a><a href='#L113'>113</a>
+<a name='L114'></a><a href='#L114'>114</a>
+<a name='L115'></a><a href='#L115'>115</a>
+<a name='L116'></a><a href='#L116'>116</a>
+<a name='L117'></a><a href='#L117'>117</a>
+<a name='L118'></a><a href='#L118'>118</a>
+<a name='L119'></a><a href='#L119'>119</a>
+<a name='L120'></a><a href='#L120'>120</a>
+<a name='L121'></a><a href='#L121'>121</a>
+<a name='L122'></a><a href='#L122'>122</a>
+<a name='L123'></a><a href='#L123'>123</a>
+<a name='L124'></a><a href='#L124'>124</a>
+<a name='L125'></a><a href='#L125'>125</a>
+<a name='L126'></a><a href='#L126'>126</a>
+<a name='L127'></a><a href='#L127'>127</a>
+<a name='L128'></a><a href='#L128'>128</a>
+<a name='L129'></a><a href='#L129'>129</a>
+<a name='L130'></a><a href='#L130'>130</a>
+<a name='L131'></a><a href='#L131'>131</a>
+<a name='L132'></a><a href='#L132'>132</a>
+<a name='L133'></a><a href='#L133'>133</a>
+<a name='L134'></a><a href='#L134'>134</a>
+<a name='L135'></a><a href='#L135'>135</a>
+<a name='L136'></a><a href='#L136'>136</a>
+<a name='L137'></a><a href='#L137'>137</a>
+<a name='L138'></a><a href='#L138'>138</a>
+<a name='L139'></a><a href='#L139'>139</a>
+<a name='L140'></a><a href='#L140'>140</a>
+<a name='L141'></a><a href='#L141'>141</a>
+<a name='L142'></a><a href='#L142'>142</a>
+<a name='L143'></a><a href='#L143'>143</a>
+<a name='L144'></a><a href='#L144'>144</a>
+<a name='L145'></a><a href='#L145'>145</a>
+<a name='L146'></a><a href='#L146'>146</a>
+<a name='L147'></a><a href='#L147'>147</a>
+<a name='L148'></a><a href='#L148'>148</a>
+<a name='L149'></a><a href='#L149'>149</a>
+<a name='L150'></a><a href='#L150'>150</a>
+<a name='L151'></a><a href='#L151'>151</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">388x</span>
+<span class="cline-any cline-yes">388x</span>
+<span class="cline-any cline-yes">388x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">388x</span>
+<span class="cline-any cline-yes">82x</span>
+<span class="cline-any cline-yes">82x</span>
+<span class="cline-any cline-yes">82x</span>
+<span class="cline-any cline-yes">82x</span>
+<span class="cline-any cline-yes">196x</span>
+<span class="cline-any cline-yes">196x</span>
+<span class="cline-any cline-yes">179x</span>
+<span class="cline-any cline-yes">179x</span>
+<span class="cline-any cline-yes">179x</span>
+<span class="cline-any cline-yes">179x</span>
+<span class="cline-any cline-yes">179x</span>
+<span class="cline-any cline-yes">179x</span>
+<span class="cline-any cline-yes">179x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">82x</span>
+<span class="cline-any cline-yes">82x</span>
+<span class="cline-any cline-yes">82x</span>
+<span class="cline-any cline-yes">82x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">388x</span>
+<span class="cline-any cline-yes">388x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">776x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">45x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">// Маскот в «3D» (08-DESIGN §2): объёмный рендер наклоняется в перспективе к курсору, блик и тень едут вместе с
+// наклоном, нажатие чуть вдавливает. Поверх — состояния из §2.2: дыхание и моргание, дремота, сон с «z z z»,
+// пробуждение, приветствие, «…» пока думает, прыжок на готовый ответ, растерянность при ошибке.
+// prefers-reduced-motion → статичные кадры: наклона и анимаций нет, состояние видно по векам, облачку и бейджу.
+import { useEffect, useRef, type ReactNode } from "react";
+import { Box, keyframes } from "@mui/material";
+import mascotImg from "@/shared/assets/maskot2.png";
+import type { MascotMood } from "../model/types";
+&nbsp;
+const ASPECT = 480 / 526;
+const MAX_TILT = 14; // градусов
+const REACH = 420; // на каком расстоянии от маскота курсор даёт полный наклон, px
+&nbsp;
+const breathe = keyframes`0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-3%) scale(1.012)}`;
+const blink = keyframes`0%,92%,100%{transform:scaleY(0)}95%{transform:scaleY(1)}`;
+const nod = keyframes`0%,100%{transform:rotateX(0) translateY(0)}50%{transform:rotateX(14deg) translateY(3%)}`;
+const sleepTilt = keyframes`0%,100%{transform:rotateZ(-7deg) translateY(4%)}50%{transform:rotateZ(-7deg) translateY(6%)}`;
+const wake = keyframes`0%{transform:scale(1,1)}35%{transform:scale(.94,1.1) translateY(-6%)}70%{transform:scale(1.04,.97)}100%{transform:scale(1,1)}`;
+const wave = keyframes`0%,100%{transform:rotateZ(0)}20%{transform:rotateZ(-8deg)}40%{transform:rotateZ(6deg)}60%{transform:rotateZ(-6deg)}80%{transform:rotateZ(4deg)}`;
+const think = keyframes`0%,100%{transform:rotateX(-10deg) translateY(-2%)}50%{transform:rotateX(-14deg) translateY(-4%)}`;
+const hop = keyframes`0%,100%{transform:translateY(0) scale(1)}30%{transform:translateY(-18%) scale(1.04,.98)}55%{transform:translateY(0) scale(1.06,.92)}75%{transform:translateY(-5%)}`;
+const shake = keyframes`0%,100%{transform:translateX(0) rotateY(0)}20%{transform:translateX(-5%) rotateY(-18deg)}40%{transform:translateX(5%) rotateY(18deg)}60%{transform:translateX(-3%) rotateY(-10deg)}80%{transform:translateX(3%) rotateY(10deg)}`;
+const nudge = keyframes`0%,100%{transform:rotateZ(0)}25%{transform:rotateZ(-4deg)}75%{transform:rotateZ(4deg)}`;
+const zzz = keyframes`0%{opacity:0;transform:translate(0,0) scale(.6)}30%{opacity:1}100%{opacity:0;transform:translate(60%,-120%) scale(1.15)}`;
+const dots = keyframes`0%,20%{opacity:.2}50%{opacity:1}100%{opacity:.2}`;
+&nbsp;
+/** Что делает тело в каждом состоянии. */
+const MOTION: Partial&lt;Record&lt;MascotMood, string&gt;&gt; = {
+  idle: `${breathe} 5s ease-in-out infinite`,
+  drowsy: `${nod} 4s ease-in-out infinite`,
+  sleeping: `${sleepTilt} 7s ease-in-out infinite`,
+  waking: `${wake} .8s ease-out 1`,
+  greeting: `${wave} 1.4s ease-in-out 1`,
+  thinking: `${think} 2.4s ease-in-out infinite`,
+  has_answer: `${hop} .9s cubic-bezier(.3,.7,.4,1) 1`,
+  reminder: `${nudge} .6s ease-in-out 2`,
+  needs_confirm: `${breathe} 5s ease-in-out infinite`,
+  error: `${shake} .7s ease-in-out 1`,
+};
+&nbsp;
+/** Насколько закрыты веки: 0 — открыты, 1 — закрыты (ниже — кадр, а не анимация: виден и без движения). */
+const LIDS: Partial&lt;Record&lt;MascotMood, number&gt;&gt; = { drowsy: 0.55, sleeping: 1 };
+&nbsp;
+// Глаза на исходнике 526×480: веки — овалы цвета меха, опускаются сверху.
+const EYES = [
+  { left: "33%", top: "17.5%", width: "22.5%", height: "23%", rotate: "8deg" },
+  { left: "55.5%", top: "25.5%", width: "22%", height: "22.5%", rotate: "8deg" },
+];
+&nbsp;
+export const Mascot3D = ({ size, mood = "idle", interactive = true, badge }: {
+  size: number; mood?: MascotMood; interactive?: boolean; badge?: ReactNode;
+}) =&gt; {
+  const root = useRef&lt;HTMLDivElement&gt;(null);
+  const w = size * 1.2;
+  const h = w * ASPECT;
+&nbsp;
+  // Наклон к курсору: CSS-переменные через requestAnimationFrame, без перерисовки React.
+  useEffect(() =&gt; {
+    const el = root.current;
+    <span class="missing-if-branch" title="if path not taken" >I</span>if (!el || !interactive || window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) <span class="cstat-no" title="statement not covered" >return;</span>
+    let frame = 0;
+    const onMove = (e: PointerEvent) =&gt; {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() =&gt; {
+        const r = el.getBoundingClientRect();
+        const dx = Math.max(-1, Math.min(1, (e.clientX - (r.left + r.width / 2)) / REACH));
+        const dy = Math.max(-1, Math.min(1, (e.clientY - (r.top + r.height / 2)) / REACH));
+        el.style.setProperty("--ry", `${(dx * MAX_TILT).toFixed(2)}deg`);
+        el.style.setProperty("--rx", `${(-dy * MAX_TILT).toFixed(2)}deg`);
+        el.style.setProperty("--gx", `${50 + dx * 30}%`);
+        el.style.setProperty("--gy", `${40 + dy * 30}%`);
+      });
+    };
+    const <span class="fstat-no" title="function not covered" >reset = () =&gt; {</span> <span class="cstat-no" title="statement not covered" >el.style.setProperty("--rx", "0deg"); <span class="cstat-no" title="statement not covered" >e</span>l.style.setProperty("--ry", "0deg"); }</span>;
+    window.addEventListener("pointermove", onMove, { passive: true });
+    document.addEventListener("pointerleave", reset);
+    return () =&gt; { cancelAnimationFrame(frame); window.removeEventListener("pointermove", onMove); document.removeEventListener("pointerleave", reset); };
+  }, [interactive]);
+&nbsp;
+  const lids = LIDS[mood] ?? 0;
+  return (
+    &lt;Box ref={root} data-mood={mood} aria-hidden={!badge}
+      sx={{
+        position: "relative", width: w, height: h, flex: "none", perspective: `${Math.round(w * 4)}px`,
+        "--rx": "0deg", "--ry": "0deg", "--gx": "50%", "--gy": "40%",
+        "@media (prefers-reduced-motion: reduce)": { "&amp; *": { animation: "none !important", transition: "none !important" } },
+      }}&gt;
+      {/* Тень на «полу»: сжимается, когда маскот наклоняется или подпрыгивает */}
+      &lt;Box aria-hidden sx={{
+        position: "absolute", left: "18%", right: "18%", bottom: "-4%", height: "10%", borderRadius: "50%",
+        background: "radial-gradient(closest-side, rgba(0,40,120,.32), transparent)",
+        transform: "scaleX(calc(1 - (var(--ry) / 1deg) * (var(--ry) / 1deg) / 900))", transition: "transform .3s ease-out",
+      }} /&gt;
+      {/* Наклон в перспективе */}
+      &lt;Box sx={{
+        width: "100%", height: "100%", transformStyle: "preserve-3d",
+        transform: "rotateX(var(--rx)) rotateY(var(--ry))", transition: "transform .35s cubic-bezier(.2,.8,.3,1)",
+        "&amp;:active": { transform: "rotateX(var(--rx)) rotateY(var(--ry)) scale(.95)" },
+      }}&gt;
+        {/* Движение состояния */}
+        &lt;Box sx={{ position: "relative", width: "100%", height: "100%", transformOrigin: "50% 90%", animation: MOTION[mood],
+          filter: mood === "sleeping" ? "saturate(.8) brightness(.95)" : "drop-shadow(0 10px 18px rgba(0, 80, 180, .28))" }}&gt;
+          &lt;Box component="img" src={mascotImg} alt="" draggable={false}
+            sx={{ width: "100%", height: "100%", display: "block", objectFit: "contain", maxWidth: "none", userSelect: "none", transform: "translateZ(20px)" }} /&gt;
+          {/* Веки: моргание раз в несколько секунд; полуприкрыты — дремлет, закрыты — спит */}
+          {EYES.map((e, i) =&gt; (
+            &lt;Box key={i} aria-hidden data-lid={lids} sx={{
+              position: "absolute", left: e.left, top: e.top, width: e.width, height: e.height, transform: `translateZ(21px) rotate(${e.rotate})`,
+              borderRadius: "50%", overflow: "hidden", pointerEvents: "none",
+            }}&gt;
+              {/* Веко цвета меха с мягким краем; нижняя кромка — тёмная линия ресниц («закрытый глаз») */}
+              &lt;Box sx={{
+                position: "absolute", inset: "-2%", transformOrigin: "50% 0", borderRadius: "0 0 50% 50% / 0 0 38% 38%",
+                background: "radial-gradient(90% 80% at 50% 35%, #2f68e2 0%, #2459d2 60%, #183f9f 100%)",
+                boxShadow: "inset 0 0 6px rgba(10,30,90,.55)",
+                transform: lids ? `scaleY(${lids})` : "scaleY(0)", transition: "transform .5s ease-in-out",
+                animation: lids ? undefined : `${blink} ${i ? 6.3 : 6}s ease-in-out infinite`,
+              }} /&gt;
+              {/* Спит: глаз закрыт — дуга ресниц «‿» и лёгкая тень, а не гладкое пятно */}
+              {lids === 1 &amp;&amp; &lt;Box sx={{
+                position: "absolute", left: "16%", right: "16%", top: "34%", height: "32%",
+                borderBottom: `${Math.max(2, Math.round(size / 30))}px solid rgba(8, 24, 78, .85)`, borderRadius: "0 0 50% 50%",
+              }} /&gt;}
+            &lt;/Box&gt;
+          ))}
+          {/* Блик: свет «падает» с той стороны, куда смотрит курсор */}
+          &lt;Box aria-hidden sx={{
+            position: "absolute", inset: "4%", borderRadius: "50%", pointerEvents: "none", mixBlendMode: "soft-light",
+            background: "radial-gradient(circle at var(--gx) var(--gy), rgba(255,255,255,.55), transparent 55%)", transform: "translateZ(22px)",
+          }} /&gt;
+        &lt;/Box&gt;
+      &lt;/Box&gt;
+      {mood === "sleeping" &amp;&amp; ["z", "z", "Z"].map((z, i) =&gt; (
+        &lt;Box key={i} component="span" aria-hidden sx={{
+          position: "absolute", right: `${8 - i * 4}%`, top: `${10 - i * 6}%`, fontWeight: 700, color: "#3a74ef",
+          fontSize: Math.max(10, Math.round(size * (0.14 + i * 0.04))), animation: `${zzz} 3s ease-out ${i}s infinite`,
+        }}&gt;{z}&lt;/Box&gt;
+      ))}
+      {mood === "thinking" &amp;&amp; (
+        &lt;Box component="span" aria-hidden sx={{
+          position: "absolute", right: "-4%", top: "-6%", px: 0.75, py: 0.25, borderRadius: 2, bgcolor: "background.paper",
+          boxShadow: "0 2px 8px rgba(0,0,0,.18)", fontWeight: 700, fontSize: Math.max(10, Math.round(size * 0.16)), lineHeight: 1.2,
+        }}&gt;
+          {[0, 1, 2].map((i) =&gt; &lt;Box key={i} component="span" sx={{ animation: `${dots} 1.2s ${i * 0.2}s infinite` }}&gt;.&lt;/Box&gt;)}
+        &lt;/Box&gt;
+      )}
+      {badge}
+    &lt;/Box&gt;
+  );
+};
+&nbsp;</pre></td></tr></table></pre>
+
+                <div class='push'></div><!-- for sticky footer -->
+            </div><!-- /wrapper -->
+            <div class='footer quiet pad2 space-top1 center small'>
+                Code coverage generated by
+                <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
+                at 2026-11-13T17:31:07.855Z
+            </div>
+        <script src="../../../prettify.js"></script>
+        <script>
+            window.onload = function () {
+                prettyPrint();
+            };
+        </script>
+        <script src="../../../sorter.js"></script>
+        <script src="../../../block-navigation.js"></script>
+    </body>
+</html>
+    

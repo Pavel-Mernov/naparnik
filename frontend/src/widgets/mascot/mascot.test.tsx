@@ -1,0 +1,93 @@
+// Маскот (08-DESIGN §2.2–2.6, BR-90, BR-91, SC-25): таймеры дремоты и сна, пробуждение, реакции на события,
+// приветствие раз в день, кадры состояний и наклон к курсору.
+import { act, render, renderHook, screen } from "@testing-library/react";
+import { ThemeProvider } from "@mui/material";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { makeTheme } from "@/shared/theme";
+import { MASCOT_TIMERS } from "@/shared/config/mascot";
+import { Mascot3D, moodLabel, useMascotMood, type MascotMood } from "@/widgets/mascot";
+
+const sec = (s: number) => act(() => { vi.advanceTimersByTime(s * 1000); });
+const move = () => act(() => { window.dispatchEvent(new PointerEvent("pointermove", { clientX: 10, clientY: 10 })); });
+
+beforeEach(() => { vi.useFakeTimers(); localStorage.setItem("naparnik.mascot.greeting", String(Date.now())); });
+afterEach(() => { vi.useRealTimers(); localStorage.clear(); });
+
+describe("useMascotMood", () => {
+  it("дремлет через 2 минуты, засыпает через 3, просыпается от движения", () => {
+    const { result } = renderHook(() => useMascotMood({}));
+    expect(result.current.mood).toBe("idle");
+    sec(MASCOT_TIMERS.drowsyAfterSec);
+    expect(result.current.mood).toBe("drowsy");
+    sec(MASCOT_TIMERS.sleepAfterSec - MASCOT_TIMERS.drowsyAfterSec);
+    expect(result.current.mood).toBe("sleeping");
+    move();
+    expect(result.current.mood).toBe("waking");
+    sec(1);
+    expect(result.current.mood).toBe("idle");
+  });
+
+  it("событие будит одной короткой реакцией, дальше — статичный кадр; без действий всё равно засыпает", () => {
+    const { result, rerender } = renderHook((p: Parameters<typeof useMascotMood>[0]) => useMascotMood(p), { initialProps: {} });
+    sec(MASCOT_TIMERS.sleepAfterSec);
+    expect(result.current.mood).toBe("sleeping");
+    rerender({ hasAnswer: true });
+    expect(result.current.mood).toBe("has_answer");
+    sec(2);
+    expect(result.current.mood).toBe("has_answer");
+    sec(MASCOT_TIMERS.sleepAfterSec);
+    expect(result.current.mood).toBe("sleeping");
+  });
+
+  it("приоритет: думает → ошибка → ответ → черновик → напоминание", () => {
+    const { result, rerender } = renderHook((p: Parameters<typeof useMascotMood>[0]) => useMascotMood(p), { initialProps: { reminder: true } as Parameters<typeof useMascotMood>[0] });
+    expect(result.current.mood).toBe("reminder");
+    rerender({ reminder: true, needsConfirm: true });
+    expect(result.current.mood).toBe("needs_confirm");
+    rerender({ reminder: true, needsConfirm: true, error: true });
+    expect(result.current.mood).toBe("error");
+    rerender({ reminder: true, needsConfirm: true, error: true, thinking: true });
+    expect(result.current.mood).toBe("thinking");
+  });
+
+  it("приветствие — первое открытие за день и не чаще раза в час", () => {
+    localStorage.removeItem("naparnik.mascot.greeting");
+    const first = renderHook(() => useMascotMood({}));
+    expect(first.result.current.mood).toBe("greeting");
+    sec(2);
+    expect(first.result.current.mood).toBe("idle");
+    const again = renderHook(() => useMascotMood({}));
+    expect(again.result.current.mood).toBe("idle");
+  });
+
+  it("каждое состояние подписано текстом (доступность)", () => {
+    const moods: MascotMood[] = ["idle", "drowsy", "sleeping", "waking", "greeting", "thinking", "has_answer", "reminder", "needs_confirm", "error", "minimized"];
+    for (const m of moods) expect(moodLabel(m)).toBeTruthy();
+    expect(moodLabel("sleeping")).toBe("Сплю. Нажми, если нужен");
+  });
+});
+
+describe("Mascot3D", () => {
+  const draw = (mood: MascotMood) => render(<ThemeProvider theme={makeTheme("light")}><Mascot3D size={96} mood={mood} badge={<span>1</span>} /></ThemeProvider>);
+
+  it("сон: веки закрыты и «z z Z»; дремота: веки полуприкрыты; думает: облачко «…»", () => {
+    const { container, unmount } = draw("sleeping");
+    expect(container.querySelectorAll('[data-lid="1"]')).toHaveLength(2);
+    expect(screen.getByText("Z")).toBeInTheDocument();
+    unmount();
+    const drowsy = draw("drowsy");
+    expect(drowsy.container.querySelectorAll('[data-lid="0.55"]')).toHaveLength(2);
+    drowsy.unmount();
+    const thinking = draw("thinking");
+    expect(thinking.container.querySelectorAll('[data-mood="thinking"] span').length).toBeGreaterThanOrEqual(3);
+  });
+
+  it("наклоняется к курсору в перспективе", () => {
+    const { container } = draw("idle");
+    const root = container.querySelector<HTMLElement>('[data-mood="idle"]')!;
+    root.getBoundingClientRect = () => ({ left: 500, top: 500, width: 100, height: 100, right: 600, bottom: 600, x: 500, y: 500, toJSON: () => ({}) });
+    act(() => { window.dispatchEvent(new PointerEvent("pointermove", { clientX: 100, clientY: 100 })); vi.advanceTimersByTime(50); });
+    expect(root.style.getPropertyValue("--ry")).toMatch(/^-\d/);
+    expect(root.style.getPropertyValue("--rx")).toMatch(/^\d/);
+  });
+});

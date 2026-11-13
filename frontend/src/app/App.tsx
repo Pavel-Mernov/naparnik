@@ -20,6 +20,7 @@ import { PlanDraftDialog } from "@/widgets/plan-draft";
 import { TeamMapDialog } from "@/widgets/team-map";
 import { TelegramDialog } from "@/widgets/telegram";
 import { SettingsDialog } from "@/widgets/settings";
+import { Mascot3D, moodLabel, useMascotMood } from "@/widgets/mascot";
 import { PracticePanel } from "@/widgets/practice";
 import { LeadPanels } from "@/widgets/lead-panels";
 import {
@@ -29,7 +30,7 @@ import {
 import { STORAGE } from "@/shared/config";
 import { makeTheme, tokens, type Mode } from "@/shared/theme";
 import { buildNotes, initials, requestTitle, statusOf, ROLE_RU, primaryRole, viewLabel, viewsFor, type DataState, type Note, type View } from "@/shared/lib";
-import { Block, DaySkeleton, Empty, KnowledgeSkeleton, ListSkeleton, MascotBadge, Row, StatusTag } from "@/shared/ui";
+import { Block, DaySkeleton, Empty, KnowledgeSkeleton, ListSkeleton, Row, StatusTag } from "@/shared/ui";
 import { DayPage } from "@/pages/day";
 import { PlanPage } from "@/pages/plan";
 import { QuestionsPage } from "@/pages/questions";
@@ -79,6 +80,8 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [chatOpen, setChatOpen] = useState(false);
+  const chatOpenRef = useRef(false);
+  chatOpenRef.current = chatOpen;
   const [chatText, setChatText] = useState("");
   const [chatLoading, setChatLoading] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([GREETING]);
@@ -97,6 +100,8 @@ function App() {
   const [teamOpen, setTeamOpen] = useState(false);
   const [tgOpen, setTgOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  // Ответ пришёл, пока чат закрыт, — маскот радуется и ждёт, пока его откроют (08-DESIGN §2.2 has_answer).
+  const [answerWaiting, setAnswerWaiting] = useState(false);
   const [serverNotes, setServerNotes] = useState<ServerNote[]>([]);
   // Практика пересчитывается после ответа Напарника: он мог начать или продвинуть её из чата.
   const [practiceRevision, setPracticeRevision] = useState(0);
@@ -209,7 +214,7 @@ function App() {
     setLoading(true); setLogin(next);
   };
 
-  const openChat = (prefill = "") => { setChatText(prefill); setChatOpen(true); };
+  const openChat = (prefill = "") => { setChatText(prefill); setChatOpen(true); setAnswerWaiting(false); };
 
   const sendChat = async (retry?: string) => {
     const text = (retry ?? chatText).trim();
@@ -222,6 +227,7 @@ function App() {
       const reply = await api<ChatReply>(owner, "/api/chat/messages", { method: "POST", body: JSON.stringify({ text }), signal: controller.signal });
       if (isCurrent(owner, epoch)) {
         setMessages((m) => [...m, { role: "assistant", text: reply.text, reply, retryText: reply.retry ? text : undefined }]);
+        if (!chatOpenRef.current) setAnswerWaiting(true);
         setAsked((a) => [...a, { id: `local-${Date.now()}`, conversation: conversation.current, question: text, at: new Date().toISOString(), reply }]);
         setPracticeRevision((n) => n + 1);
       }
@@ -267,6 +273,14 @@ function App() {
   notes.unshift(...serverNotes.filter((n) => !n.read).map((n) => ({ id: n.id, text: n.text.split("\n")[0], meta: n.text.split("\n").slice(1).join(" ") || "Напарник",
     urgent: n.type === "page_stale", go: (n.view === "plan" ? "day" : n.view) as Note["go"] })));
   const urgent = notes.filter((n) => n.urgent).length;
+  const lastMessage = messages[messages.length - 1];
+  const { mood } = useMascotMood({
+    thinking: chatLoading,
+    error: lastMessage?.role === "assistant" && Boolean(lastMessage.retryText) && !lastMessage.reply,
+    hasAnswer: answerWaiting || notes.some((n) => n.id.startsWith("ans-")),
+    needsConfirm: Boolean(data?.drafts.length),
+    reminder: urgent > 0,
+  });
   // Новости дня: несрочные события (ответы, заявки) — без дублей с «Ближайшее»
   const news = notes.filter((n) => !n.urgent && n.go !== "day").slice(0, 5);
   const newsTag = (n: (typeof notes)[number]) => {
@@ -386,15 +400,15 @@ function App() {
 
         {/* Маскот — на всех экранах, 96 px (08-DESIGN): клик открывает чат, бейдж — сколько ждёт внимания,
             «Думаю…» — пока отвечает модель. Плавное «дыхание» отключается при prefers-reduced-motion. */}
-        {role && !chatOpen && <Box component="button" onClick={() => openChat()} aria-label="Открыть чат с Напарником" sx={{
+        {role && !chatOpen && <Box component="button" onClick={() => openChat()} aria-label="Открыть чат с Напарником" aria-description={`Напарник: ${moodLabel(mood).toLowerCase()}`} data-mood={mood} sx={{
           position: "fixed", right: { xs: 8, md: 24 }, bottom: { xs: 70, md: 20 }, zIndex: 12, p: 0, border: "none", bgcolor: "transparent",
           overflow: "visible", lineHeight: 0,
           transition: "transform .2s ease", "&:hover, &:focus-visible": { transform: "translateY(-3px)" },
           "&:hover .mascot-label, &:focus-visible .mascot-label": { opacity: 1, transform: "translateY(-50%)" },
         }}>
-          <MascotBadge
+          <Mascot3D
             size={mobile ? 72 : 96}
-            float
+            mood={mood}
             badge={urgent > 0 ? (
               <Box component="span" sx={{
                 position: "absolute", top: { xs: 4, md: 8 }, right: { xs: 4, md: 8 },
@@ -419,7 +433,7 @@ function App() {
               borderStyle: "solid", borderWidth: "6px 0 6px 6px",
               borderColor: `transparent transparent transparent ${t.inverse}`,
             },
-          }}>{chatLoading ? "Думаю…" : urgent ? `Есть новое: ${urgent}` : "Спроси меня"}</Box>
+          }}>{chatLoading ? "Думаю…" : urgent ? `Есть новое: ${urgent}` : moodLabel(mood)}</Box>
         </Box>}
 
         <Popover open={Boolean(notesAnchor)} anchorEl={notesAnchor} onClose={() => setNotesAnchor(null)} anchorOrigin={{ vertical: "bottom", horizontal: "right" }} transformOrigin={{ vertical: "top", horizontal: "right" }}
