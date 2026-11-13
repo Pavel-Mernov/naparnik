@@ -82,6 +82,22 @@ describe("Mascot3D", () => {
     expect(thinking.container.querySelectorAll('[data-mood="thinking"] span').length).toBeGreaterThanOrEqual(3);
   });
 
+  it("есть письмо или важное — машет письмом (у напоминания — с «!»), во сне лапа опущена", () => {
+    const answer = draw("has_answer");
+    expect(answer.container.querySelector('[data-letter="letter"]')).not.toBeNull();
+    expect(answer.container.querySelector('[data-paw="has_answer"]')).not.toBeNull();
+    answer.unmount();
+    const reminder = draw("reminder");
+    expect(reminder.container.querySelector('[data-letter="alert"]')).not.toBeNull();
+    reminder.unmount();
+    const idle = draw("idle");
+    expect(idle.container.querySelector("[data-letter]")).toBeNull();
+    idle.unmount();
+    const sleeping = draw("sleeping");
+    expect(sleeping.container.querySelector<HTMLElement>('[data-paw="sleeping"]')!.getAttribute("class")).toBeTruthy();
+    expect(sleeping.container.querySelector("[data-letter]")).toBeNull();
+  });
+
   it("наклоняется к курсору в перспективе", () => {
     const { container } = draw("idle");
     const root = container.querySelector<HTMLElement>('[data-mood="idle"]')!;
