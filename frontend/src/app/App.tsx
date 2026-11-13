@@ -102,6 +102,13 @@ function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   // Ответ пришёл, пока чат закрыт, — маскот радуется и ждёт, пока его откроют (08-DESIGN §2.2 has_answer).
   const [answerWaiting, setAnswerWaiting] = useState(false);
+  // Что из важного человек уже видел (открыл чат или колокольчик): маскот машет письмом только на новое.
+  const [seen, setSeen] = useState<Set<string>>(new Set());
+  const markSeenRef = useRef<() => void>(() => undefined);
+  useEffect(() => {
+    try { setSeen(new Set(JSON.parse(localStorage.getItem(`naparnik.mascot.seen.${login}`) ?? "[]") as string[])); }
+    catch { setSeen(new Set()); }
+  }, [login]);
   const [serverNotes, setServerNotes] = useState<ServerNote[]>([]);
   // Практика пересчитывается после ответа Напарника: он мог начать или продвинуть её из чата.
   const [practiceRevision, setPracticeRevision] = useState(0);
@@ -214,7 +221,7 @@ function App() {
     setLoading(true); setLogin(next);
   };
 
-  const openChat = (prefill = "") => { setChatText(prefill); setChatOpen(true); setAnswerWaiting(false); };
+  const openChat = (prefill = "") => { setChatText(prefill); setChatOpen(true); setAnswerWaiting(false); markSeenRef.current(); };
 
   const sendChat = async (retry?: string) => {
     const text = (retry ?? chatText).trim();
@@ -273,13 +280,23 @@ function App() {
   notes.unshift(...serverNotes.filter((n) => !n.read).map((n) => ({ id: n.id, text: n.text.split("\n")[0], meta: n.text.split("\n").slice(1).join(" ") || "Напарник",
     urgent: n.type === "page_stale", go: (n.view === "plan" ? "day" : n.view) as Note["go"] })));
   const urgent = notes.filter((n) => n.urgent).length;
+  // Важное: срочное, ответы людей, решения по заявкам. Новое — то, чего человек ещё не видел.
+  const important = notes.filter((n) => n.urgent || n.id.startsWith("ans-") || n.id.startsWith("r-")).map((n) => n.id);
+  const unseen = important.filter((id) => !seen.has(id));
+  const markSeen = () => {
+    if (!unseen.length) return;
+    const next = new Set([...seen, ...important]);
+    setSeen(next);
+    try { localStorage.setItem(`naparnik.mascot.seen.${login}`, JSON.stringify([...next])); } catch { /* приватный режим — только до перезагрузки */ }
+  };
+  markSeenRef.current = markSeen;
   const lastMessage = messages[messages.length - 1];
   const { mood } = useMascotMood({
     thinking: chatLoading,
     error: lastMessage?.role === "assistant" && Boolean(lastMessage.retryText) && !lastMessage.reply,
-    hasAnswer: answerWaiting || notes.some((n) => n.id.startsWith("ans-")),
-    needsConfirm: Boolean(data?.drafts.length),
-    reminder: urgent > 0,
+    hasAnswer: answerWaiting || unseen.some((id) => id.startsWith("ans-") || id.startsWith("r-")),
+    needsConfirm: unseen.some((id) => id.startsWith("d-")),
+    reminder: unseen.some((id) => id.startsWith("o-") || id.startsWith("in-") || id.startsWith("a-")),
   });
   // Новости дня: несрочные события (ответы, заявки) — без дублей с «Ближайшее»
   const news = notes.filter((n) => !n.urgent && n.go !== "day").slice(0, 5);
@@ -363,7 +380,7 @@ function App() {
               </Box>
               <ThemeToggle mode={mode} onToggle={() => setMode(mode === "light" ? "dark" : "light")} />
               <Stack direction="row" alignItems="center" gap={0.5} sx={{ flex: "none" }}>
-                <IconButton aria-label={`Уведомления: ${notes.length}`} onClick={(e) => setNotesAnchor(e.currentTarget)}>
+                <IconButton aria-label={`Уведомления: ${notes.length}`} onClick={(e) => { setNotesAnchor(e.currentTarget); markSeen(); }}>
                   <Badge badgeContent={urgent} sx={{ "& .MuiBadge-badge": { bgcolor: "error.main", color: "#000", fontWeight: 700, borderRadius: 0 } }}><NotificationsNoneOutlined /></Badge>
                 </IconButton>
                 <Box component="button" onClick={(e) => setAccountAnchor(e.currentTarget)} aria-label="Профиль и тестовые учётки" sx={{
