@@ -1,6 +1,6 @@
 # Прогон эталонного набора: deepseek-deepseek-chat
 
-> `docs/04-mock-data/evals.json`, 43 вопросов. Модель: **deepseek-deepseek-chat**. 2026-11-12T17:34.
+> `docs/04-mock-data/evals.json`, 43 вопросов. Модель: **deepseek-deepseek-chat**. 2026-11-13T19:21.
 > Воспроизвести: `cd backend && go run ./cmd/evals -mode live`.
 
 **Итого: 43 из 43.**
