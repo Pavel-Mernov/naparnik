@@ -211,7 +211,12 @@ func Check(c Ctx, name string, args map[string]any) *Error {
 	}
 	switch name {
 	case "request_access":
-		return checkAccess(c, str(args, "system"))
+		if e := checkAccess(c, str(args, "system")); e != nil {
+			return e
+		}
+		if dup := activeRequest(c, func(r store.Request) bool { return r.Kind == "access" && r.System == str(args, "system") }); dup != nil {
+			return duplicateError(dup).Error
+		}
 	case "send_question":
 		if _, ok := c.Store.User(str(args, "addressee_id")); !ok {
 			return &Error{Code: "not_found", Message: "Адресат не найден в команде."}
@@ -225,6 +230,10 @@ func Check(c Ctx, name string, args map[string]any) *Error {
 		}
 		if day, ok := parseDate(str(args, "date")); !ok || !day.After(c.Store.Today) {
 			return &Error{Code: "validation", Message: "Укажи будущую дату"}
+		}
+		day, _ := parseDate(str(args, "date"))
+		if dup := activeRequest(c, sameAbsence(str(args, "type"), day.Format(time.DateOnly))); dup != nil {
+			return duplicateError(dup).Error
 		}
 	case "suggest_term":
 		if _, found := lookupTerm(c, str(args, "term")); found {

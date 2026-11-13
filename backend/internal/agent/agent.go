@@ -194,6 +194,17 @@ func (a *Agent) Ask(ctx context.Context, login, text string) (Reply, error) {
 	return reply, nil
 }
 
+// samePending — неподтверждённый черновик пользователя с тем же инструментом и теми же аргументами.
+func samePending(s *store.Store, userID, tool string, args map[string]any) (store.ActionDraft, bool) {
+	want, _ := json.Marshal(args)
+	for _, d := range s.PendingDrafts(userID) {
+		if got, _ := json.Marshal(d.Args); d.Tool == tool && string(got) == string(want) {
+			return d, true
+		}
+	}
+	return store.ActionDraft{}, false
+}
+
 func (a *Agent) handle(tc tools.Ctx, call llm.ToolCall, reply *Reply) string {
 	reply.ToolLog = append(reply.ToolLog, call.Name)
 	t, known := tools.ByName(call.Name)
@@ -205,6 +216,12 @@ func (a *Agent) handle(tc tools.Ctx, call llm.ToolCall, reply *Reply) string {
 		}
 		var d Draft
 		err := a.Store.Transaction(func(s *store.Store) error {
+			// Тот же черновик уже ждёт подтверждения (модель упала посреди ответа и ход пошёл по правилам,
+			// или человек повторил вопрос) — показываем его, а не второй такой же.
+			if same, found := samePending(s, tc.User.ID, call.Name, call.Input); found {
+				d = draftView(same)
+				return nil
+			}
 			d = Draft{ID: s.NextID("DRAFT"), UserID: tc.User.ID, Tool: call.Name, Args: call.Input, Version: 1, Status: "pending"}
 			s.PutDraft(store.ActionDraft{ID: d.ID, UserID: d.UserID, Tool: d.Tool, Args: d.Args})
 			return nil

@@ -148,7 +148,7 @@ npm --prefix frontend run test:coverage     # тесты React и отчёт о 
 npm --prefix frontend run build             # TypeScript и сборка React
 ```
 
-**Backend:** отчёт — [docs/coverage/coverage.txt](docs/coverage/coverage.txt) (по функциям и итог) и `docs/coverage/coverage.html`. Покрытие операторов (statements) — **93.6%**. Считаются `backend/internal` и `backend/cmd/buddy`; не входят зависимости, тесты и точка входа `cmd/server`.
+**Backend:** отчёт — [docs/coverage/coverage.txt](docs/coverage/coverage.txt) (по функциям и итог) и `docs/coverage/coverage.html`. Покрытие операторов (statements) — **93.7%**. Считаются `backend/internal` и `backend/cmd/buddy`; не входят зависимости, тесты и точка входа `cmd/server`.
 
 **Frontend:** отчёт — `frontend/coverage/index.html`. Считается **весь код приложения** в `frontend/src`, кроме тестов, точки входа и файлов с одними реэкспортами (API-клиент, тема и конфиг в `shared/*/index.ts` считаются): строки **95.1%**, ветви **83.9%**, функции **89.5%**, операторы **91.9%**. Интеграционные тесты проходят интерфейс по ролям на настоящих ответах backend, записанных в режиме заглушки модели (`frontend/src/test/fixtures.json`).
 

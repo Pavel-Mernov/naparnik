@@ -1,6 +1,7 @@
 package tools
 
 import (
+	"strings"
 	"testing"
 	"time"
 
@@ -244,6 +245,24 @@ func TestCreateAbsenceRequest(t *testing.T) {
 	if len(s.Requests("u-sokolov")) != 1 {
 		t.Fatal("заявка не сохранена")
 	}
+	// Повтор того же отгула на ту же дату — отказ с номером первой заявки; в форме — предупреждение.
+	again := map[string]any{"type": "day_off", "date": "2026-11-13"}
+	if e := Run(c, "create_absence_request", again).Error; e == nil || e.Code != "conflict" || !strings.Contains(e.Message, "ABS-1042") {
+		t.Fatalf("повтор: %+v", e)
+	}
+	if e := Check(c, "create_absence_request", again); e == nil || e.Code != "conflict" {
+		t.Fatalf("повтор до черновика: %+v", e)
+	}
+	if w := data(t, Run(c, "precheck_absence", again))["warnings"].([]warning); len(w) == 0 || w[len(w)-1].Code != "DUPLICATE" {
+		t.Fatalf("предупреждение о повторе: %+v", w)
+	}
+	// После отказа можно подать снова.
+	if _, e := Decide(ctxFor(t, s, "lead.kovalev"), "ABS-1042", "reject", "NEED_INFO", ""); e != nil {
+		t.Fatal(e)
+	}
+	if !Run(c, "create_absence_request", again).OK {
+		t.Fatal("после отказа заявку можно подать снова")
+	}
 	if Run(c, "create_absence_request", map[string]any{"type": "day_off", "date": "2026-11-01"}).Error.Code != "validation" {
 		t.Fatal("прошедшая дата")
 	}
@@ -284,8 +303,15 @@ func TestAccesses(t *testing.T) {
 	if Run(c, "request_access", map[string]any{"system": "sys-nope"}).Error.Code != "not_found" {
 		t.Fatal("нет такой системы")
 	}
+	// Повторная заявка на тот же доступ — отказ с номером первой, и до черновика, и при отправке.
+	if e := Run(c, "request_access", map[string]any{"system": "sys-redash", "reason": "s-04"}).Error; e == nil || e.Code != "conflict" || !strings.Contains(e.Message, "ACC-2002") {
+		t.Fatalf("повтор: %+v", e)
+	}
+	if e := Check(c, "request_access", map[string]any{"system": "sys-redash"}); e == nil || e.Code != "conflict" {
+		t.Fatalf("повтор до черновика: %+v", e)
+	}
 	t.Setenv("MOCK_FAIL", "access")
-	if Run(c, "request_access", map[string]any{"system": "sys-redash"}).Error.Code != "unavailable" {
+	if Run(ctxFor(t, newStore(t), "intern.sokolov"), "request_access", map[string]any{"system": "sys-redash"}).Error.Code != "unavailable" {
 		t.Fatal("ожидалась недоступность сервиса")
 	}
 }

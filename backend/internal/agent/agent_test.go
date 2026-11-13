@@ -2,6 +2,7 @@ package agent
 
 import (
 	"context"
+	"errors"
 	"strings"
 	"testing"
 	"time"
@@ -410,5 +411,45 @@ func TestHistoryMasksPII(t *testing.T) {
 	}
 	if !strings.Contains(saved, "***") {
 		t.Fatalf("маски нет: %s", saved)
+	}
+}
+
+// failAfterDraft — модель вызвала инструмент и упала, не дописав ответ.
+type failAfterDraft struct{ call llm.Step }
+
+func (p failAfterDraft) Start(string, string, []llm.ToolSpec) llm.Session {
+	return &failingSession{p.call}
+}
+
+type failingSession struct{ call llm.Step }
+
+func (s *failingSession) SendUser(context.Context, string) (llm.Step, error) { return s.call, nil }
+func (s *failingSession) SendToolResults(context.Context, []llm.ToolResult) (llm.Step, error) {
+	return llm.Step{}, errors.New("обрыв соединения")
+}
+
+// Повтор вопроса и падение модели посреди ответа не плодят второй такой же черновик.
+func TestSameDraftIsReused(t *testing.T) {
+	base := newAgent(t, "stub_ok", time.Second)
+	call := llm.Step{ToolCalls: []llm.ToolCall{{ID: "1", Name: "create_absence_request", Input: map[string]any{"type": "day_off", "date": "2026-11-17"}}}}
+	done := llm.Step{Text: "Черновик готов, нажми «Подтвердить»."}
+	a := New(base.Store, failAfterDraft{call}, time.Second)
+	a.Backup = &scriptedProvider{steps: []llm.Step{call, done}}
+	first := ask(t, a, "intern.sokolov", "Отгул 17 ноября, сделай за меня")
+	if len(first.Drafts) != 1 || !first.Degraded {
+		t.Fatalf("упрощённый режим с черновиком: %+v", first)
+	}
+	again := ask(t, New(base.Store, &scriptedProvider{steps: []llm.Step{call, done}}, time.Second), "intern.sokolov", "Отгул 17 ноября, сделай за меня")
+	if len(again.Drafts) != 1 || again.Drafts[0].ID != first.Drafts[0].ID {
+		t.Fatalf("повтор вопроса — тот же черновик: %+v / %+v", first.Drafts, again.Drafts)
+	}
+	u, _ := base.Store.UserByLogin("intern.sokolov")
+	if n := len(base.Store.PendingDrafts(u.ID)); n != 1 {
+		t.Fatalf("черновиков в ожидании: %d, нужен один", n)
+	}
+	// Другая дата — уже другой черновик.
+	other := llm.Step{ToolCalls: []llm.ToolCall{{ID: "2", Name: "create_absence_request", Input: map[string]any{"type": "day_off", "date": "2026-11-18"}}}}
+	if r := ask(t, New(base.Store, &scriptedProvider{steps: []llm.Step{other, done}}, time.Second), "intern.sokolov", "И на 18-е"); len(r.Drafts) != 1 || r.Drafts[0].ID == first.Drafts[0].ID {
+		t.Fatalf("другая дата: %+v", r.Drafts)
 	}
 }

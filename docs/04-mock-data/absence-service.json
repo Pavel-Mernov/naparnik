@@ -22,7 +22,8 @@
       { "code": "PAST_DATE", "message": "Дата уже прошла" },
       { "code": "SHORT_NOTICE", "message": "По тестовой инструкции отгул подают за 2 рабочих дня" },
       { "code": "MEETING_CONFLICT", "message": "В этот день у тебя встреча: {event}" },
-      { "code": "STEP_DEADLINE", "message": "В этот день срок шага плана: {step}" }
+      { "code": "STEP_DEADLINE", "message": "В этот день срок шага плана: {step}" },
+      { "code": "DUPLICATE", "message": "На эту дату уже есть заявка {id} ({status})" }
     ]
   },
   "endpoints": {

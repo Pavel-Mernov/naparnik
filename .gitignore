@@ -17,3 +17,7 @@ dist/
 htmlcov/
 .ruff_cache/
 coverage.out
+
+# IDE
+.idea/
+.vscode/

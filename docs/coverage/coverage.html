@@ -63,7 +63,7 @@
 				
 				<option value="file3">github.com/worker4556/naparnik/backend/internal/adapters/mock.go (100.0%)</option>
 				
-				<option value="file4">github.com/worker4556/naparnik/backend/internal/agent/agent.go (95.6%)</option>
+				<option value="file4">github.com/worker4556/naparnik/backend/internal/agent/agent.go (95.8%)</option>
 				
 				<option value="file5">github.com/worker4556/naparnik/backend/internal/agent/drafts.go (94.1%)</option>
 				
@@ -121,7 +121,7 @@
 				
 				<option value="file32">github.com/worker4556/naparnik/backend/internal/store/notify_rules.go (98.4%)</option>
 				
-				<option value="file33">github.com/worker4556/naparnik/backend/internal/store/persistence.go (69.5%)</option>
+				<option value="file33">github.com/worker4556/naparnik/backend/internal/store/persistence.go (72.3%)</option>
 				
 				<option value="file34">github.com/worker4556/naparnik/backend/internal/store/plans.go (95.7%)</option>
 				
@@ -135,7 +135,7 @@
 				
 				<option value="file39">github.com/worker4556/naparnik/backend/internal/store/watch.go (94.8%)</option>
 				
-				<option value="file40">github.com/worker4556/naparnik/backend/internal/telegram/telegram.go (91.0%)</option>
+				<option value="file40">github.com/worker4556/naparnik/backend/internal/telegram/telegram.go (91.7%)</option>
 				
 				<option value="file41">github.com/worker4556/naparnik/backend/internal/tools/access.go (100.0%)</option>
 				
@@ -163,7 +163,7 @@
 				
 				<option value="file53">github.com/worker4556/naparnik/backend/internal/tools/profile.go (95.7%)</option>
 				
-				<option value="file54">github.com/worker4556/naparnik/backend/internal/tools/requests.go (98.8%)</option>
+				<option value="file54">github.com/worker4556/naparnik/backend/internal/tools/requests.go (97.1%)</option>
 				
 				<option value="file55">github.com/worker4556/naparnik/backend/internal/tools/reroute.go (96.3%)</option>
 				
@@ -832,6 +832,17 @@ func (a *Agent) Ask(ctx context.Context, login, text string) (Reply, error) {
         <span class="cov8" title="1">return reply, nil</span>
 }
 
+// samePending — неподтверждённый черновик пользователя с тем же инструментом и теми же аргументами.
+func samePending(s *store.Store, userID, tool string, args map[string]any) (store.ActionDraft, bool) {
+        <span class="cov8" title="1">want, _ := json.Marshal(args)
+        for _, d := range s.PendingDrafts(userID) </span>{
+                <span class="cov8" title="1">if got, _ := json.Marshal(d.Args); d.Tool == tool &amp;&amp; string(got) == string(want) </span>{
+                        <span class="cov8" title="1">return d, true
+</span>                }
+        }
+        <span class="cov8" title="1">return store.ActionDraft{}, false</span>
+}
+
 func (a *Agent) handle(tc tools.Ctx, call llm.ToolCall, reply *Reply) string {
         <span class="cov8" title="1">reply.ToolLog = append(reply.ToolLog, call.Name)
         t, known := tools.ByName(call.Name)
@@ -843,10 +854,16 @@ func (a *Agent) handle(tc tools.Ctx, call llm.ToolCall, reply *Reply) string {
 </span>                }
                 <span class="cov8" title="1">var d Draft
                 err := a.Store.Transaction(func(s *store.Store) error </span>{
+                        // Тот же черновик уже ждёт подтверждения (модель упала посреди ответа и ход пошёл по правилам,
+                        // или человек повторил вопрос) — показываем его, а не второй такой же.
+                        <span class="cov8" title="1">if same, found := samePending(s, tc.User.ID, call.Name, call.Input); found </span>{
+                                <span class="cov8" title="1">d = draftView(same)
+                                return nil
+</span>                        }
                         <span class="cov8" title="1">d = Draft{ID: s.NextID("DRAFT"), UserID: tc.User.ID, Tool: call.Name, Args: call.Input, Version: 1, Status: "pending"}
                         s.PutDraft(store.ActionDraft{ID: d.ID, UserID: d.UserID, Tool: d.Tool, Args: d.Args})
-                        return nil
-</span>                })
+                        return nil</span>
+                })
                 <span class="cov8" title="1">if err != nil </span>{
                         <span class="cov0" title="0">res = tools.Result{Error: &amp;tools.Error{Code: "unavailable", Message: "Не удалось сохранить черновик. Повтори запрос."}}
 </span>                } else {
@@ -5960,7 +5977,7 @@ func (s *Store) PendingDrafts(userID string) []ActionDraft {
         out := []ActionDraft{}
         for _, d := range s.drafts </span>{
                 <span class="cov8" title="1">if d.UserID == userID &amp;&amp; len(d.Result) == 0 &amp;&amp; !d.Cancelled </span>{
-                        <span class="cov0" title="0">raw, _ := json.Marshal(d)
+                        <span class="cov8" title="1">raw, _ := json.Marshal(d)
                         var copy ActionDraft
                         _ = json.Unmarshal(raw, &amp;copy)
                         out = append(out, copy)
@@ -7293,11 +7310,11 @@ func (t *Service) poll(ctx context.Context) {
                 <span class="cov8" title="1">var ups []update
                 if err := t.call(ctx, "getUpdates", map[string]any{"offset": offset, "timeout": 25, "allowed_updates": []string{"message"}}, &amp;ups); err != nil </span>{
                         // Ошибку видно в журнале (раньше глоталась): например, Conflict — тот же бот опрашивает другой экземпляр.
-                        <span class="cov0" title="0">if msg := err.Error(); msg != lastErr &amp;&amp; ctx.Err() == nil </span>{
+                        <span class="cov8" title="1">if msg := err.Error(); msg != lastErr &amp;&amp; ctx.Err() == nil </span>{
                                 <span class="cov0" title="0">log.Printf("telegram: %v", err)
                                 lastErr = msg
 </span>                        }
-                        <span class="cov0" title="0">time.Sleep(5 * time.Second)
+                        <span class="cov8" title="1">time.Sleep(5 * time.Second)
                         continue</span>
                 }
                 <span class="cov8" title="1">lastErr = ""
@@ -7309,7 +7326,7 @@ func (t *Service) poll(ctx context.Context) {
                         <span class="cov8" title="1">reply := t.Handle(ctx, u.Message.Chat.ID, u.Message.Text)
                         log.Printf("telegram: входящее %q → %s", command(u.Message.Text), firstLine(reply))
                         if err := t.send(ctx, u.Message.Chat.ID, reply); err != nil </span>{
-                                <span class="cov8" title="1">log.Printf("telegram: %v", err)
+                                <span class="cov0" title="0">log.Printf("telegram: %v", err)
 </span>                        }
                 }
         }
@@ -10049,7 +10066,38 @@ func precheckAbsence(c Ctx, args map[string]any) Result {
                         <span class="cov8" title="1">ws = append(ws, warning{"STEP_DEADLINE", "В этот день срок шага плана: " + s.Title})
 </span>                }
         }
+        <span class="cov8" title="1">if dup := activeRequest(c, sameAbsence(rt.Type, date)); dup != nil </span>{
+                <span class="cov8" title="1">ws = append(ws, warning{"DUPLICATE", "На эту дату уже есть заявка " + dup.ID + " (" + statusRU(dup.Status) + ")"})
+</span>        }
         <span class="cov8" title="1">return ok(map[string]any{"date": date, "warnings": ws})</span>
+}
+
+// activeRequest — заявка пользователя, которая ещё в силе (не отклонена), подходящая под условие.
+func activeRequest(c Ctx, match func(store.Request) bool) *store.Request {
+        <span class="cov8" title="1">for _, r := range c.Store.Requests(c.User.ID) </span>{
+                <span class="cov8" title="1">if r.Status != "rejected" &amp;&amp; match(r) </span>{
+                        <span class="cov8" title="1">return &amp;r
+</span>                }
+        }
+        <span class="cov8" title="1">return nil</span>
+}
+
+func duplicateError(r *store.Request) Result {
+        <span class="cov8" title="1">return fail("conflict", "Такая заявка уже есть: "+r.ID+" ("+statusRU(r.Status)+"). Повторно отправлять не нужно.")
+</span>}
+
+func statusRU(s string) string {
+        <span class="cov8" title="1">switch s </span>{
+        case "approved":
+                <span class="cov0" title="0">return "одобрена"</span>
+        case "granted":
+                <span class="cov0" title="0">return "доступ выдан"</span>
+        }
+        <span class="cov8" title="1">return "на согласовании"</span>
+}
+
+func sameAbsence(t, date string) func(store.Request) bool {
+        <span class="cov8" title="1">return func(r store.Request) bool </span>{ <span class="cov8" title="1">return r.Kind == "absence" &amp;&amp; r.Type == t &amp;&amp; r.Date == date }</span>
 }
 
 func createAbsenceRequest(c Ctx, args map[string]any) Result {
@@ -10060,6 +10108,9 @@ func createAbsenceRequest(c Ctx, args map[string]any) Result {
         <span class="cov8" title="1">day, valid := parseDate(str(args, "date"))
         if !valid || !day.After(c.Store.Today) </span>{
                 <span class="cov8" title="1">return fail("validation", "Укажи будущую дату")
+</span>        }
+        <span class="cov8" title="1">if dup := activeRequest(c, sameAbsence(rt.Type, day.Format(time.DateOnly))); dup != nil </span>{
+                <span class="cov8" title="1">return duplicateError(dup)
 </span>        }
         <span class="cov8" title="1">ctx, cancel := svcCtx()
         defer cancel()
@@ -10131,7 +10182,10 @@ func requestAccess(c Ctx, args map[string]any) Result {
                 <span class="cov8" title="1">return Result{Error: e}
 </span>        }
         <span class="cov8" title="1">sys := findSystem(c, str(args, "system"))
-        ctx, cancel := svcCtx()
+        if dup := activeRequest(c, func(r store.Request) bool </span>{ <span class="cov8" title="1">return r.Kind == "access" &amp;&amp; r.System == sys.ID }</span>); dup != nil {
+                <span class="cov8" title="1">return duplicateError(dup)
+</span>        }
+        <span class="cov8" title="1">ctx, cancel := svcCtx()
         defer cancel()
         rc, err := c.svc().Access.Submit(ctx, adapters.AccessSubmit{Key: "acc:" + c.User.ID + ":" + sys.ID, EmployeeID: c.User.ID,
                 ApproverID: c.User.LeadID, System: sys.ID, Reason: str(args, "reason")})
@@ -10940,7 +10994,12 @@ func Check(c Ctx, name string, args map[string]any) *Error {
 </span>        }
         <span class="cov8" title="1">switch name </span>{
         case "request_access":
-                <span class="cov8" title="1">return checkAccess(c, str(args, "system"))</span>
+                <span class="cov8" title="1">if e := checkAccess(c, str(args, "system")); e != nil </span>{
+                        <span class="cov8" title="1">return e
+</span>                }
+                <span class="cov8" title="1">if dup := activeRequest(c, func(r store.Request) bool </span>{ <span class="cov8" title="1">return r.Kind == "access" &amp;&amp; r.System == str(args, "system") }</span>); dup != nil {
+                        <span class="cov8" title="1">return duplicateError(dup).Error
+</span>                }
         case "send_question":
                 <span class="cov8" title="1">if _, ok := c.Store.User(str(args, "addressee_id")); !ok </span>{
                         <span class="cov8" title="1">return &amp;Error{Code: "not_found", Message: "Адресат не найден в команде."}
@@ -10954,6 +11013,10 @@ func Check(c Ctx, name string, args map[string]any) *Error {
 </span>                }
                 <span class="cov8" title="1">if day, ok := parseDate(str(args, "date")); !ok || !day.After(c.Store.Today) </span>{
                         <span class="cov8" title="1">return &amp;Error{Code: "validation", Message: "Укажи будущую дату"}
+</span>                }
+                <span class="cov8" title="1">day, _ := parseDate(str(args, "date"))
+                if dup := activeRequest(c, sameAbsence(str(args, "type"), day.Format(time.DateOnly))); dup != nil </span>{
+                        <span class="cov8" title="1">return duplicateError(dup).Error
 </span>                }
         case "suggest_term":
                 <span class="cov8" title="1">if _, found := lookupTerm(c, str(args, "term")); found </span>{

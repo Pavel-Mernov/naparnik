@@ -75,7 +75,38 @@ func precheckAbsence(c Ctx, args map[string]any) Result {
 			ws = append(ws, warning{"STEP_DEADLINE", "В этот день срок шага плана: " + s.Title})
 		}
 	}
+	if dup := activeRequest(c, sameAbsence(rt.Type, date)); dup != nil {
+		ws = append(ws, warning{"DUPLICATE", "На эту дату уже есть заявка " + dup.ID + " (" + statusRU(dup.Status) + ")"})
+	}
 	return ok(map[string]any{"date": date, "warnings": ws})
+}
+
+// activeRequest — заявка пользователя, которая ещё в силе (не отклонена), подходящая под условие.
+func activeRequest(c Ctx, match func(store.Request) bool) *store.Request {
+	for _, r := range c.Store.Requests(c.User.ID) {
+		if r.Status != "rejected" && match(r) {
+			return &r
+		}
+	}
+	return nil
+}
+
+func duplicateError(r *store.Request) Result {
+	return fail("conflict", "Такая заявка уже есть: "+r.ID+" ("+statusRU(r.Status)+"). Повторно отправлять не нужно.")
+}
+
+func statusRU(s string) string {
+	switch s {
+	case "approved":
+		return "одобрена"
+	case "granted":
+		return "доступ выдан"
+	}
+	return "на согласовании"
+}
+
+func sameAbsence(t, date string) func(store.Request) bool {
+	return func(r store.Request) bool { return r.Kind == "absence" && r.Type == t && r.Date == date }
 }
 
 func createAbsenceRequest(c Ctx, args map[string]any) Result {
@@ -86,6 +117,9 @@ func createAbsenceRequest(c Ctx, args map[string]any) Result {
 	day, valid := parseDate(str(args, "date"))
 	if !valid || !day.After(c.Store.Today) {
 		return fail("validation", "Укажи будущую дату")
+	}
+	if dup := activeRequest(c, sameAbsence(rt.Type, day.Format(time.DateOnly))); dup != nil {
+		return duplicateError(dup)
 	}
 	ctx, cancel := svcCtx()
 	defer cancel()
@@ -157,6 +191,9 @@ func requestAccess(c Ctx, args map[string]any) Result {
 		return Result{Error: e}
 	}
 	sys := findSystem(c, str(args, "system"))
+	if dup := activeRequest(c, func(r store.Request) bool { return r.Kind == "access" && r.System == sys.ID }); dup != nil {
+		return duplicateError(dup)
+	}
 	ctx, cancel := svcCtx()
 	defer cancel()
 	rc, err := c.svc().Access.Submit(ctx, adapters.AccessSubmit{Key: "acc:" + c.User.ID + ":" + sys.ID, EmployeeID: c.User.ID,
