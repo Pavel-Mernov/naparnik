@@ -112,6 +112,20 @@ func readablePages(c Ctx) []mockdata.Page {
 	return out
 }
 
+// hitOf — страница в выдаче инструмента. Выдача уходит во внешнюю модель, поэтому у конфиденциальной
+// страницы вместо текста — заглушка: модель знает, что страница есть, и даёт ссылку, но не видит содержания (BR-49).
+// Поиск по словам идёт у нас, а не в модели, поэтому такая страница всё равно находится.
+func hitOf(c Ctx, p mockdata.Page, score float64) Hit {
+	h := Hit{p.ID, p.Title, p.Body, c.Store.Name(p.AuthorID), p.UpdatedAt, p.TestInstruction, "", score}
+	switch {
+	case p.Confidential():
+		h.Body, h.Label = ConfidentialBody, ConfidentialLabel
+	case p.TestInstruction:
+		h.Label = TestInstructionLabel
+	}
+	return h
+}
+
 func SearchKB(c Ctx, query string) []Hit {
 	q := Stems(query)
 	if len(q) == 0 {
@@ -126,11 +140,7 @@ func SearchKB(c Ctx, query string) []Hit {
 		// Порог — по всему тексту, а порядок — с бонусом за слова запроса в заголовке:
 		// страница «Код-стайл Python» важнее памятки, где код-стайл упомянут одной строкой.
 		score += titleBonus * float64(overlap(q, Stems(p.Title))) / float64(len(q))
-		h := Hit{p.ID, p.Title, p.Body, c.Store.Name(p.AuthorID), p.UpdatedAt, p.TestInstruction, "", score}
-		if p.TestInstruction {
-			h.Label = TestInstructionLabel
-		}
-		hits = append(hits, h)
+		hits = append(hits, hitOf(c, p, score))
 	}
 	sort.SliceStable(hits, func(i, j int) bool { return hits[i].Score > hits[j].Score })
 	if len(hits) > 3 {
@@ -385,6 +395,7 @@ type PageCard struct {
 	Author          string `json:"author"`
 	UpdatedAt       string `json:"updated_at"`
 	TestInstruction bool   `json:"test_instruction"`
+	Classification  string `json:"classification"`
 }
 
 // KBPages — папки и опубликованные страницы своего пространства (BR-02, BR-40).
@@ -400,7 +411,12 @@ func KBPages(c Ctx) (folders []mockdata.Folder, pages []PageCard) {
 		if len(ex) > 140 {
 			ex = append(ex[:140], '…')
 		}
-		pages = append(pages, PageCard{p.ID, p.Folder, p.Type, p.Title, string(ex), p.Body, c.Store.Name(p.AuthorID), p.UpdatedAt, p.TestInstruction})
+		class := p.Classification
+		if class == "" {
+			class = mockdata.ClassInternal
+		}
+		// Человек с правами на пространство видит страницу целиком: гриф ограничивает только внешнюю модель (BR-49).
+		pages = append(pages, PageCard{p.ID, p.Folder, p.Type, p.Title, string(ex), p.Body, c.Store.Name(p.AuthorID), p.UpdatedAt, p.TestInstruction, class})
 	}
 	return folders, pages
 }
@@ -470,11 +486,7 @@ func SourcesFor(c Ctx, tool string, args map[string]any) []Hit {
 	for _, p := range readablePages(c) {
 		for _, id := range ids {
 			if p.ID == id && !slices.ContainsFunc(out, func(h Hit) bool { return h.PageID == id }) {
-				h := Hit{p.ID, p.Title, p.Body, c.Store.Name(p.AuthorID), p.UpdatedAt, p.TestInstruction, "", 1}
-				if p.TestInstruction {
-					h.Label = TestInstructionLabel
-				}
-				out = append(out, h)
+				out = append(out, hitOf(c, p, 1))
 			}
 		}
 	}

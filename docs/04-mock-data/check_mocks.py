@@ -70,6 +70,11 @@ def walk(obj, where):
 for name, content in data.items():
     walk(content, name)
 
+# гриф страниц (BR-49)
+for p in kb.get("pages", []):
+    if p.get("classification", "internal") not in {"internal", "confidential"}:
+        errors.append(f"kb-pages.json: {p['id']}: неизвестный гриф {p['classification']}")
+
 # транскрипт
 for mid, m in meetings.items():
     tf = m.get("transcript_file")

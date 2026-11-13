@@ -235,7 +235,8 @@ func FinishMeeting(c Ctx, meetingID string, recorded bool) (store.Meeting, *Erro
 		}
 		folder, similar := placePage(c, title)
 		page := mockdata.Page{ID: nextPageID(c), Space: c.Store.Data.Team.Department.KBSpaceID, Folder: folder, Type: "meeting", Status: "Draft",
-			Title: title, AuthorID: c.User.ID, UpdatedAt: c.Store.Today.Format(time.DateOnly), Body: body, SourceQuestion: q.ID, SimilarPageID: similar}
+			Title: title, AuthorID: c.User.ID, UpdatedAt: c.Store.Today.Format(time.DateOnly), Body: body, SourceQuestion: q.ID, SimilarPageID: similar,
+			Classification: inheritedClass(c, similar)}
 		c.Store.AddPage(page)
 		out, _ := c.Store.UpdateMeeting(m.ID, func(x *store.Meeting) {
 			x.Status, x.RecordingURL, x.PageID = "recorded", url, page.ID

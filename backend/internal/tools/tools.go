@@ -20,6 +20,12 @@ import (
 
 const TestInstructionLabel = "тестовая инструкция, не регламент Авито"
 
+// ConfidentialLabel — пометка источника с грифом «конфиденциально» (BR-49).
+const ConfidentialLabel = "конфиденциально: открой страницу в базе"
+
+// ConfidentialBody — что получает внешняя модель вместо текста конфиденциальной страницы (BR-49).
+const ConfidentialBody = "[Гриф «конфиденциально»: текст страницы не передаётся внешней модели. Не пересказывай и не додумывай содержание — назови страницу и предложи открыть её в базе.]"
+
 type Error struct {
 	Code    string `json:"code"` // forbidden | not_found | validation | unavailable | conflict
 	Message string `json:"message"`

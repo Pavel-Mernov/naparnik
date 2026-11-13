@@ -318,3 +318,55 @@ func TestPromisedDraftIsCreated(t *testing.T) {
 		}
 	}
 }
+
+// recordingProvider — сценарий модели, который запоминает всё, что ей передали результаты инструментов.
+type recordingProvider struct {
+	steps []llm.Step
+	seen  []string
+}
+
+func (p *recordingProvider) Start(string, string, []llm.ToolSpec) llm.Session {
+	return &recording{p: p}
+}
+
+type recording struct {
+	p *recordingProvider
+	i int
+}
+
+func (s *recording) next() (llm.Step, error) {
+	st := s.p.steps[min(s.i, len(s.p.steps)-1)]
+	s.i++
+	return st, nil
+}
+func (s *recording) SendUser(context.Context, string) (llm.Step, error) { return s.next() }
+func (s *recording) SendToolResults(_ context.Context, rs []llm.ToolResult) (llm.Step, error) {
+	for _, r := range rs {
+		s.p.seen = append(s.p.seen, r.Content)
+	}
+	return s.next()
+}
+
+// BR-49: текст конфиденциальной страницы не уходит во внешнюю модель, а стажёр получает ссылку и пометку.
+func TestConfidentialNotSentToModel(t *testing.T) {
+	base := newAgent(t, "stub_ok", time.Second)
+	q := "Какой план запусков раздела объявлений на квартал?"
+	p := &recordingProvider{steps: []llm.Step{
+		{ToolCalls: []llm.ToolCall{{ID: "1", Name: "search_kb", Input: map[string]any{"query": q}}}},
+		{Text: "Нашёл страницу «План запусков раздела «Объявления» на I квартал 2027», Дмитрий Волков."},
+	}}
+	r := ask(t, New(base.Store, p, time.Second), "intern.sokolov", q)
+	for _, c := range p.seen {
+		if strings.Contains(c, "пилот подписки") {
+			t.Fatalf("модель получила текст страницы: %s", c)
+		}
+	}
+	if len(r.Sources) == 0 || r.Sources[0].PageID != "kb-41" || !strings.Contains(r.Text, "конфиденциально") {
+		t.Fatalf("ответ: %+v", r)
+	}
+	// Запасной режим без модели — тоже ссылка, без текста и без служебной заглушки.
+	off := ask(t, newAgent(t, "stub_error", time.Second), "intern.sokolov", "Что с запусками в разделе объявлений в первом квартале?")
+	if strings.Contains(off.Text, "подписки") || strings.Contains(off.Text, "[Гриф") || !strings.Contains(off.Text, "конфиденциально") {
+		t.Fatalf("упрощённый режим: %s", off.Text)
+	}
+}

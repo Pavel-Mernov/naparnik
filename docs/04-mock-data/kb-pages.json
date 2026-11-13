@@ -1,9 +1,9 @@
 {
   "_meta": {
-    "description": "Заглушка базы знаний (в стиле Confluence). Все тексты синтетические. Страницы с test_instruction=true показываются с пометкой «тестовая инструкция, не регламент Авито» (BR-05).",
+    "description": "Заглушка базы знаний (в стиле Confluence). Все тексты синтетические. Страницы с test_instruction=true показываются с пометкой «тестовая инструкция, не регламент Авито» (BR-05). Поле classification — гриф (BR-49): без поля — internal; confidential — человек с правами видит страницу целиком, а во внешнюю модель уходят только название, автор и дата, без текста (kb-41).",
     "demo_today": "2026-11-11",
     "gaps": "Специально НЕТ ответов на вопросы Q2, Q3, Q4, Q5, Q10 из questions.json — на них проверяется маршрутизация к людям",
-    "used_by": ["SC-02", "SC-03", "SC-04", "SC-07", "SC-08", "SC-12", "SC-14", "SC-16", "SC-22", "SC-27", "SC-35"]
+    "used_by": ["SC-02", "SC-03", "SC-04", "SC-07", "SC-08", "SC-12", "SC-14", "SC-16", "SC-22", "SC-27", "SC-35", "SC-36"]
   },
   "spaces": [
     { "id": "space-analytics", "name": "Продуктовая аналитика", "department_id": "dept-analytics", "readers": "dept-analytics" },
@@ -173,6 +173,12 @@
       "id": "kb-40", "space": "space-analytics", "folder": "f-metrics", "type": "article", "status": "Published",
       "title": "Дерево метрик раздела «Объявления»", "author_id": "u-volkov", "created_at": "2026-03-20", "updated_at": "2026-10-30", "test_instruction": false,
       "body": "North Star (контакты на активное объявление) раскладывается на долю объявлений с просмотрами, CTR карточки и конверсию карточки в контакт. Метрики второго уровня ведут продуктовые аналитики."
+    },
+    {
+      "id": "kb-41", "space": "space-analytics", "folder": "f-metrics", "type": "article", "status": "Published",
+      "title": "План запусков раздела «Объявления» на I квартал 2027", "author_id": "u-volkov", "created_at": "2026-10-15", "updated_at": "2026-11-05", "test_instruction": false,
+      "classification": "confidential",
+      "body": "Синтетический пример конфиденциальной страницы (BR-49). Январь — пилот подписки для частных продавцов в трёх городах, целевой прирост выручки раздела 4%. Февраль — новая карточка объявления на 20% трафика. Март — решение о раскатке по итогам A/B. Бюджет и сроки не обсуждать вне отдела."
     },
     {
       "id": "kb-R1", "space": "space-dwh-pii", "folder": "f-pii", "type": "article", "status": "Published",

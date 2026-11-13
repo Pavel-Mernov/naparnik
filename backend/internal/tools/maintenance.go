@@ -141,6 +141,7 @@ func DecideDuplicate(c Ctx, pairID, decision string) (DuplicateItem, *Error) {
 					p.Title = pair.ProposedTitle
 				}
 				p.Body = strings.TrimSpace(a.Body) + "\n\n" + strings.TrimSpace(b.Body)
+				p.Classification = mockdata.StricterClass(a.Classification, b.Classification) // BR-49
 				p.UpdatedAt = c.Store.Today.Format(time.DateOnly)
 			})
 			c.Store.UpdatePage(b.ID, func(p *mockdata.Page) { p.Status, p.MergedInto = "Merged", a.ID })

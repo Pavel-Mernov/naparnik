@@ -80,7 +80,10 @@ func practiceIDs(t practice.Template) []string {
 func practiceSources(c Ctx, t practice.Template) ([]practice.Source, bool) {
 	pages := map[string]mockdata.Page{}
 	for _, p := range readablePages(c) {
-		pages[p.ID] = p
+		// Текст источников уходит модели на генерацию задания — конфиденциальные не берём (BR-49).
+		if !p.Confidential() {
+			pages[p.ID] = p
+		}
 	}
 	seen, complete := map[string]bool{}, true
 	out := []practice.Source{}

@@ -41,7 +41,7 @@
 | Огр. 05: недоступное не показывается и не выполняется | SC-16, SC-13, SC-33 | kb-R1, sys-dwh-pii, evals e-26…e-31 |
 | Огр. 06: без чувствительных ПДн и финансов | SC-17, SC-28 | questions Q8, Q13 (заведомо фиктивные значения), evals e-32…e-37 |
 | Огр. 09–10: < 1 с, LLM не блокирует интерфейс, сбои обработаны | SC-15, SC-26 | llm-stub, absence-service (503) |
-| Сдача 03: тестовые данные и имитации интеграций | все SC-01…SC-35 | вся папка + check_mocks.py |
+| Сдача 03: тестовые данные и имитации интеграций | все SC-01…SC-36 | вся папка + check_mocks.py |
 | «Наставник: сокращать рутину, не заменять содержательную работу» | SC-04, SC-10, SC-19, SC-21, SC-22, SC-23 | expert-answers, meetings, kb-pages (maintenance_seed) |
 
 **Не покрывается данными, а делается в коде:** покрытие тестами > 80 % и отчёт о покрытии, SDD-спецификации агента и инструментов, README с инструкцией запуска.
@@ -85,3 +85,4 @@
 | SC-33 Нет доступа к нужной системе | access-service not_yet_available_variant, sys-dwh-marts-ro, шаг s-10 |
 | SC-34 Жаргон и набор знаний под роль | practice jargon_question, role-knowledge (analyst, backend) |
 | SC-35 Вопрос к топ-руководителю уходит бадди | team (u-volkov, department.routing), kb-39, kb-40, q-18, expert-answers (q-18, redirect_variant), evals e-43 |
+| SC-36 Конфиденциальная страница | kb-pages (kb-41, `classification: confidential`) |

@@ -326,6 +326,9 @@ func (s *stubSession) describe(tool string, raw json.RawMessage) (string, *ToolC
 			return "", &c
 		}
 		h := d.Hits[0]
+		if strings.HasPrefix(h.Label, "конфиденциально") { // BR-49: текста нет — только ссылка
+			return fmt.Sprintf("Нашёл страницу «%s», %s, %s. Она под грифом «конфиденциально»: пересказывать её не буду, открой её в базе.", h.Title, h.Author, h.UpdatedAt), nil
+		}
 		label := ""
 		if h.Label != "" {
 			label = " · " + h.Label

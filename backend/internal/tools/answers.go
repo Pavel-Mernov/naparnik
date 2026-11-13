@@ -65,6 +65,7 @@ func answerQuestion(c Ctx, questionID, text string) (store.Question, mockdata.Pa
 		ID: nextPageID(c), Space: c.Store.Data.Team.Department.KBSpaceID, Folder: folder, Type: "qa", Status: "Draft",
 		Title: title, AuthorID: c.User.ID,
 		UpdatedAt: c.Store.Today.Format(time.DateOnly), Body: text, SourceQuestion: q.ID, SimilarPageID: similar,
+		Classification: inheritedClass(c, similar),
 	}
 	c.Store.AddPage(page)
 	q, _ = c.Store.UpdateQuestion(q.ID, func(x *store.Question) {
@@ -85,6 +86,15 @@ func nextPageID(c Ctx) string {
 			return id
 		}
 	}
+}
+
+// inheritedClass — BR-49: страница из ответа или встречи дополняет похожую и получает её гриф,
+// если он закрытее: ответ по конфиденциальной теме не должен стать открытым.
+func inheritedClass(c Ctx, similar string) string {
+	if p, found := pageByID(c, similar); found {
+		return mockdata.StricterClass("", p.Classification)
+	}
+	return ""
 }
 
 // placePage — папка по самой похожей опубликованной странице и похожая страница для BR-32.

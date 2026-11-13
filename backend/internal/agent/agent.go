@@ -295,8 +295,15 @@ func honestMiss(tc tools.Ctx, r *Reply, text, question string) string {
 
 // testLabel — BR-05: ответ по тестовой инструкции всегда с пометкой, даже если модель её не повторила.
 func testLabel(r *Reply, text string) string {
+	low := strings.ToLower(text)
 	for _, src := range r.Sources {
-		if src.Label != "" && !strings.Contains(strings.ToLower(text), "тестов") {
+		// BR-49: у конфиденциальной страницы ссылка вместо пересказа — напомним, если модель не сказала.
+		if src.Label == tools.ConfidentialLabel && !strings.Contains(low, "конфиденц") {
+			text += "\n\nСтраница «" + src.Title + "» под грифом «конфиденциально»: её текст не передаётся модели, открой её в базе."
+			low = strings.ToLower(text)
+			continue
+		}
+		if src.Label != "" && src.Label != tools.ConfidentialLabel && !strings.Contains(low, "тестов") {
 			return text + "\n\nИсточник «" + src.Title + "» — " + src.Label + "."
 		}
 	}
@@ -395,6 +402,9 @@ func (a *Agent) fallback(tc tools.Ctx, text string, err error) Reply {
 		return reply
 	}
 	reply.Text = reason + " Вот что нашёл в базе без пересказа:\n" + hits[0].Body
+	if hits[0].Label == tools.ConfidentialLabel {
+		reply.Text = reason + " Нашёл страницу «" + hits[0].Title + "» под грифом «конфиденциально» — открой её в базе."
+	}
 	for _, h := range hits {
 		reply.Sources = append(reply.Sources, Source{h.PageID, h.Title, h.Author, h.UpdatedAt, h.Label})
 	}

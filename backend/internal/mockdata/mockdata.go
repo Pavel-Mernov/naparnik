@@ -78,6 +78,27 @@ type Page struct {
 	SourceQuestion  string `json:"source_question,omitempty"` // для страниц «Вопрос-ответ» из ответа человека (P2)
 	SimilarPageID   string `json:"similar_page_id,omitempty"` // BR-32: похожая страница, которую можно дополнить
 	MergedInto      string `json:"merged_into,omitempty"`     // BR-39: после объединения дублей страница ведёт на общую
+	Classification  string `json:"classification,omitempty"`  // BR-49: гриф; пусто = «internal»
+}
+
+// Грифы страниц базы (BR-49), от открытого к закрытому.
+const (
+	ClassInternal     = "internal"     // внутреннее: можно передавать внешней модели
+	ClassConfidential = "confidential" // стратегия, финансы, планы запусков: текст во внешнюю модель не уходит
+)
+
+// Confidential — страницу можно показать человеку с правами, но не передавать её текст внешней модели (BR-49).
+func (p Page) Confidential() bool { return p.Classification == ClassConfidential }
+
+// StricterClass — более закрытый из двух грифов: страница из нескольких источников наследует самый закрытый (BR-49).
+func StricterClass(a, b string) string {
+	if a == ClassConfidential || b == ClassConfidential {
+		return ClassConfidential
+	}
+	if a != "" {
+		return a
+	}
+	return b
 }
 
 type Folder struct {

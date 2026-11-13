@@ -52,7 +52,7 @@ func glossary(c Ctx) []glossaryEntry {
 	rs, _ := RoleSetFor(c)
 	var out []glossaryEntry
 	for _, p := range readablePages(c) {
-		if !containsStr(rs.Glossary, p.ID) && p.Folder != GlossaryFolder {
+		if (!containsStr(rs.Glossary, p.ID) && p.Folder != GlossaryFolder) || p.Confidential() { // BR-49
 			continue
 		}
 		page := p
