@@ -23,8 +23,10 @@ const Incoming = ({ q, from, onAnswer }: { q: Question; from: string; onAnswer: 
       </Stack>
       <Typography variant="h3" component="h3" mb={1}>{questionTitle(q)}</Typography>
       {q.text && q.text !== q.title && <Box sx={{ color: "text.secondary", mb: 2 }}><Markdown text={q.text} /></Box>}
-      {/* Поле на фоне блока: свой белый фон, подсказка — по левому краю, как заголовок и кнопка. */}
-      <TextField fullWidth multiline minRows={3} label="Твой ответ" value={text} onChange={(e) => setText(e.target.value)}
+      {/* Подпись над полем, а не плавающая метка: в теме рамка фокуса — outline без выреза под метку,
+          и метка ложилась на линию. Поле на своём фоне, подсказка — по левому краю, как заголовок и кнопка. */}
+      <Typography component="label" htmlFor={`answer-${q.id}`} variant="body2" fontWeight={600} sx={{ display: "block", mb: 0.75 }}>Твой ответ</Typography>
+      <TextField id={`answer-${q.id}`} fullWidth multiline minRows={3} placeholder="Напиши ответ своими словами" value={text} onChange={(e) => setText(e.target.value)}
         sx={{ "& .MuiInputBase-root": { bgcolor: t.bg }, "& .MuiFormHelperText-root": { mx: 0, mt: 1 } }}
         helperText="Ответ сразу увидит стажёр, а я оформлю его страницей в базе — опубликую после твоего «Ок»." />
       <Button variant="contained" sx={{ mt: 1.5 }} disabled={!text.trim() || busy}
