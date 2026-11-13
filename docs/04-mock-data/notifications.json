@@ -24,8 +24,8 @@
   "quiet_rules": { "respect_working_hours": true, "dnd": true, "urgent_in_working_hours": "сразу" },
   "mascot_timers": {
     "scenario": "SC-25",
-    "drowsy_after_sec": 120,
-    "sleep_after_sec": 180,
+    "drowsy_after_sec": 60,
+    "sleep_after_sec": 90,
     "greeting_cooldown_min": 60,
     "wake_triggers": ["click", "hover", "event"],
     "test_override_env": "MASCOT_TIMER_SCALE=0.05 — ускорить таймеры в автотестах"

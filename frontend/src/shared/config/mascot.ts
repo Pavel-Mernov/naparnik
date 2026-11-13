@@ -1,7 +1,7 @@
 /** Таймеры маскота из docs/04-mock-data/notifications.json (SC-25, BR-91). */
 export const MASCOT_TIMERS = {
-  drowsyAfterSec: 120,
-  sleepAfterSec: 180,
+  drowsyAfterSec: 60,
+  sleepAfterSec: 90,
   greetingCooldownMin: 60,
   wakeTriggers: ["click", "hover", "event"] as const,
 } as const;
