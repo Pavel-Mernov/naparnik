@@ -368,13 +368,27 @@ function App() {
           slotProps={{ paper: { sx: { minWidth: 320, maxWidth: "calc(100vw - 24px)" } } }}>
           {me && <MenuItem onClick={() => { setAccountAnchor(null); setProfileOf(""); }}>
             <AccountCircleOutlined sx={{ mr: 1.5, color: t.muted }} />
-            <ListItemText primary="Мой профиль" secondary="Фото, телефон, почта" />
+            <ListItemText
+              primary="Мой профиль"
+              secondary="Фото, телефон, почта"
+              slotProps={{
+                primary: { variant: "body1", sx: { fontSize: 14, fontWeight: (th) => th.type.weight.medium } },
+                secondary: { variant: "body2" },
+              }}
+            />
           </MenuItem>}
           {me && <Divider />}
           <Typography variant="caption" color="text.secondary" sx={{ px: 2, pt: 1.5, pb: 1, display: "block" }}>Тестовые учётки · войти как</Typography>
           {others.map((u) => <MenuItem key={u.login} onClick={() => switchUser(u.login)}>
             <Avatar sx={{ width: 28, height: 28, fontSize: 12, bgcolor: t.surface, color: t.text }}>{initials(u.name)}</Avatar>
-            <ListItemText primary={u.name} secondary={`${ROLE_RU[primaryRole(u.roles)]} · ${u.position}`} />
+            <ListItemText
+              primary={u.name}
+              secondary={`${ROLE_RU[primaryRole(u.roles)]} · ${u.position}`}
+              slotProps={{
+                primary: { variant: "body1", sx: { fontSize: 14, fontWeight: (th) => th.type.weight.medium } },
+                secondary: { variant: "body2" },
+              }}
+            />
           </MenuItem>)}
         </Menu>
 

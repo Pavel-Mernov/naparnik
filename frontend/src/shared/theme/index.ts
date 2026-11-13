@@ -239,7 +239,10 @@ export const makeTheme = (mode: Mode): Theme => {
       },
       MuiPaper: { defaultProps: { elevation: 0 }, styleOverrides: { root: { backgroundImage: "none" } } },
       MuiDialog: {
-        styleOverrides: { paper: { borderRadius: radius, border: `${stroke.thick}px solid ${t.line}` } },
+        defaultProps: { elevation: 0 },
+        styleOverrides: {
+          paper: { borderRadius: radius, border: `${stroke.thick}px solid ${t.line}`, boxShadow: "none" },
+        },
       },
       MuiOutlinedInput: {
         styleOverrides: {

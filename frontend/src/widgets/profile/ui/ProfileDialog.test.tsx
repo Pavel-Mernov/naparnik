@@ -43,24 +43,26 @@ describe("ProfileDialog", () => {
     expect(screen.getByText("Профиль сотрудника")).toBeInTheDocument();
   });
 
-  it("edits the phone and shows the backend validation message", async () => {
+  it("validates phone with hint, blocks letters, and saves 11-digit +7 number", async () => {
     const onChanged = vi.fn();
     const fetchMock = vi.spyOn(globalThis, "fetch")
       .mockResolvedValueOnce(json({ ok: true, profile: intern }))
-      .mockResolvedValueOnce(json({ ok: false, error: { code: "validation", message: "Телефон — российский номер" } }, 422))
       .mockResolvedValueOnce(json({ ok: true, profile: { ...intern, phone: "+7 912 345-67-89" } }));
     wrap(<ProfileDialog open login="intern.sokolov" onClose={vi.fn()} onChanged={onChanged} />);
     await userEvent.click(await screen.findByRole("button", { name: "Изменить" }));
     const field = screen.getByLabelText("Рабочий телефон");
+    expect(screen.getByText("+7")).toBeInTheDocument();
+    expect(screen.getByText(/Введите корректный номер телефона например/)).toBeInTheDocument();
     await userEvent.clear(field);
-    await userEvent.type(field, "123");
-    await userEvent.click(screen.getByRole("button", { name: "Сохранить" }));
-    expect(await screen.findByText("Телефон — российский номер")).toBeInTheDocument();
+    await userEvent.type(field, "abc123");
+    expect(field).toHaveValue("123");
+    expect(screen.getByRole("button", { name: "Сохранить" })).toBeDisabled();
     await userEvent.clear(field);
-    await userEvent.type(field, "89123456789");
+    await userEvent.type(field, "9123456789");
+    expect(await screen.findByText(/успешно валидирован/)).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "Сохранить" }));
     expect(await screen.findByRole("link", { name: "+7 912 345-67-89" })).toBeInTheDocument();
-    expect(fetchMock.mock.calls[2][1]).toMatchObject({ method: "PATCH", body: JSON.stringify({ phone: "89123456789" }) });
+    expect(fetchMock.mock.calls[1][1]).toMatchObject({ method: "PATCH", body: JSON.stringify({ phone: "+7 912 345-67-89" }) });
     expect(onChanged).toHaveBeenCalledWith(expect.objectContaining({ phone: "+7 912 345-67-89" }));
   });
 
