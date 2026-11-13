@@ -1,0 +1,654 @@
+
+<!doctype html>
+<html lang="en">
+
+<head>
+    <title>Code coverage report for pages/requests/ui/RequestsPage.tsx</title>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../../../prettify.css" />
+    <link rel="stylesheet" href="../../../base.css" />
+    <link rel="shortcut icon" type="image/x-icon" href="../../../favicon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="../../../theme.js"></script>
+    <style type='text/css'>
+        .coverage-summary .sorter {
+            background-image: url(../../../sort-arrow-sprite.png);
+        }
+    </style>
+</head>
+    
+<body>
+<div class='wrapper'>
+    <div class='pad1'>
+        
+        <label class="theme-select quiet">
+            Theme
+            <select id="themeSelect" autocomplete="off">
+                <option value="light">Light</option>
+                <option value="dark">Dark</option>
+                <option value="legacy">Legacy</option>
+            </select>
+        </label>
+
+        <h1><a href="../../../index.html">All files</a> / <a href="index.html">pages/requests/ui</a> RequestsPage.tsx</h1>
+        <div class='clearfix'>
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">96.49% </span>
+                <span class="quiet">Statements</span>
+                <span class='fraction'>110/114</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">86.88% </span>
+                <span class="quiet">Branches</span>
+                <span class='fraction'>106/122</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">92.15% </span>
+                <span class="quiet">Functions</span>
+                <span class='fraction'>47/51</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">97.5% </span>
+                <span class="quiet">Lines</span>
+                <span class='fraction'>78/80</span>
+            </div>
+        
+            
+        </div>
+        <p class="quiet">
+            Press <em>n</em> or <em>j</em> to go to the next uncovered block, <em>b</em>, <em>p</em> or <em>k</em> for the previous block.
+        </p>
+        <template id="filterTemplate">
+            <div class="quiet">
+                Filter:
+                <input type="search" id="fileSearch">
+            </div>
+        </template>
+    </div>
+    <div class='status-line high'></div>
+    <pre><table class="coverage">
+<tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
+<a name='L2'></a><a href='#L2'>2</a>
+<a name='L3'></a><a href='#L3'>3</a>
+<a name='L4'></a><a href='#L4'>4</a>
+<a name='L5'></a><a href='#L5'>5</a>
+<a name='L6'></a><a href='#L6'>6</a>
+<a name='L7'></a><a href='#L7'>7</a>
+<a name='L8'></a><a href='#L8'>8</a>
+<a name='L9'></a><a href='#L9'>9</a>
+<a name='L10'></a><a href='#L10'>10</a>
+<a name='L11'></a><a href='#L11'>11</a>
+<a name='L12'></a><a href='#L12'>12</a>
+<a name='L13'></a><a href='#L13'>13</a>
+<a name='L14'></a><a href='#L14'>14</a>
+<a name='L15'></a><a href='#L15'>15</a>
+<a name='L16'></a><a href='#L16'>16</a>
+<a name='L17'></a><a href='#L17'>17</a>
+<a name='L18'></a><a href='#L18'>18</a>
+<a name='L19'></a><a href='#L19'>19</a>
+<a name='L20'></a><a href='#L20'>20</a>
+<a name='L21'></a><a href='#L21'>21</a>
+<a name='L22'></a><a href='#L22'>22</a>
+<a name='L23'></a><a href='#L23'>23</a>
+<a name='L24'></a><a href='#L24'>24</a>
+<a name='L25'></a><a href='#L25'>25</a>
+<a name='L26'></a><a href='#L26'>26</a>
+<a name='L27'></a><a href='#L27'>27</a>
+<a name='L28'></a><a href='#L28'>28</a>
+<a name='L29'></a><a href='#L29'>29</a>
+<a name='L30'></a><a href='#L30'>30</a>
+<a name='L31'></a><a href='#L31'>31</a>
+<a name='L32'></a><a href='#L32'>32</a>
+<a name='L33'></a><a href='#L33'>33</a>
+<a name='L34'></a><a href='#L34'>34</a>
+<a name='L35'></a><a href='#L35'>35</a>
+<a name='L36'></a><a href='#L36'>36</a>
+<a name='L37'></a><a href='#L37'>37</a>
+<a name='L38'></a><a href='#L38'>38</a>
+<a name='L39'></a><a href='#L39'>39</a>
+<a name='L40'></a><a href='#L40'>40</a>
+<a name='L41'></a><a href='#L41'>41</a>
+<a name='L42'></a><a href='#L42'>42</a>
+<a name='L43'></a><a href='#L43'>43</a>
+<a name='L44'></a><a href='#L44'>44</a>
+<a name='L45'></a><a href='#L45'>45</a>
+<a name='L46'></a><a href='#L46'>46</a>
+<a name='L47'></a><a href='#L47'>47</a>
+<a name='L48'></a><a href='#L48'>48</a>
+<a name='L49'></a><a href='#L49'>49</a>
+<a name='L50'></a><a href='#L50'>50</a>
+<a name='L51'></a><a href='#L51'>51</a>
+<a name='L52'></a><a href='#L52'>52</a>
+<a name='L53'></a><a href='#L53'>53</a>
+<a name='L54'></a><a href='#L54'>54</a>
+<a name='L55'></a><a href='#L55'>55</a>
+<a name='L56'></a><a href='#L56'>56</a>
+<a name='L57'></a><a href='#L57'>57</a>
+<a name='L58'></a><a href='#L58'>58</a>
+<a name='L59'></a><a href='#L59'>59</a>
+<a name='L60'></a><a href='#L60'>60</a>
+<a name='L61'></a><a href='#L61'>61</a>
+<a name='L62'></a><a href='#L62'>62</a>
+<a name='L63'></a><a href='#L63'>63</a>
+<a name='L64'></a><a href='#L64'>64</a>
+<a name='L65'></a><a href='#L65'>65</a>
+<a name='L66'></a><a href='#L66'>66</a>
+<a name='L67'></a><a href='#L67'>67</a>
+<a name='L68'></a><a href='#L68'>68</a>
+<a name='L69'></a><a href='#L69'>69</a>
+<a name='L70'></a><a href='#L70'>70</a>
+<a name='L71'></a><a href='#L71'>71</a>
+<a name='L72'></a><a href='#L72'>72</a>
+<a name='L73'></a><a href='#L73'>73</a>
+<a name='L74'></a><a href='#L74'>74</a>
+<a name='L75'></a><a href='#L75'>75</a>
+<a name='L76'></a><a href='#L76'>76</a>
+<a name='L77'></a><a href='#L77'>77</a>
+<a name='L78'></a><a href='#L78'>78</a>
+<a name='L79'></a><a href='#L79'>79</a>
+<a name='L80'></a><a href='#L80'>80</a>
+<a name='L81'></a><a href='#L81'>81</a>
+<a name='L82'></a><a href='#L82'>82</a>
+<a name='L83'></a><a href='#L83'>83</a>
+<a name='L84'></a><a href='#L84'>84</a>
+<a name='L85'></a><a href='#L85'>85</a>
+<a name='L86'></a><a href='#L86'>86</a>
+<a name='L87'></a><a href='#L87'>87</a>
+<a name='L88'></a><a href='#L88'>88</a>
+<a name='L89'></a><a href='#L89'>89</a>
+<a name='L90'></a><a href='#L90'>90</a>
+<a name='L91'></a><a href='#L91'>91</a>
+<a name='L92'></a><a href='#L92'>92</a>
+<a name='L93'></a><a href='#L93'>93</a>
+<a name='L94'></a><a href='#L94'>94</a>
+<a name='L95'></a><a href='#L95'>95</a>
+<a name='L96'></a><a href='#L96'>96</a>
+<a name='L97'></a><a href='#L97'>97</a>
+<a name='L98'></a><a href='#L98'>98</a>
+<a name='L99'></a><a href='#L99'>99</a>
+<a name='L100'></a><a href='#L100'>100</a>
+<a name='L101'></a><a href='#L101'>101</a>
+<a name='L102'></a><a href='#L102'>102</a>
+<a name='L103'></a><a href='#L103'>103</a>
+<a name='L104'></a><a href='#L104'>104</a>
+<a name='L105'></a><a href='#L105'>105</a>
+<a name='L106'></a><a href='#L106'>106</a>
+<a name='L107'></a><a href='#L107'>107</a>
+<a name='L108'></a><a href='#L108'>108</a>
+<a name='L109'></a><a href='#L109'>109</a>
+<a name='L110'></a><a href='#L110'>110</a>
+<a name='L111'></a><a href='#L111'>111</a>
+<a name='L112'></a><a href='#L112'>112</a>
+<a name='L113'></a><a href='#L113'>113</a>
+<a name='L114'></a><a href='#L114'>114</a>
+<a name='L115'></a><a href='#L115'>115</a>
+<a name='L116'></a><a href='#L116'>116</a>
+<a name='L117'></a><a href='#L117'>117</a>
+<a name='L118'></a><a href='#L118'>118</a>
+<a name='L119'></a><a href='#L119'>119</a>
+<a name='L120'></a><a href='#L120'>120</a>
+<a name='L121'></a><a href='#L121'>121</a>
+<a name='L122'></a><a href='#L122'>122</a>
+<a name='L123'></a><a href='#L123'>123</a>
+<a name='L124'></a><a href='#L124'>124</a>
+<a name='L125'></a><a href='#L125'>125</a>
+<a name='L126'></a><a href='#L126'>126</a>
+<a name='L127'></a><a href='#L127'>127</a>
+<a name='L128'></a><a href='#L128'>128</a>
+<a name='L129'></a><a href='#L129'>129</a>
+<a name='L130'></a><a href='#L130'>130</a>
+<a name='L131'></a><a href='#L131'>131</a>
+<a name='L132'></a><a href='#L132'>132</a>
+<a name='L133'></a><a href='#L133'>133</a>
+<a name='L134'></a><a href='#L134'>134</a>
+<a name='L135'></a><a href='#L135'>135</a>
+<a name='L136'></a><a href='#L136'>136</a>
+<a name='L137'></a><a href='#L137'>137</a>
+<a name='L138'></a><a href='#L138'>138</a>
+<a name='L139'></a><a href='#L139'>139</a>
+<a name='L140'></a><a href='#L140'>140</a>
+<a name='L141'></a><a href='#L141'>141</a>
+<a name='L142'></a><a href='#L142'>142</a>
+<a name='L143'></a><a href='#L143'>143</a>
+<a name='L144'></a><a href='#L144'>144</a>
+<a name='L145'></a><a href='#L145'>145</a>
+<a name='L146'></a><a href='#L146'>146</a>
+<a name='L147'></a><a href='#L147'>147</a>
+<a name='L148'></a><a href='#L148'>148</a>
+<a name='L149'></a><a href='#L149'>149</a>
+<a name='L150'></a><a href='#L150'>150</a>
+<a name='L151'></a><a href='#L151'>151</a>
+<a name='L152'></a><a href='#L152'>152</a>
+<a name='L153'></a><a href='#L153'>153</a>
+<a name='L154'></a><a href='#L154'>154</a>
+<a name='L155'></a><a href='#L155'>155</a>
+<a name='L156'></a><a href='#L156'>156</a>
+<a name='L157'></a><a href='#L157'>157</a>
+<a name='L158'></a><a href='#L158'>158</a>
+<a name='L159'></a><a href='#L159'>159</a>
+<a name='L160'></a><a href='#L160'>160</a>
+<a name='L161'></a><a href='#L161'>161</a>
+<a name='L162'></a><a href='#L162'>162</a>
+<a name='L163'></a><a href='#L163'>163</a>
+<a name='L164'></a><a href='#L164'>164</a>
+<a name='L165'></a><a href='#L165'>165</a>
+<a name='L166'></a><a href='#L166'>166</a>
+<a name='L167'></a><a href='#L167'>167</a>
+<a name='L168'></a><a href='#L168'>168</a>
+<a name='L169'></a><a href='#L169'>169</a>
+<a name='L170'></a><a href='#L170'>170</a>
+<a name='L171'></a><a href='#L171'>171</a>
+<a name='L172'></a><a href='#L172'>172</a>
+<a name='L173'></a><a href='#L173'>173</a>
+<a name='L174'></a><a href='#L174'>174</a>
+<a name='L175'></a><a href='#L175'>175</a>
+<a name='L176'></a><a href='#L176'>176</a>
+<a name='L177'></a><a href='#L177'>177</a>
+<a name='L178'></a><a href='#L178'>178</a>
+<a name='L179'></a><a href='#L179'>179</a>
+<a name='L180'></a><a href='#L180'>180</a>
+<a name='L181'></a><a href='#L181'>181</a>
+<a name='L182'></a><a href='#L182'>182</a>
+<a name='L183'></a><a href='#L183'>183</a>
+<a name='L184'></a><a href='#L184'>184</a>
+<a name='L185'></a><a href='#L185'>185</a>
+<a name='L186'></a><a href='#L186'>186</a>
+<a name='L187'></a><a href='#L187'>187</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">49x</span>
+<span class="cline-any cline-yes">49x</span>
+<span class="cline-any cline-yes">49x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">72x</span>
+<span class="cline-any cline-yes">49x</span>
+<span class="cline-any cline-yes">49x</span>
+<span class="cline-any cline-yes">49x</span>
+<span class="cline-any cline-yes">49x</span>
+<span class="cline-any cline-yes">49x</span>
+<span class="cline-any cline-yes">49x</span>
+<span class="cline-any cline-yes">49x</span>
+<span class="cline-any cline-yes">49x</span>
+<span class="cline-any cline-yes">196x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">49x</span>
+<span class="cline-any cline-yes">49x</span>
+<span class="cline-any cline-yes">10x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">49x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">98x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">49x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">105x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">98x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">55x</span>
+<span class="cline-any cline-yes">55x</span>
+<span class="cline-any cline-yes">55x</span>
+<span class="cline-any cline-yes">55x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">220x</span>
+<span class="cline-any cline-yes">23x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">30x</span>
+<span class="cline-any cline-yes">30x</span>
+<span class="cline-any cline-yes">24x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">30x</span>
+<span class="cline-any cline-yes">30x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">30x</span>
+<span class="cline-any cline-yes">30x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">24x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">30x</span>
+<span class="cline-any cline-yes">30x</span>
+<span class="cline-any cline-yes">30x</span>
+<span class="cline-any cline-yes">77x</span>
+<span class="cline-any cline-yes">30x</span>
+<span class="cline-any cline-yes">38x</span>
+<span class="cline-any cline-yes">38x</span>
+<span class="cline-any cline-yes">30x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">30x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">38x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">30x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">// Заявки в имитации корпоративного сервиса. Два пути (BR-42): «сделай сам» — форма, «сделаю за тебя» — Напарник.
+// Руководитель согласует или отклоняет с причиной из справочника сервиса.
+import { useEffect, useMemo, useState } from "react";
+import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, MenuItem, Stack, TextField, Typography, useMediaQuery, useTheme } from "@mui/material";
+import { api, unwrap, type RequestItem, type Warning } from "@/shared/api";
+import { requestTitle, shortDateTime } from "@/shared/lib";
+import type { DataState } from "@/shared/lib";
+import { AiTag, Block, Empty, PageHead, Row, StatusTag } from "@/shared/ui";
+&nbsp;
+type Kind = "absence" | "access";
+&nbsp;
+const SelfServiceDialog = ({ open, data, login, onClose, onSent }: { open: boolean; data: DataState; login: string; onClose: () =&gt; void; onSent: (msg: string) =&gt; void }) =&gt; {
+  const mobile = useMediaQuery(useTheme().breakpoints.down("sm"));
+  const { t } = useTheme();
+  const abs = data.services?.absence;
+  // Список считается только при смене данных: иначе эффект ниже срабатывал на каждый рендер и стирал ошибку отправки.
+  const systems = useMemo(() =&gt; (data.services?.access.systems ?? <span class="branch-1 cbranch-no" title="branch not covered" >[])</span>.filter((s) =&gt; s.status === "not_requested" || s.status === "rejected"), [data.services]);
+  const [kind, setKind] = useState&lt;Kind&gt;("absence");
+  const [type, setType] = useState("day_off");
+  const [date, setDate] = useState("");
+  const [comment, setComment] = useState("");
+  const [system, setSystem] = useState("");
+  const [warnings, setWarnings] = useState&lt;Warning[]&gt;([]);
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+  const chosen = systems.find((s) =&gt; s.system === system);
+&nbsp;
+  useEffect(() =&gt; { if (open) { setError(""); setSystem((s) =&gt; s || systems[0]?.system || <span class="branch-2 cbranch-no" title="branch not covered" >"")</span>; } }, [open, systems]);
+  useEffect(() =&gt; {
+    if (kind !== "absence" || !date) { setWarnings([]); return; }
+    const c = new AbortController();
+    api&lt;{ ok: boolean; data: { warnings: Warning[] | null } }&gt;(login, `/api/services/absence/precheck?type=${encodeURIComponent(type)}&amp;date=${encodeURIComponent(date)}`, { signal: c.signal })
+      .then((r) =&gt; setWarnings(unwrap(r).warnings ?? <span class="branch-1 cbranch-no" title="branch not covered" >[])</span>).<span class="fstat-no" title="function not covered" >catch(() =&gt; <span class="cstat-no" title="statement not covered" >u</span>ndefined)</span>;
+    return () =&gt; c.abort();
+  }, [kind, type, date, login]);
+&nbsp;
+  const send = async () =&gt; {
+    setBusy(true); setError("");
+    try {
+      const body = kind === "absence" ? { kind, type, date, comment } : { kind, system, reason: comment || <span class="branch-1 cbranch-no" title="branch not covered" >"Шаг плана адаптации" }</span>;
+      const res = await api&lt;{ data: RequestItem }&gt;(login, "/api/requests", { method: "POST", body: JSON.stringify(body) });
+      onSent(`Заявка ${res.data.id} отправлена на согласование`);
+      setDate(""); setComment("");
+    } catch (e) { setError(e instanceof Error ? e.message : <span class="branch-1 cbranch-no" title="branch not covered" >"Не получилось отправить")</span>; }
+    setBusy(false);
+  };
+&nbsp;
+  const tab = (k: Kind, label: string) =&gt; &lt;Box component="button" onClick={() =&gt; setKind(k)} aria-pressed={kind === k} sx={{
+    font: "inherit", border: "none", px: 2, py: 1, flex: 1, fontWeight: 600, bgcolor: kind === k ? t.inverse : t.surface, color: kind === k ? t.onInverse : t.text,
+  }}&gt;{label}&lt;/Box&gt;;
+&nbsp;
+  return (
+    &lt;Dialog open={open} onClose={onClose} fullWidth maxWidth="sm" fullScreen={mobile}&gt;
+      &lt;DialogTitle&gt;Оформить самому&lt;/DialogTitle&gt;
+      &lt;DialogContent&gt;
+        &lt;Stack direction="row" mb={2.5}&gt;{tab("absence", "Отсутствие")}{tab("access", "Доступ")}&lt;/Stack&gt;
+        {kind === "absence" ? &lt;Stack gap={2}&gt;
+          &lt;TextField select label="Тип" value={type} <span class="fstat-no" title="function not covered" >onChange={(e</span>) =&gt; <span class="cstat-no" title="statement not covered" >setType(e.target.value)}&gt;</span>
+            {(abs?.types ?? <span class="branch-1 cbranch-no" title="branch not covered" >[{ type: "day_off", title: "Отгул" }])</span>.map((x) =&gt; &lt;MenuItem key={x.type} value={x.type}&gt;{x.title}&lt;/MenuItem&gt;)}
+          &lt;/TextField&gt;
+          &lt;TextField type="date" label="Дата" value={date} onChange={(e) =&gt; setDate(e.target.value)} slotProps={{ inputLabel: { shrink: true }, htmlInput: { min: data.me.today } }} /&gt;
+          {warnings.map((w) =&gt; &lt;Box key={w.code} sx={{ bgcolor: t.badSoft, px: 1.5, py: 1, fontSize: 14 }}&gt;{w.message}&lt;/Box&gt;)}
+          &lt;TextField label="Комментарий" value={comment} <span class="fstat-no" title="function not covered" >onChange={(e</span>) =&gt; <span class="cstat-no" title="statement not covered" >setComment(e.target.value)} p</span>laceholder="Необязательно" /&gt;
+          &lt;Typography variant="body2" color="text.secondary"&gt;Согласует {abs?.approver ?? <span class="branch-1 cbranch-no" title="branch not covered" >"руководитель"} </span>— подставится сам. Порядок — тестовая инструкция, не регламент Авито.&lt;/Typography&gt;
+        &lt;/Stack&gt; : systems.length ? &lt;Stack gap={2}&gt;
+          &lt;TextField select label="Система" value={system} onChange={(e) =&gt; setSystem(e.target.value)}&gt;
+            {systems.map((s) =&gt; &lt;MenuItem key={s.system} value={s.system}&gt;{s.title}{s.now ? "" : ` — по плану с ${s.week_from}-й недели`}&lt;/MenuItem&gt;)}
+          &lt;/TextField&gt;
+          {chosen &amp;&amp; !chosen.now &amp;&amp; &lt;Box sx={{ bgcolor: t.waitSoft, px: 1.5, py: 1, fontSize: 14 }}&gt;По плану этот доступ нужен с {chosen.week_from}-й недели — руководитель может попросить подать позже.&lt;/Box&gt;}
+          &lt;TextField label="Зачем" value={comment} onChange={(e) =&gt; setComment(e.target.value)} placeholder="Например: шаг плана — дашборды отдела" /&gt;
+          &lt;Typography variant="body2" color="text.secondary"&gt;Здесь только системы твоего отдела. Доступы к персональным данным стажёрам не выдаются.&lt;/Typography&gt;
+        &lt;/Stack&gt; : <span class="branch-1 cbranch-no" title="branch not covered" >&lt;Empty text="Все доступы отдела уже запрошены или выданы." variant={2} /&gt;}</span>
+        {error &amp;&amp; &lt;Typography color="error.main" mt={2} role="alert"&gt;{error}&lt;/Typography&gt;}
+      &lt;/DialogContent&gt;
+      &lt;DialogActions sx={{ p: 2, gap: 1 }}&gt;
+        &lt;Button variant="text" onClick={onClose}&gt;Отмена&lt;/Button&gt;
+        &lt;Button variant="contained" disabled={busy || (kind === "absence" ? !date : !system)} onClick={() =&gt; void send()}&gt;{busy ? "Отправляю…" : "Отправить в сервис"}&lt;/Button&gt;
+      &lt;/DialogActions&gt;
+    &lt;/Dialog&gt;
+  );
+};
+&nbsp;
+const RejectDialog = ({ request, data, onClose, onReject }: { request: RequestItem | null; data: DataState; onClose: () =&gt; void; onReject: (r: RequestItem, reason: string, comment: string) =&gt; void }) =&gt; {
+  const [reason, setReason] = useState("");
+  const [comment, setComment] = useState("");
+  const codes = request?.kind === "access" ? <span class="branch-0 cbranch-no" title="branch not covered" >data.services?.access.reason_codes : d</span>ata.services?.absence.reason_codes;
+  return (
+    &lt;Dialog open={Boolean(request)} onClose={onClose} fullWidth maxWidth="sm"&gt;
+      &lt;DialogTitle&gt;Отклонить: {request &amp;&amp; requestTitle(request)}&lt;/DialogTitle&gt;
+      &lt;DialogContent&gt;&lt;Stack gap={2} pt={1}&gt;
+        &lt;TextField select label="Причина" value={reason} onChange={(e) =&gt; setReason(e.target.value)}&gt;{codes?.map((c) =&gt; &lt;MenuItem key={c.code} value={c.code}&gt;{c.text}&lt;/MenuItem&gt;)}&lt;/TextField&gt;
+        &lt;TextField label="Комментарий стажёру" value={comment} onChange={(e) =&gt; setComment(e.target.value)} multiline minRows={2} helperText={reason === "OTHER" ? "Для «Другое» комментарий обязателен" : "Необязательно"} /&gt;
+      &lt;/Stack&gt;&lt;/DialogContent&gt;
+      &lt;DialogActions sx={{ p: 2, gap: 1 }}&gt;
+        &lt;Button variant="text" onClick={onClose}&gt;Отмена&lt;/Button&gt;
+        &lt;Button variant="contained" disabled={!reason || (reason === "OTHER" &amp;&amp; !comment.trim())} onClick={() =&gt; request &amp;&amp; onReject(request, reason, comment.trim())}&gt;Отклонить&lt;/Button&gt;
+      &lt;/DialogActions&gt;
+    &lt;/Dialog&gt;
+  );
+};
+&nbsp;
+/** Карточка заявки (SCR-I7): квитанция и история статусов, как журнал в трекере. */
+const RequestDialog = ({ request, data, onClose, onMarkStep }: { request: RequestItem | null; data: DataState; onClose: () =&gt; void; onMarkStep?: (stepId: string) =&gt; void }) =&gt; {
+  const { t } = useTheme();
+  if (!request) return null;
+  const name = (id: string) =&gt; data.users.find((u) =&gt; u.id === id)?.name ?? <span class="branch-1 cbranch-no" title="branch not covered" >id;</span>
+  const step = request.step_id ? data.plan?.steps.find((s) =&gt; s.id === request.step_id) : undefined;
+  const codes = request.kind === "access" ? data.services?.access.reason_codes : data.services?.absence.reason_codes;
+  const fields: Array&lt;[string, string | undefined]&gt; = [
+    ["Номер", request.id], ["Автор", name(request.employee_id)], ["Согласует", name(request.approver_id)],
+    ["Как оформлена", request.source === "self" ? "сам, в форме сервиса" : "через Напарника"],
+    ["Шаг плана", step?.title], [request.kind === "access" ? "Зачем" : "Комментарий", request.comment],
+    ["Причина отказа", request.reason_code ? codes?.find((c) =&gt; c.code === request.reason_code)?.text ?? <span class="branch-1 cbranch-no" title="branch not covered" >request.reason_code : u</span>ndefined],
+    ["Комментарий согласующего", request.decision],
+  ];
+  const canMark = onMarkStep &amp;&amp; request.status === "granted" &amp;&amp; step &amp;&amp; step.status !== "Done";
+  return (
+    &lt;Dialog open onClose={onClose} fullWidth maxWidth="sm"&gt;
+      &lt;DialogTitle sx={{ pb: 0.5 }}&gt;{requestTitle(request)}&lt;/DialogTitle&gt;
+      &lt;DialogContent&gt;
+        &lt;Box mb={2}&gt;&lt;StatusTag status={request.status} /&gt;&lt;/Box&gt;
+        &lt;Box component="dl" sx={{ display: "grid", gridTemplateColumns: "auto 1fr", gap: "6px 16px", m: 0, mb: 3 }}&gt;
+          {fields.filter(([, v]) =&gt; v).map(([k, v]) =&gt; [&lt;Typography key={`${k}-k`} component="dt" color="text.secondary"&gt;{k}&lt;/Typography&gt;, &lt;Typography key={`${k}-v`} component="dd" sx={{ m: 0 }}&gt;{v}&lt;/Typography&gt;])}
+        &lt;/Box&gt;
+        &lt;Typography variant="h3" component="h3" mb={1}&gt;История&lt;/Typography&gt;
+        &lt;Box sx={{ borderLeft: `2px solid ${t.line}`, pl: 2 }}&gt;
+          {(request.history ?? <span class="branch-1 cbranch-no" title="branch not covered" >[])</span>.map((h, i) =&gt; &lt;Box key={i} mb={1.25}&gt;
+            &lt;Typography variant="caption" color="text.secondary"&gt;{shortDateTime(h.at)}&lt;/Typography&gt;
+            &lt;Typography variant="body2"&gt;{h.text}&lt;/Typography&gt;
+          &lt;/Box&gt;)}
+        &lt;/Box&gt;
+      &lt;/DialogContent&gt;
+      &lt;DialogActions sx={{ p: 2, gap: 1 }}&gt;
+        &lt;Button variant={canMark ? "text" : "contained"} onClick={onClose}&gt;Закрыть&lt;/Button&gt;
+        {canMark &amp;&amp; &lt;Button variant="contained" onClick={() =&gt; { onMarkStep(step.id); onClose(); }}&gt;Отметить шаг выполненным&lt;/Button&gt;}
+      &lt;/DialogActions&gt;
+    &lt;/Dialog&gt;
+  );
+};
+&nbsp;
+export const RequestsPage = ({ data, login, isLead, busy, onAgent, onDecide, onSent, onMarkStep }: {
+  data: DataState; login: string; isLead: boolean; busy: boolean; onAgent: () =&gt; void; onMarkStep?: (stepId: string) =&gt; void;
+  onDecide: (r: RequestItem, decision: "approve" | "reject", reason?: string, comment?: string) =&gt; Promise&lt;void&gt;; onSent: (msg: string) =&gt; void;
+}) =&gt; {
+  const [form, setForm] = useState(false);
+  const [rejecting, setRejecting] = useState&lt;RequestItem | null&gt;(null);
+  const [opened, setOpened] = useState&lt;RequestItem | null&gt;(null);
+  const name = (id: string) =&gt; data.users.find((u) =&gt; u.id === id)?.name ?? <span class="branch-1 cbranch-no" title="branch not covered" >"Стажёр";</span>
+  const { t } = useTheme();
+  const pending = data.requests.filter((r) =&gt; r.status === "pending");
+  const done = data.requests.filter((r) =&gt; r.status !== "pending");
+  const hasAny = pending.length + done.length &gt; 0;
+  // Два пути (BR-42), не сегмент: primary = форма, secondary = Напарник. Одна точка входа — шапка или empty.
+  const actions = (
+    &lt;Stack direction="row" gap={1} flexWrap="wrap"&gt;
+      &lt;Button variant="contained" onClick={() =&gt; setForm(true)}&gt;Оформить самому&lt;/Button&gt;
+      {/* Secondary CTA той же высоты: без вложенного AiTag — тег внутри кнопки ломал читаемость */}
+      &lt;Button variant="outlined" onClick={onAgent}&gt;Через Напарника&lt;/Button&gt;
+    &lt;/Stack&gt;
+  );
+  const row = (r: RequestItem) =&gt; &lt;Row key={r.id} title={requestTitle(r)} onClick={() =&gt; setOpened(r)}
+    sub={&lt;&gt;{isLead ? `${name(r.employee_id)} · ` : ""}{r.id} · {shortDateTime(r.created_at)} · {r.source === "self" ? "оформлена сам" : &lt;AiTag&gt;через Напарника&lt;/AiTag&gt;}&lt;/&gt;}
+    end={isLead &amp;&amp; r.status === "pending" &amp;&amp; r.approver_id === data.me.id ? &lt;&gt;
+      &lt;Button variant="contained" size="small" disabled={busy} sx={{ minHeight: 36 }} onClick={(e) =&gt; { e.stopPropagation(); void onDecide(r, "approve"); }}&gt;{r.kind === "access" ? <span class="branch-0 cbranch-no" title="branch not covered" >"Выдать" : "</span>Согласовать"}&lt;/Button&gt;
+      &lt;Button variant="text" size="small" disabled={busy} sx={{ minHeight: 36, bgcolor: "transparent", "&amp;:hover": { bgcolor: t.surfaceHover } }} onClick={(e) =&gt; { e.stopPropagation(); setRejecting(r); }}&gt;Отклонить&lt;/Button&gt;
+    &lt;/&gt; : &lt;StatusTag status={r.status} /&gt;} /&gt;;
+  return &lt;&gt;
+    &lt;PageHead context={isLead ? (pending.length ? `Ждут твоего решения: ${pending.length}` : <span class="branch-1 cbranch-no" title="branch not covered" >"Новых заявок нет") : "</span>Отгулы и доступы через сервисы отдела"}
+      title={isLead ? "Согласование" : "Заявки"}
+      action={!isLead &amp;&amp; hasAny ? actions : undefined} /&gt;
+    &lt;Stack gap={5}&gt;
+      &lt;Block title="На согласовании" aside={pending.length &gt; 0 ? &lt;Typography color="text.secondary"&gt;{pending.length}&lt;/Typography&gt; : undefined}&gt;
+        {pending.length ? pending.map(row) : (
+          &lt;Empty
+            text={isLead ? <span class="branch-0 cbranch-no" title="branch not covered" >"Решать сейчас нечего." : h</span>asAny ? "Сейчас на согласовании ничего нет." : "Активных заявок нет."}
+            action={!isLead &amp;&amp; !hasAny ? actions : undefined}
+          /&gt;
+        )}
+      &lt;/Block&gt;
+      {done.length &gt; 0 &amp;&amp; &lt;Block title="Решено"&gt;{done.map(row)}&lt;/Block&gt;}
+    &lt;/Stack&gt;
+    {!isLead &amp;&amp; &lt;SelfServiceDialog open={form} data={data} login={login} onClose={() =&gt; setForm(false)} onSent={(m) =&gt; { setForm(false); onSent(m); }} /&gt;}
+    &lt;RequestDialog request={opened} data={data} onClose={() =&gt; setOpened(null)} onMarkStep={onMarkStep} /&gt;
+    &lt;RejectDialog request={rejecting} data={data} <span class="fstat-no" title="function not covered" >onClose={() =&gt; <span class="cstat-no" title="statement not covered" >s</span>etRejecting(null)} o</span>nReject={async (r, reason, comment) =&gt; { setRejecting(null); await onDecide(r, "reject", reason, comment); }} /&gt;
+  &lt;/&gt;;
+};
+&nbsp;</pre></td></tr></table></pre>
+
+                <div class='push'></div><!-- for sticky footer -->
+            </div><!-- /wrapper -->
+            <div class='footer quiet pad2 space-top1 center small'>
+                Code coverage generated by
+                <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
+                at 2026-11-13T16:13:13.860Z
+            </div>
+        <script src="../../../prettify.js"></script>
+        <script>
+            window.onload = function () {
+                prettyPrint();
+            };
+        </script>
+        <script src="../../../sorter.js"></script>
+        <script src="../../../block-navigation.js"></script>
+    </body>
+</html>
+    

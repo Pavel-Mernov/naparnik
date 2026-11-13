@@ -14,6 +14,8 @@ type stepView struct {
 	DueDate string `json:"due_date"`
 	Status  string `json:"status"`
 	Source  string `json:"source"`
+	// Action — готовое действие шага из шаблона: «team_map» открывает карту команды, «access_request:…» — заявку.
+	Action string `json:"action,omitempty"`
 }
 
 func targetIntern(c Ctx, internID string) (string, *Result) {
@@ -35,7 +37,7 @@ func planViews(c Ctx, internID string) []stepView {
 	var out []stepView
 	for _, st := range c.Store.PlanSteps(internID) {
 		t, _ := c.Store.TemplateStep(st.StepID)
-		out = append(out, stepView{st.StepID, t.Title, t.Stage, t.Owner, st.DueDate, st.Status, t.Source})
+		out = append(out, stepView{st.StepID, t.Title, t.Stage, t.Owner, st.DueDate, st.Status, t.Source, t.PreparedAction})
 	}
 	return out
 }

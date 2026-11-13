@@ -63,6 +63,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /api/practices/{intern}/{practice}/generate", s.auth(s.practiceGenerate))
 	mux.HandleFunc("POST /api/practices/{intern}/{practice}/{action}", s.auth(s.practiceAction))
 	mux.HandleFunc("GET /api/dashboard/team", s.auth(s.teamDashboard))
+	mux.HandleFunc("GET /api/team", s.auth(s.teamMap)) // SC-02: карта команды
 	mux.HandleFunc("POST /api/chat/messages", s.auth(s.chat))
 	mux.HandleFunc("POST /api/chat/reset", s.auth(s.chatReset))
 	mux.HandleFunc("GET /api/chat/history", s.auth(s.chatHistory))
@@ -272,6 +273,11 @@ func (s *Server) chatReset(w http.ResponseWriter, _ *http.Request, u *mockdata.U
 		return
 	}
 	writeJSON(w, 200, map[string]bool{"ok": true})
+}
+
+// teamMap — карта команды (SCR-I5): коллеги, зоны ответственности, их страницы и черновик сообщения.
+func (s *Server) teamMap(w http.ResponseWriter, _ *http.Request, u *mockdata.User) {
+	writeJSON(w, 200, map[string]any{"people": tools.TeamMap(s.ctx(u)), "department": s.Store.Data.Team.Department.Name})
 }
 
 // chatHistory — сохранённые вопросы Напарнику: окно чата после перезагрузки и «Мои вопросы».

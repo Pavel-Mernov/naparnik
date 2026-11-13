@@ -7,7 +7,7 @@ import {
   Divider, ListItemText, Menu, MenuItem, Popover, Snackbar, Stack, TextField, Typography, useMediaQuery,
 } from "@mui/material";
 import {
-  AccountCircleOutlined, DescriptionOutlined, ForumOutlined, HomeOutlined, MenuBookOutlined,
+  AccountCircleOutlined, DescriptionOutlined, ForumOutlined, HomeOutlined, MenuBookOutlined, SendOutlined,
   NotificationsNoneOutlined, TaskAltOutlined,
 } from "@mui/icons-material";
 import avitoLogo from "@/shared/assets/logo.svg";
@@ -17,13 +17,17 @@ import { ThemeToggle } from "@/features/toggle-theme";
 import { ChatDrawer, type ChatMessage, type Lookup } from "@/widgets/chat";
 import { ProfileAvatar, ProfileDialog } from "@/widgets/profile";
 import { PlanDraftDialog } from "@/widgets/plan-draft";
+import { TeamMapDialog } from "@/widgets/team-map";
+import { TelegramDialog } from "@/widgets/telegram";
+import { PracticePanel } from "@/widgets/practice";
+import { LeadPanels } from "@/widgets/lead-panels";
 import {
-  api, ApiError, getProfile, unwrap, type ChatReply, type KbDraft, type KbFolder, type KbPage, type Me, type PlanData, type PlanStep,
+  api, ApiError, getProfile, unwrap, type ChatReply, type Meeting, type KbDraft, type KbFolder, type KbPage, type Me, type PlanData, type PlanStep,
   type Question, type RequestItem, type Services, type TeamOverview, type TodayData, type User, type ChatHistory, type ChatTurn,
 } from "@/shared/api";
 import { STORAGE } from "@/shared/config";
 import { makeTheme, tokens, type Mode } from "@/shared/theme";
-import { buildNotes, initials, requestTitle, statusOf, ROLE_RU, primaryRole, viewLabel, viewsFor, type DataState, type View } from "@/shared/lib";
+import { buildNotes, initials, requestTitle, statusOf, ROLE_RU, primaryRole, viewLabel, viewsFor, type DataState, type Note, type View } from "@/shared/lib";
 import { Block, DaySkeleton, Empty, KnowledgeSkeleton, ListSkeleton, MascotBadge, Row, StatusTag } from "@/shared/ui";
 import { DayPage } from "@/pages/day";
 import { PlanPage } from "@/pages/plan";
@@ -36,6 +40,11 @@ import { TeamPage } from "@/pages/team";
 const ICONS: Record<View, ReactElement> = {
   day: <HomeOutlined />, plan: <TaskAltOutlined />, questions: <ForumOutlined />, knowledge: <MenuBookOutlined />, requests: <DescriptionOutlined />,
 };
+// Уведомления, которые рождаются на сервере по времени (утренний план, напоминание о событии, устаревшая страница):
+// их нет в данных экранов, поэтому подтягиваем раз в полминуты.
+const SERVER_ONLY = ["morning_plan", "event_reminder", "page_stale"];
+type ServerNote = { id: string; type: string; text: string; view: View; read: boolean };
+
 const GREETING: ChatMessage = { role: "assistant", text: "Привет! Спроси про команду, процессы или задачи. Могу оформить отгул или доступ — без твоего «Подтвердить» ничего не отправлю." };
 
 /** Сохранённые ходы текущего разговора — обратно в окно чата. */
@@ -83,6 +92,14 @@ function App() {
   const [profileOf, setProfileOf] = useState<string | null>(null);
   // Черновик плана стажёра (SC-20): ID стажёра или "" — закрыт.
   const [planDraftOf, setPlanDraftOf] = useState("");
+  // Карта команды (SCR-I5) и страница базы, которую открыть по ссылке из неё.
+  const [teamOpen, setTeamOpen] = useState(false);
+  const [tgOpen, setTgOpen] = useState(false);
+  const [serverNotes, setServerNotes] = useState<ServerNote[]>([]);
+  // Практика пересчитывается после ответа Напарника: он мог начать или продвинуть её из чата.
+  const [practiceRevision, setPracticeRevision] = useState(0);
+  const [kbOpen, setKbOpen] = useState("");
+  const clearKbOpen = useCallback(() => setKbOpen(""), []);
   const [myPhoto, setMyPhoto] = useState<{ login: string; url: string | null }>({ login: "", url: null });
   const role = data ? primaryRole(data.me.roles) : null;
   const views = role ? viewsFor(role) : [];
@@ -109,7 +126,7 @@ function App() {
       if (!current()) return;
       setUsers(usersPayload.users);
       const r = primaryRole(me.roles);
-      const [today, plan, questions, kb, requests, overview, managedPlans, services, drafts] = await Promise.all([
+      const [today, plan, questions, kb, requests, overview, managedPlans, services, drafts, meetings] = await Promise.all([
         r === "intern" ? api<{ ok: boolean; data: TodayData }>(login, "/api/today", options).then(unwrap) : undefined,
         r === "intern" ? optionalPlan(me.id) : undefined,
         api<{ questions: Question[] }>(login, "/api/questions", options),
@@ -119,10 +136,11 @@ function App() {
         r === "buddy" ? Promise.all(me.interns.map(async (i) => ({ ...i, plan: await optionalPlan(i.id) }))) : [],
         r === "lead" || r === "intern" ? api<Services>(login, "/api/services", options) : undefined,
         api<{ drafts: KbDraft[] }>(login, "/api/kb/drafts", options).then((x) => x.drafts).catch(() => []),
+        api<{ meetings: Meeting[] }>(login, "/api/meetings", options).then((x) => x.meetings).catch(() => []),
       ]);
       if (!current()) return;
       setData({ me, users: usersPayload.users, today, plan, questions: questions.questions, folders: kb.folders, pages: kb.pages,
-        requests: requests?.requests ?? [], overview, managedPlans, services, drafts });
+        requests: requests?.requests ?? [], overview, managedPlans, services, drafts, meetings });
       setSelectedIntern((prev) => me.interns.some((i) => i.id === prev) ? prev : me.interns[0]?.id ?? "");
     } catch (e) {
       if (current()) setError(e instanceof Error ? e.message : "Не удалось загрузить данные");
@@ -132,6 +150,14 @@ function App() {
   }, [login]);
 
   useEffect(() => { void load(); return () => { loadController.current?.abort(); }; }, [load]);
+  useEffect(() => {
+    let alive = true;
+    const pull = () => api<{ notifications: ServerNote[] }>(login, "/api/notifications")
+      .then((r) => { if (alive) setServerNotes(r.notifications.filter((n) => SERVER_ONLY.includes(n.type))); }).catch(() => undefined);
+    void pull();
+    const timer = setInterval(pull, 30000);
+    return () => { alive = false; clearInterval(timer); };
+  }, [login]);
   useEffect(() => () => { actions.current.forEach((c) => c.abort()); }, []);
   // Чат на экране начинается с чистого листа — и разговор с агентом на сервере тоже.
   // Своё фото — для аватара в шапке; без фото остаются инициалы.
@@ -175,7 +201,7 @@ function App() {
     actions.current.forEach((c) => c.abort());
     actions.current.clear();
     localStorage.setItem(STORAGE.login, next);
-    setProfileOf(null); setPlanDraftOf("");
+    setProfileOf(null); setPlanDraftOf(""); setTeamOpen(false); setKbOpen(""); setTgOpen(false); setServerNotes([]);
     setData(null); setView("day"); setSelectedIntern(""); setBusy(false); setError(""); setSnack("");
     setChatText(""); setChatOpen(false); setChatLoading(false); setMessages([GREETING]); setAsked([]);
     setLoading(true); setLogin(next);
@@ -195,6 +221,7 @@ function App() {
       if (isCurrent(owner, epoch)) {
         setMessages((m) => [...m, { role: "assistant", text: reply.text, reply, retryText: reply.retry ? text : undefined }]);
         setAsked((a) => [...a, { id: `local-${Date.now()}`, conversation: conversation.current, question: text, at: new Date().toISOString(), reply }]);
+        setPracticeRevision((n) => n + 1);
       }
     } catch (e) {
       if (isCurrent(owner, epoch)) setMessages((m) => [...m, { role: "assistant", text: e instanceof Error ? e.message : "Не получилось ответить", retryText: text }]);
@@ -235,6 +262,8 @@ function App() {
     meId: data.me.id, today: data.me.today, steps: data.today?.steps ?? data.plan?.steps ?? [], questions: data.questions,
     requests: data.requests, drafts: data.drafts, events: data.today?.events ?? [],
   }) : [];
+  notes.unshift(...serverNotes.filter((n) => !n.read).map((n) => ({ id: n.id, text: n.text.split("\n")[0], meta: n.text.split("\n").slice(1).join(" ") || "Напарник",
+    urgent: n.type === "page_stale", go: (n.view === "plan" ? "day" : n.view) as Note["go"] })));
   const urgent = notes.filter((n) => n.urgent).length;
   // Новости дня: несрочные события (ответы, заявки) — без дублей с «Ближайшее»
   const news = notes.filter((n) => !n.urgent && n.go !== "day").slice(0, 5);
@@ -249,16 +278,17 @@ function App() {
   const page = () => {
     if (!data || !role) return null;
     if (view === "day") {
-      if (role === "intern") return <DayPage data={data} asked={asked} onMarkDone={(s) => void markDone(s)} onAsk={openChat} onOpenPlan={() => nav("plan")} onOpenQuestions={() => nav("questions")}
+      if (role === "intern") return <DayPage data={data} asked={asked} onTeam={() => setTeamOpen(true)} onMarkDone={(s) => void markDone(s)} onAsk={openChat} onOpenPlan={() => nav("plan")} onOpenQuestions={() => nav("questions")}
         waiting={<Block title="Новости">{news.length ? news.map((n) => {
           const rejected = n.go === "requests" && /отклонен/i.test(n.text);
           const soft = n.id.startsWith("ans-") || (n.go === "requests" && !rejected) ? t.okSoft : rejected ? t.badSoft : undefined;
           return <Row key={n.id} title={n.text} sub={n.meta} end={newsTag(n)} onClick={() => nav(n.go)} sx={soft ? { bgcolor: soft } : undefined} />;
         }) : <Empty text="Ответы людей и статусы заявок появятся здесь." variant={0} />}</Block>} />;
-      if (role === "lead") return <TeamPage overview={data.overview} onRequests={() => nav("requests")} onProfile={setProfileOf} onPlanDraft={setPlanDraftOf} />;
+      if (role === "lead") return <><TeamPage overview={data.overview} onRequests={() => nav("requests")} onProfile={setProfileOf} onPlanDraft={setPlanDraftOf} />
+        <LeadPanels login={login} users={data.users} onAction={perform} /></>;
       if (role === "buddy") return <BuddyPage data={data} onPlan={(id) => { setSelectedIntern(id); nav("plan"); }} onQuestions={() => nav("questions")} onProfile={setProfileOf} onPlanDraft={setPlanDraftOf} />;
     }
-    if (view === "plan" && role === "intern") return <PlanPage plan={data.plan} title="Мой план" context={`${data.me.week}-я неделя · ${data.me.department}`} today={data.me.today} onMarkDone={(s) => void markDone(s)} />;
+    if (view === "plan" && role === "intern") return <PlanPage plan={data.plan} title="Мой план" context={`${data.me.week}-я неделя · ${data.me.department}`} today={data.me.today} onMarkDone={(s) => void markDone(s)} onTeam={() => setTeamOpen(true)} />;
     if (view === "plan" && role === "buddy") {
       const chosen = data.managedPlans.find((i) => i.id === selectedIntern);
       return <PlanPage plan={chosen?.plan} title={chosen ? `План: ${chosen.name}` : "План стажёра"} context="Бадди может отмечать шаги стажёра" today={data.me.today}
@@ -266,10 +296,10 @@ function App() {
         picker={data.managedPlans.length > 1 && <TextField select size="small" label="Стажёр" value={selectedIntern} onChange={(e) => setSelectedIntern(e.target.value)} sx={{ minWidth: 220 }}>
           {data.managedPlans.map((i) => <MenuItem key={i.id} value={i.id}>{i.name}</MenuItem>)}</TextField>} />;
     }
-    if (view === "questions" || (view === "day" && role === "expert")) return <QuestionsPage data={data} role={role} asked={asked} onAsk={() => openChat()} onOpenChat={() => setChatOpen(true)}
+    if (view === "questions" || (view === "day" && role === "expert")) return <QuestionsPage data={data} role={role} login={login} asked={asked} onAction={perform} onAsk={() => openChat()} onOpenChat={() => setChatOpen(true)}
       onAnswer={(q, text) => perform(`/api/questions/${q.id}/answer`, "POST", { text }, "Ответ ушёл стажёру. Проверь страницу для базы")}
       onApprove={async (d, title, body) => { await perform(`/api/kb/pages/${d.id}/approve`, "POST", { title, body }, "Страница опубликована в базе знаний"); }} />;
-    if (view === "knowledge") return <KnowledgePage data={data} onAsk={openChat} />;
+    if (view === "knowledge") return <KnowledgePage data={data} onAsk={openChat} openId={kbOpen} onOpened={clearKbOpen} />;
     if (view === "requests") return <RequestsPage data={data} login={login} isLead={role === "lead"} busy={busy} onAgent={() => openChat("Мне нужен отгул ")}
       onSent={(m) => { setSnack(m); void load(); }}
       onMarkStep={role === "intern" ? (id) => { const st = data.plan?.steps.find((x) => x.id === id); if (st) void markDone(st); } : undefined}
@@ -339,6 +369,9 @@ function App() {
               : view === "day" ? <DaySkeleton />
               : <ListSkeleton plates={view === "plan" ? 3 : 2} rows={view === "plan" ? 4 : 3} />
           )}
+          {/* Практика перед задачей (SC-30…32) — под содержимым «Моего дня» и «Плана», как в прежнем интерфейсе. */}
+          {data && data.me.login === login && (role === "intern" || role === "buddy") && (view === "day" || view === "plan") &&
+            <PracticePanel key={login} login={login} buddy={role === "buddy"} revision={practiceRevision} />}
         </Container>
 
         {mobile && role && <BottomNavigation component="nav" aria-label="Разделы" showLabels value={view} onChange={(_, v: View) => nav(v)} sx={{
@@ -412,6 +445,17 @@ function App() {
               }}
             />
           </MenuItem>}
+          {me && <MenuItem onClick={() => { setAccountAnchor(null); setTgOpen(true); }}>
+            <SendOutlined sx={{ mr: 1.5, color: t.muted }} />
+            <ListItemText
+              primary="Уведомления в Telegram"
+              secondary="Подключить или отключить бота"
+              slotProps={{
+                primary: { variant: "body1", sx: { fontSize: 14, fontWeight: (th) => th.type.weight.medium } },
+                secondary: { variant: "body2" },
+              }}
+            />
+          </MenuItem>}
           {me && <Divider />}
           <Typography variant="caption" color="text.secondary" sx={{ px: 2, pt: 1.5, pb: 1, display: "block" }}>Тестовые учётки · войти как</Typography>
           {others.map((u) => <MenuItem key={u.login} onClick={() => switchUser(u.login)}>
@@ -431,6 +475,9 @@ function App() {
           onSend={(retry) => void sendChat(retry)} login={login} look={look} onAction={() => void load()} onReset={() => void newConversation()} />
         <ProfileDialog open={profileOf !== null} login={login} userId={profileOf || undefined} onClose={() => setProfileOf(null)}
           onChanged={(p) => { if (p.can_edit) setMyPhoto({ login, url: p.photo?.url ?? null }); }} />
+        <TeamMapDialog open={teamOpen} login={login} onClose={() => setTeamOpen(false)} onProfile={setProfileOf}
+          onOpenPage={(id) => { setTeamOpen(false); setKbOpen(id); nav("knowledge"); }} />
+        <TelegramDialog open={tgOpen} login={login} onClose={() => setTgOpen(false)} onChange={setSnack} />
         <PlanDraftDialog open={Boolean(planDraftOf)} login={login} internId={planDraftOf} onClose={() => setPlanDraftOf("")}
           onDone={(m) => { setSnack(m); void load(); }} />
         <Snackbar open={Boolean(snack)} autoHideDuration={3000} onClose={() => setSnack("")} message={snack}

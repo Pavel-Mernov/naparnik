@@ -1,7 +1,7 @@
 // Чат с Напарником: Markdown без HTML-вставок, читаемые черновики с «Подтвердить / Отмена»,
 // квитанция после подтверждения, «Повторить» при сбое (BR-11, BR-14, BR-43, BR-70, SC-05, SC-15).
 import { Fragment, useEffect, useRef, useState, type ReactNode } from "react";
-import { Box, Button, CircularProgress, Drawer, IconButton, Stack, TextField, Tooltip, Typography, useMediaQuery, useTheme } from "@mui/material";
+import { Box, Button, Checkbox, CircularProgress, Drawer, FormControlLabel, IconButton, Stack, TextField, Tooltip, Typography, useMediaQuery, useTheme } from "@mui/material";
 import { AddCommentOutlined, CloseRounded, SendRounded } from "@mui/icons-material";
 import { MascotBadge } from "@/shared/ui/Mascot";
 import { AiTag } from "@/shared/ui";
@@ -74,54 +74,85 @@ export const describeDraft = (d: Draft, look: Lookup): { title: string; rows: Ar
   }
 };
 
-type DraftState = { status: "new" | "busy" | "done" | "cancelled" | "error"; note?: string; retry?: boolean };
-
+// Черновик действия. Состояние подтверждает сервер: правки, подтверждение и отмена переживают перезагрузку
+// и другую вкладку (BR-14, SC-05). Из истории уже подтверждённый или отменённый черновик показывается сразу,
+// без запроса; ожидающий — перечитывается с сервера, чтобы показать актуальный текст и версию.
 const receiptNote = (r: Record<string, string> = {}) =>
   `Готово: ${[r.id, STATUS_RU[r.status] ?? r.status, r.approver, r.to && `${r.to}, ${r.delivery}`].filter(Boolean).join(" · ")}`;
 
-// Черновик из истории показывается в том состоянии, в каком он на сервере: квитанция, отмена или «Подтвердить».
-const initialDraftState = (d: Draft): DraftState =>
-  d.status === "confirmed" ? { status: "done", note: receiptNote(d.result?.receipt) } : d.status === "cancelled" ? { status: "cancelled" } : { status: "new" };
-
-const DraftCard = ({ draft, login, look, onDone }: { draft: Draft; login: string; look: Lookup; onDone: () => void }) => {
+export const DraftCard = ({ draft, login, look, onDone }: { draft: Draft; login: string; look: Lookup; onDone: (draft?: Draft) => void }) => {
   const { t } = useTheme();
-  const [st, setSt] = useState<DraftState>(() => initialDraftState(draft));
-  const view = describeDraft(draft, look);
-  // Отмена сохраняется на сервере — после перезагрузки черновик не просит подтверждения снова.
-  const cancel = async () => {
-    setSt({ status: "busy" });
-    try {
-      await api(login, `/api/drafts/${draft.id}`, { method: "DELETE", body: JSON.stringify({ version: draft.version ?? 1 }) });
-      setSt({ status: "cancelled" });
-    } catch (e) {
-      setSt({ status: "error", note: e instanceof Error ? e.message : "Не получилось отменить", retry: true });
-    }
+  const settled = draft.status === "confirmed" || draft.status === "cancelled";
+  const [current, setCurrent] = useState(draft);
+  const [ready, setReady] = useState(settled);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [retry, setRetry] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [text, setText] = useState("");
+  const [urgent, setUrgent] = useState(false);
+  const controller = useRef<AbortController | null>(null);
+  const sync = async (signal: AbortSignal) => {
+    const r = await api<{ draft: Draft }>(login, `/api/drafts/${draft.id}`, { signal });
+    if (!signal.aborted) { setCurrent(r.draft); setReady(true); }
+    return r.draft;
   };
-  const confirm = async () => {
-    setSt({ status: "busy" });
-    try {
-      const res = await api<{ receipt?: Record<string, string> }>(login, `/api/drafts/${draft.id}/confirm`, { method: "POST", body: "{}" });
-      setSt({ status: "done", note: receiptNote(res.receipt) });
-      onDone();
-    } catch (e) {
-      const unavailable = e instanceof ApiError && e.status === 503;
-      setSt({ status: "error", note: e instanceof Error ? e.message : "Не получилось", retry: unavailable });
+  useEffect(() => {
+    const c = new AbortController(); controller.current = c;
+    if (!settled) {
+      setReady(false); setEditing(false); setError("");
+      void sync(c.signal).catch((e) => { if (!c.signal.aborted) setError(e instanceof Error ? e.message : "Не получилось загрузить черновик"); });
     }
+    return () => c.abort();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [login, draft.id]);
+  const run = async (method: "PATCH" | "POST" | "DELETE", body: unknown) => {
+    const signal = controller.current?.signal;
+    if (busy || !ready || !signal || signal.aborted) return;
+    setBusy(true); setError(""); setRetry(false);
+    try {
+      await api(login, `/api/drafts/${draft.id}${method === "POST" ? "/confirm" : ""}`, { method, body: JSON.stringify(body), signal });
+      const saved = await sync(signal);
+      if (signal.aborted) return;
+      setEditing(false); onDone(saved);
+    } catch (e) {
+      if (signal.aborted) return;
+      setError(e instanceof Error ? e.message : "Не получилось выполнить действие");
+      setRetry(e instanceof ApiError && e.status === 503); // сервис недоступен — черновик сохранён, можно повторить
+      // Запрос мог выполниться, даже если ответ потерян: перечитываем состояние с сервера.
+      try {
+        const saved = await sync(signal);
+        if (!signal.aborted && saved.status !== "pending") { setEditing(false); onDone(saved); }
+      } catch { /* кнопка «Обновить черновик» ниже */ setReady(false); }
+    } finally { if (!signal.aborted) setBusy(false); }
   };
-  if (st.status === "done") return <Box sx={{ p: 1.5, mt: 1, bgcolor: t.okSoft }}><Typography fontWeight={600}>✓ {st.note}</Typography></Box>;
-  if (st.status === "cancelled") return <Box sx={{ p: 1.5, mt: 1, border: `2px solid ${t.line}` }}><Typography color="text.secondary">Отменено — ничего не отправлено.</Typography></Box>;
+  const view = describeDraft(current, look);
+  const version = current.version ?? 1;
+  if (ready && current.status === "confirmed") return <Box sx={{ p: 1.5, mt: 1, bgcolor: t.okSoft }}><Typography fontWeight={600}>✓ {receiptNote(current.result?.receipt)}</Typography></Box>;
+  if (ready && current.status === "cancelled") return <Box sx={{ p: 1.5, mt: 1, border: `2px solid ${t.line}` }}><Typography color="text.secondary">Отменено — ничего не отправлено.</Typography></Box>;
   return (
     <Box sx={{ p: 1.5, mt: 1, bgcolor: t.aiSoft }}>
       <Typography variant="caption" sx={{ color: t.ai, fontWeight: 700 }}>Черновик — проверь перед отправкой</Typography>
       <Typography fontWeight={600} mt={0.5}>{view.title}</Typography>
       {view.rows.filter(([, v]) => v).map(([k, v]) => <Typography key={k} variant="body2"><Box component="span" color="text.secondary">{k}: </Box>{v}</Typography>)}
-      {view.text && <Box sx={{ p: 1.25, mt: 1, bgcolor: t.bg }}><Markdown text={view.text} /></Box>}
-      {st.status === "error" && <Typography variant="body2" color="error.main" mt={1} role="alert">{st.note}{st.retry ? " Черновик сохранён." : ""}</Typography>}
+      {editing ? <Stack gap={1} mt={1.5}>
+        <TextField label="Текст вопроса" value={text} onChange={(e) => setText(e.target.value)} fullWidth multiline minRows={3} disabled={busy}
+          sx={{ "& .MuiInputBase-root": { bgcolor: t.bg }, "& .MuiFormHelperText-root": { mx: 0 } }}
+          slotProps={{ htmlInput: { maxLength: 8000 } }} helperText="Исправь формулировку перед отправкой. Не добавляй паспортные или банковские данные." />
+        <FormControlLabel control={<Checkbox checked={urgent} disabled={busy} onChange={(e) => setUrgent(e.target.checked)} />} label="Срочно — без ответа не могу продолжить работу" />
+        <Stack direction={{ xs: "column", sm: "row" }} gap={1}>
+          <Button variant="contained" disabled={busy || !text.trim()} onClick={() => void run("PATCH", { version, text, urgent })}>Сохранить изменения</Button>
+          <Button variant="text" disabled={busy} onClick={() => setEditing(false)}>Не сохранять</Button>
+        </Stack>
+      </Stack> : view.text && <Box sx={{ p: 1.25, mt: 1, bgcolor: t.bg }}><Markdown text={view.text} /></Box>}
+      {error && <Typography variant="body2" color="error.main" mt={1} role="alert">{error}{retry ? " Черновик сохранён." : ""}</Typography>}
+      {!ready && error && <Button variant="text" onClick={() => { const signal = controller.current?.signal; if (signal) { setError(""); void sync(signal).catch((e) => { if (!signal.aborted) setError(e instanceof Error ? e.message : "Не получилось"); }); } }}>Обновить черновик</Button>}
+      {current.tool === "send_question" && !editing && <Button variant="text" disabled={!ready || busy} onClick={() => { setText(String(current.args.text ?? "")); setUrgent(Boolean(current.args.urgent)); setEditing(true); }}>Изменить вопрос</Button>}
       <Stack direction="row" spacing={1} mt={1.5}>
-        <Button variant="contained" fullWidth disabled={st.status === "busy" || (st.status === "error" && !st.retry)} onClick={() => void confirm()}>
-          {st.status === "busy" ? "Отправляю…" : st.status === "error" && st.retry ? "Повторить" : "Подтвердить"}
+        <Button variant="contained" fullWidth disabled={!ready || busy || editing} onClick={() => void run("POST", { version })}>
+          {busy ? "Выполняю…" : retry ? "Повторить" : "Подтвердить"}
         </Button>
-        <Button variant="outlined" fullWidth disabled={st.status === "busy"} onClick={() => void cancel()}>Отмена</Button>
+        <Button variant="outlined" fullWidth disabled={!ready || busy} onClick={() => void run("DELETE", { version })}>Отмена</Button>
       </Stack>
     </Box>
   );
@@ -130,7 +161,7 @@ const DraftCard = ({ draft, login, look, onDone }: { draft: Draft; login: string
 // ---------- окно чата ----------
 
 /** Отметка полезности ответа из базы (SCR-I2). «Не помогло» сразу ведёт к человеку. */
-const Feedback = ({ onNotHelpful }: { onNotHelpful: () => void }) => {
+const Feedback = ({ onNotHelpful, onRate }: { onNotHelpful: () => void; onRate: (value: string) => void }) => {
   const [picked, setPicked] = useState("");
   const options: Array<[string, string]> = [["helped", "Помогло"], ["not", "Не помогло"], ["stale", "Устарело"]];
   const thanks: Record<string, string> = { helped: "Спасибо, учту", not: "Ищу, кто поможет…", stale: "Спасибо, передам владельцу базы" };
@@ -138,7 +169,7 @@ const Feedback = ({ onNotHelpful }: { onNotHelpful: () => void }) => {
   return <Stack direction="row" gap={1} mt={1} flexWrap="wrap">
     {options.map(([id, label]) => (
       <Button key={id} variant="text" size="small" sx={{ minHeight: 36, px: 1.5 }}
-        onClick={() => { setPicked(id); if (id === "not") onNotHelpful(); }}>{label}</Button>
+        onClick={() => { setPicked(id); onRate(id === "not" ? "not_helped" : id); if (id === "not") onNotHelpful(); }}>{label}</Button>
     ))}
   </Stack>;
 };
@@ -201,7 +232,8 @@ export const ChatDrawer = ({ open, onClose, text, setText, messages, loading, on
                   </Box>
                 ))}
                 {m.reply?.drafts.map((d) => <DraftCard key={d.id} draft={d} login={login} look={look} onDone={onAction} />)}
-                {m.reply && m.reply.sources.length > 0 && !m.reply.drafts.length && <Feedback onNotHelpful={() => onSend(`Не помогло, нужен человек: ${messages[index - 1]?.text ?? ""}`)} />}
+                {m.reply && m.reply.sources.length > 0 && !m.reply.drafts.length && <Feedback onNotHelpful={() => onSend(`Не помогло, нужен человек: ${messages[index - 1]?.text ?? ""}`)}
+                  onRate={(value) => { void api(login, "/api/feedback", { method: "POST", body: JSON.stringify({ page_id: m.reply?.sources[0]?.page_id, value }) }).catch(() => undefined); }} />}
                 {m.reply?.actions && m.reply.actions.length > 0 && index === messages.length - 1 && !loading && (
                   <Stack direction="row" gap={1} mt={1} flexWrap="wrap" aria-label="Быстрые действия">
                     {m.reply.actions.map((x) => (

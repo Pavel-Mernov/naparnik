@@ -45,8 +45,9 @@
 |---|---|---|
 | `GET /catalog` | — | `{request_types: [{type, title, min_notice_workdays…}], self_service: {title, steps, link, source_page}, reason_codes: [{code, text}]}` |
 | `POST /requests`, `Idempotency-Key` | `{idempotency_key, employee_id, approver_id, type, date, comment?}` | `{id, status}` — `pending` по умолчанию |
+| `GET /requests/{id}` | — | `{id, status, reason_code?, comment?}` — `pending`, `approved` или `rejected` |
 
-Статус после согласования (`approved`, `rejected`) в прототипе меняет экран руководителя; с настоящим сервисом — его вебхук или опрос (следующий шаг).
+Решение согласующего с имитацией принимается на экране руководителя. С настоящим сервисом решение принимают там, а backend опрашивает `GET /requests/{id}` для заявок «на согласовании» раз в `ABSENCE_SYNC_SEC` секунд (по умолчанию 60) и применяет решение тем же `Decide`, что и экран руководителя: история заявки, уведомление стажёру, событие в журнале. Код причины не из справочника превращается в «Другое» с пояснением. Сбой сервиса заявку не меняет — повторит следующий опрос. Вебхук — следующий шаг.
 
 ## Выгрузка журнала событий
 

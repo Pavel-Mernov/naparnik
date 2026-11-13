@@ -35,16 +35,10 @@ export default defineConfig({
       provider: "v8",
       reporter: ["text", "html", "json-summary", "lcov"],
       reportsDirectory: "coverage",
-      // Покрываем переиспользуемую бизнес-логику и интерактивные UI-примитивы.
-      // Тонкие entrypoints, декларативная композиция страниц и type-only barrel-файлы
-      // проверяются build/integration-тестами и не искажают метрику unit coverage.
-      include: [
-        "src/api.ts", "src/helpers.ts", "src/state.ts",
-        "src/components/ui.tsx", "src/components/PersonDialog.tsx",
-        "src/shared/api/index.ts", "src/shared/lib/**/*.{ts,tsx}",
-        "src/widgets/profile/ui/ProfileDialog.tsx", "src/widgets/plan-draft/ui/PlanDraftDialog.tsx",
-      ],
-      exclude: ["src/**/*.test.{ts,tsx}", "src/test/**", "src/**/index.ts"],
+      // Весь код приложения, который загружает index.html (src/app/main.tsx и всё, что он импортирует).
+      // Не считаются только тесты, тестовые помощники, точка входа и barrel-файлы с одними реэкспортами.
+      include: ["src/**/*.{ts,tsx}"],
+      exclude: ["src/**/*.test.{ts,tsx}", "src/test/**", "src/app/main.tsx", "src/**/index.ts"],
       thresholds: { lines: 80, functions: 80, statements: 80, branches: 80 },
     },
   },

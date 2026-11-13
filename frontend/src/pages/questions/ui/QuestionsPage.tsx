@@ -1,20 +1,59 @@
-// Вопросы людям. Адресат отвечает прямо здесь (US-10), автор проверяет страницу в базе перед публикацией (BR-30).
+// Вопросы людям. Адресат отвечает прямо здесь (US-10), может назначить встречу (US-14), сказать «не ко мне» или
+// переадресовать (BR-17); автор проверяет страницу в базе перед публикацией (BR-30).
 import { useState } from "react";
 import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, Stack, TextField, Typography, useMediaQuery, useTheme } from "@mui/material";
-import type { ChatTurn, KbDraft, Question } from "@/shared/api";
+import { api, type ChatTurn, type KbDraft, type Meeting, type Question } from "@/shared/api";
 import { answerDue, type DataState, type Role } from "@/shared/lib";
 import { AiTag, Block, Empty, PageHead, Row, StatusTag } from "@/shared/ui";
 import { Markdown } from "@/widgets/chat";
+import { PersonDialog } from "@/widgets/person-picker";
+
+type Action = (path: string, method: string, body: unknown, message: string) => Promise<boolean>;
+
+const when = (iso: string) => {
+  const d = new Date(iso);
+  return `${d.toLocaleDateString("ru-RU", { weekday: "long", day: "numeric", month: "long" })}, ${d.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" })}`;
+};
+
+/** Выбор слота встречи (US-14): 3 варианта в рабочие часы обоих (BR-41). */
+const SlotDialog = ({ q, login, onClose, onPick }: { q: Question | null; login: string; onClose: () => void; onPick: (slot: string) => void }) => {
+  const [slots, setSlots] = useState<string[] | null>(null);
+  const [error, setError] = useState("");
+  const [seen, setSeen] = useState<string | null>(null);
+  if (q && seen !== q.id) {
+    setSeen(q.id); setSlots(null); setError("");
+    api<{ slots: string[] }>(login, `/api/questions/${q.id}/meeting-slots`).then((r) => setSlots(r.slots)).catch((e) => setError(e instanceof Error ? e.message : "Не получилось"));
+  }
+  return (
+    <Dialog open={Boolean(q)} onClose={onClose} fullWidth maxWidth="xs">
+      <DialogTitle>Обсудить голосом</DialogTitle>
+      <DialogContent>
+        <Typography color="text.secondary" mb={2}>Выбери время на 30 минут — я подобрал, когда свободны оба. Встречу стоит записать: из записи я соберу ответ для базы знаний.</Typography>
+        {error && <Typography color="error.main" role="alert">{error}</Typography>}
+        {!slots && !error && <Typography color="text.secondary">Ищу свободное время…</Typography>}
+        <Stack gap={1}>{slots?.map((x) => <Button key={x} variant="outlined" onClick={() => onPick(x)} sx={{ justifyContent: "flex-start" }}>{when(x)}</Button>)}</Stack>
+        {slots && !slots.length && <Typography color="text.secondary">Общего свободного времени в ближайшие дни нет — лучше ответить текстом.</Typography>}
+      </DialogContent>
+      <DialogActions sx={{ p: 2 }}><Button variant="text" onClick={onClose}>Отмена</Button></DialogActions>
+    </Dialog>
+  );
+};
 
 const questionTitle = (q: Question) => (q.text_hidden ? "Текст скрыт настройками стажёра" : q.title || q.text || "Вопрос");
 
 /** Статус вопроса; просроченный (SC-23) — красная плашка «Просрочен» вместо «Ждёт ответа». */
 const QuestionStatus = ({ q }: { q: Question }) => q.status === "Sent" && q.overdue ? <StatusTag status="Overdue" label="Просрочен" /> : <StatusTag status={q.status} />;
 
-const Incoming = ({ q, from, onAnswer }: { q: Question; from: string; onAnswer: (q: Question, text: string) => Promise<boolean> }) => {
+const Incoming = ({ q, from, meeting, onAnswer, onMeeting, onFinish, onLeaveOpen, onNotMine, notMineLabel = "Не ко мне" }: {
+  q: Question; from: string; meeting?: Meeting; onAnswer: (q: Question, text: string) => Promise<boolean>;
+  onMeeting: (q: Question) => void; onFinish: (m: Meeting, recorded: boolean) => void; onLeaveOpen: (q: Question) => void;
+  onNotMine?: (q: Question) => void; notMineLabel?: string;
+}) => {
   const { t } = useTheme();
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
+  const scheduled = q.status === "MeetingScheduled" && meeting;
+  const noRecording = q.status === "NoRecording";
   return (
     <Box sx={{ border: `2px solid ${t.line}`, p: { xs: 2, md: 2.5 }, mb: 2 }}>
       <Stack direction="row" justifyContent="space-between" gap={2} mb={1}>
@@ -22,17 +61,35 @@ const Incoming = ({ q, from, onAnswer }: { q: Question; from: string; onAnswer: 
         <QuestionStatus q={q} />
       </Stack>
       <Typography variant="h3" component="h3" mb={1}>{questionTitle(q)}</Typography>
+      {q.hint && <Box sx={{ bgcolor: t.aiSoft, color: "text.primary", px: 1.5, py: 1, mb: 1.5, fontSize: 14 }}>💡 {q.hint}</Box>}
       {q.text && q.text !== q.title && <Box sx={{ color: "text.secondary", mb: 2 }}><Markdown text={q.text} /></Box>}
-      {/* Подпись над полем, а не плавающая метка: в теме рамка фокуса — outline без выреза под метку,
-          и метка ложилась на линию. Поле на своём фоне, подсказка — по левому краю, как заголовок и кнопка. */}
-      <Typography component="label" htmlFor={`answer-${q.id}`} variant="body2" fontWeight={600} sx={{ display: "block", mb: 0.75 }}>Твой ответ</Typography>
-      <TextField id={`answer-${q.id}`} fullWidth multiline minRows={3} placeholder="Напиши ответ своими словами" value={text} onChange={(e) => setText(e.target.value)}
-        sx={{ "& .MuiInputBase-root": { bgcolor: t.bg }, "& .MuiFormHelperText-root": { mx: 0, mt: 1 } }}
-        helperText="Ответ сразу увидит стажёр, а я оформлю его страницей в базе — опубликую после твоего «Ок»." />
-      <Button variant="contained" sx={{ mt: 1.5 }} disabled={!text.trim() || busy}
-        onClick={async () => { setBusy(true); if (await onAnswer(q, text)) setText(""); setBusy(false); }}>
-        {busy ? "Отправляю…" : "Ответить"}
-      </Button>
+      {scheduled ? <Box sx={{ bgcolor: t.surface, p: 2 }}>
+        <Typography fontWeight={600}>📅 Встреча: {when(meeting.start)}</Typography>
+        <Typography variant="body2" color="text.secondary" mb={1.5}>Не забудь включить запись — я напомню за 5 минут. После встречи отметь, как прошло:</Typography>
+        <Stack direction={{ xs: "column", sm: "row" }} gap={1}>
+          <Button variant="contained" onClick={() => onFinish(meeting, true)}>Встреча записана — собрать ответ</Button>
+          <Button variant="text" onClick={() => onFinish(meeting, false)}>Записи не было</Button>
+        </Stack>
+        <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 1 }}>В Авито это придёт от ВКС само; в демо отмечаешь ты. Расшифровка — демо-данные.</Typography>
+      </Box> : <>
+        {noRecording && <Box sx={{ bgcolor: t.aiSoft, px: 1.5, py: 1, mb: 1.5 }}>🎙 Записи встречи нет — ответ не попадёт в базу. Ответишь текстом? Пары строк хватит.</Box>}
+        {/* Подпись над полем, а не плавающая метка: в теме рамка фокуса — outline без выреза под метку,
+            и метка ложилась на линию. Поле на своём фоне, подсказка — по левому краю, как заголовок и кнопка. */}
+        <Typography component="label" htmlFor={`answer-${q.id}`} variant="body2" fontWeight={600} sx={{ display: "block", mb: 0.75 }}>Твой ответ</Typography>
+        <TextField id={`answer-${q.id}`} fullWidth multiline minRows={3} placeholder="Напиши ответ своими словами" value={text} onChange={(e) => setText(e.target.value)}
+          sx={{ "& .MuiInputBase-root": { bgcolor: t.bg }, "& .MuiFormHelperText-root": { mx: 0, mt: 1 } }}
+          helperText="Ответ сразу увидит стажёр, а я оформлю его страницей в базе — опубликую после твоего «Ок»." />
+        <Stack direction={{ xs: "column", sm: "row" }} gap={1} mt={1.5} alignItems={{ sm: "center" }}>
+          <Button variant="contained" disabled={!text.trim() || busy}
+            onClick={async () => { setBusy(true); if (await onAnswer(q, text)) setText(""); setBusy(false); }}>
+            {busy ? "Отправляю…" : "Ответить"}
+          </Button>
+          {noRecording
+            ? <Button variant="text" onClick={() => onLeaveOpen(q)}>Нет, оставить открытым</Button>
+            : <Button variant="text" onClick={() => onMeeting(q)}>Проще голосом — назначить встречу</Button>}
+          {!noRecording && onNotMine && <Button variant="text" onClick={() => onNotMine(q)}>{notMineLabel}</Button>}
+        </Stack>
+      </>}
     </Box>
   );
 };
@@ -98,13 +155,20 @@ export const AskedList = ({ asked, onOpenChat }: { asked: ChatTurn[]; onOpenChat
   </>;
 };
 
-export const QuestionsPage = ({ data, role, asked = [], onAsk, onOpenChat, onAnswer, onApprove }: {
-  data: DataState; role: Role; asked?: ChatTurn[]; onAsk: () => void; onOpenChat?: () => void;
+export const QuestionsPage = ({ data, role, login, asked = [], onAsk, onOpenChat, onAnswer, onApprove, onAction }: {
+  data: DataState; role: Role; login: string; asked?: ChatTurn[]; onAsk: () => void; onOpenChat?: () => void;
   onAnswer: (q: Question, text: string) => Promise<boolean>; onApprove: (d: KbDraft, title: string, body: string) => Promise<void>;
+  onAction: Action;
 }) => {
   const [draft, setDraft] = useState<KbDraft | null>(null);
+  const [slotFor, setSlotFor] = useState<Question | null>(null);
+  const [rerouting, setRerouting] = useState<{ q: Question; kind: "not-mine" | "redirect" } | null>(null);
+  const colleagues = data.users.filter((u) => u.id !== data.me.id && !u.roles.includes("intern"));
+  const myInterns = new Set(data.me.interns.map((i) => i.id));
   const name = (id: string) => data.users.find((u) => u.id === id)?.name ?? "Стажёр";
-  const incoming = data.questions.filter((q) => q.addressee_id === data.me.id && q.status === "Sent");
+  const routeText = (q: Question) => (q.route?.length ? [q.route[0].from, ...q.route.map((r) => r.to)].map((id) => name(id).split(" ")[0]).join(" → ") : "");
+  const meetingOf = (q: Question) => data.meetings.find((m) => m.question_id === q.id);
+  const incoming = data.questions.filter((q) => q.addressee_id === data.me.id && ["Sent", "MeetingScheduled", "NoRecording"].includes(q.status));
   const [filter, setFilter] = useState("");
   const [search, setSearch] = useState("");
   const all = data.questions.filter((q) => !incoming.includes(q));
@@ -126,7 +190,13 @@ export const QuestionsPage = ({ data, role, asked = [], onAsk, onOpenChat, onAns
         {data.drafts.map((d) => <Row key={d.id} title={d.title} sub="Черновик страницы — опубликую после твоего «Ок»" onClick={() => setDraft(d)}
           end={<Button variant="text" size="small" sx={{ minHeight: 36, bgcolor: "transparent", "&:hover": { bgcolor: t.surfaceHover } }}>Проверить</Button>} />)}
       </Block>}
-      {incoming.length > 0 && <Block title="Ждут ответа">{incoming.map((q) => <Incoming key={q.id} q={q} from={`От ${name(q.asked_by)}`} onAnswer={onAnswer} />)}</Block>}
+      {incoming.length > 0 && <Block title="Ждут ответа">{incoming.map((q) => <Incoming key={q.id} q={q} from={`От ${name(q.asked_by)}`} meeting={meetingOf(q)} onAnswer={onAnswer}
+        onMeeting={setSlotFor}
+        onFinish={(m, recorded) => void onAction(`/api/meetings/${m.id}/finish`, "POST", { recorded },
+          recorded ? "Собрал ответ со встречи — проверь черновик страницы" : "Понял, записи нет. Можешь ответить текстом")}
+        onLeaveOpen={(x) => void onAction(`/api/questions/${x.id}/leave-open`, "POST", {}, "Вопрос передан владельцу базы")}
+        notMineLabel={q.hint && myInterns.has(q.asked_by) ? "Переадресовать" : "Не ко мне"}
+        onNotMine={(x) => setRerouting({ q: x, kind: q.hint && myInterns.has(q.asked_by) ? "redirect" : "not-mine" })} />)}</Block>}
       <Block title={role === "buddy" ? "Маршрут вопросов стажёров" : all.length ? "Все вопросы" : asked.length ? "Вопросы людям" : "Пока пусто"}>
         {all.length > 0 && <Stack direction={{ xs: "column", sm: "row" }} gap={1} mb={1.5}>
           <TextField size="small" placeholder="Найти вопрос" value={search} onChange={(e) => setSearch(e.target.value)} aria-label="Поиск вопросов" sx={{ flex: 1 }} />
@@ -137,15 +207,24 @@ export const QuestionsPage = ({ data, role, asked = [], onAsk, onOpenChat, onAns
             <Stack direction="row" justifyContent="space-between" gap={2}>
               <Box minWidth={0}>
                 <Typography fontWeight={500}>{questionTitle(q)}</Typography>
-                <Typography variant="body2" color="text.secondary">{q.asked_by === data.me.id ? `Кому: ${q.addressee}` : `${name(q.asked_by)} → ${q.addressee}`}{q.urgent ? " · срочно" : ""}{answerDue(q) ? ` · ${answerDue(q)}` : ""}</Typography>
+                <Typography variant="body2" color="text.secondary">{q.asked_by === data.me.id ? `Кому: ${q.addressee}` : `${name(q.asked_by)} → ${q.addressee}`}{q.urgent ? " · срочно" : ""}{answerDue(q) ? ` · ${answerDue(q)}` : ""}
+                  {q.status === "MeetingScheduled" && meetingOf(q) ? ` · встреча ${when(meetingOf(q)!.start)}` : ""}</Typography>
               </Box>
-              <QuestionStatus q={q} />
+              <Stack alignItems="flex-end" gap={0.75}>
+                <QuestionStatus q={q} />
+                {role === "buddy" && myInterns.has(q.asked_by) && ["Sent", "NoRecording"].includes(q.status) && q.addressee_id !== data.me.id &&
+                  <Button variant="text" size="small" sx={{ minHeight: 32 }} onClick={() => setRerouting({ q, kind: "redirect" })}>Переадресовать</Button>}
+              </Stack>
             </Stack>
+            {routeText(q) && <Typography variant="caption" component="div" color="text.secondary">Маршрут: {routeText(q)}</Typography>}
             {q.answer && <Box sx={{ mt: 1.5, pl: 2, borderLeft: 3, borderColor: "success.main" }}>
               <Typography variant="body2" fontWeight={600} mb={0.5}>Ответ · {q.addressee}</Typography>
               <Markdown text={q.answer} />
               {q.page_id && <Typography variant="caption" color="text.secondary">Ответ сохранён в базе знаний — следующему стажёру Напарник ответит сразу</Typography>}
             </Box>}
+            {meetingOf(q)?.recording_url && <Button component="a" href={meetingOf(q)!.recording_url} target="_blank" rel="noopener noreferrer" variant="text" sx={{ mt: 1 }}>
+              Открыть запись встречи
+            </Button>}
             {q.reason && !q.answer && <Typography variant="caption" color="text.secondary">Почему {q.addressee}: {q.reason}</Typography>}
           </Box>)) : <Empty
             text={role === "intern" ? "Вопросов людям пока нет. Сначала спроси Напарника — он поищет в базе." : "Здесь появятся вопросы, на которые ты ответил."}
@@ -156,6 +235,14 @@ export const QuestionsPage = ({ data, role, asked = [], onAsk, onOpenChat, onAns
         <AskedList asked={asked} onOpenChat={onOpenChat} />
       </Block>}
     </Stack>
+    <PersonDialog open={Boolean(rerouting)} people={colleagues.filter((u) => u.id !== rerouting?.q.addressee_id)}
+      title={rerouting?.kind === "redirect" ? "Переадресовать вопрос" : "Не ко мне"} allowAuto={rerouting?.kind === "not-mine"}
+      text={rerouting?.kind === "redirect" ? "Напарник ошибся с адресатом? Выбери, кто ответит лучше. Стажёр и прежний адресат узнают об этом."
+        : "Подскажи, кто ответит лучше, — или пусть Напарник подберёт следующего кандидата. Стажёр увидит, что вопрос передан."}
+      confirm={rerouting?.kind === "redirect" ? "Переадресовать" : "Передать"} onClose={() => setRerouting(null)}
+      onPick={(to) => { const r = rerouting; setRerouting(null); if (r) void onAction(`/api/questions/${r.q.id}/${r.kind}`, "POST", { to }, "Вопрос передан — стажёр в курсе"); }} />
+    <SlotDialog q={slotFor} login={login} onClose={() => setSlotFor(null)}
+      onPick={(slot) => { const q = slotFor; setSlotFor(null); if (q) void onAction(`/api/questions/${q.id}/meeting`, "POST", { slot }, "Встреча назначена — стажёр получил приглашение"); }} />
     <DraftDialog draft={draft} folder={data.folders.find((f) => f.id === draft?.folder)?.title} onClose={() => setDraft(null)}
       onApprove={async (d, ti, b) => { await onApprove(d, ti, b); setDraft(null); }} />
   </>;

@@ -21,6 +21,19 @@ export type PlanStep = {
   due_date: string;
   status: "Planned" | "Today" | "Done" | "Overdue" | string;
   source: string;
+  /** Готовое действие шага: «team_map» открывает карту команды. */
+  action?: string;
+};
+
+/** Человек на карте команды (SCR-I5, SC-02): зона ответственности, его страницы в базе, черновик сообщения. */
+export type TeamCard = {
+  id: string; name: string; initials: string; photo: { url: string; updated_at: string } | null; status: string; position: string;
+  responsibility: string; working_hours: string; my_buddy?: boolean;
+  /** Топ-руководитель: вопросы к нему — через бадди (BR-10a), черновика нет. */
+  via_buddy?: boolean;
+  pages: Array<{ id: string; title: string; updated_at: string }>;
+  /** Черновик первого сообщения: человек копирует и отправляет сам (BR-62). */
+  message: string;
 };
 
 export type PlanData = {
@@ -53,6 +66,8 @@ export type Question = {
   reason?: string;
   urgent: boolean;
   status: string;
+  hint?: string; // BR-10a: подсказка только адресату-бадди
+  route?: Array<{ at: string; from: string; to: string; by: string; kind: string }>;
   /** Срок ответа текущего адресата (BR-18, SC-23) — только у вопроса в статусе Sent. */
   due_at?: string;
   overdue?: boolean;
@@ -107,6 +122,7 @@ export type KbPage = {
   test_instruction: boolean;
 };
 
+export type Meeting = { id: string; question_id: string; organizer_id: string; participants: string[]; start: string; end: string; status: string; page_id?: string; recording_url?: string };
 export type KbDraft = { id: string; title: string; body: string; folder: string; similar_page_id?: string; source_question?: string };
 export type AbsenceType = { type: string; title: string };
 export type SystemOption = { system: string; title: string; status: string; week_from: number; now: boolean };

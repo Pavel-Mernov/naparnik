@@ -159,8 +159,10 @@ export const ProfileDialog = ({ open, login, userId, onClose, onChanged }: Profi
   };
 
   const phoneOk = phone !== null && isPhoneValid(phone);
-  const phoneHelp = phoneError || (phoneOk ? PHONE_SUCCESS : PHONE_HINT);
-  const phoneHelpColor = phoneError ? errText : phoneOk ? okText : t.muted;
+  // «Успешно валидирован» — только когда номер изменили; при открытии правки с прежним номером — подсказка формата.
+  const phoneChanged = phone !== null && phone !== phoneDigits(profile?.phone ?? "");
+  const phoneHelp = phoneError || (phoneOk && phoneChanged ? PHONE_SUCCESS : PHONE_HINT);
+  const phoneHelpColor = phoneError ? errText : phoneOk && phoneChanged ? okText : t.muted;
 
   const intern = profile?.status === "Стажёр";
 

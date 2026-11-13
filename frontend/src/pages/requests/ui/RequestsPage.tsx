@@ -1,6 +1,6 @@
 // Заявки в имитации корпоративного сервиса. Два пути (BR-42): «сделай сам» — форма, «сделаю за тебя» — Напарник.
 // Руководитель согласует или отклоняет с причиной из справочника сервиса.
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, MenuItem, Stack, TextField, Typography, useMediaQuery, useTheme } from "@mui/material";
 import { api, unwrap, type RequestItem, type Warning } from "@/shared/api";
 import { requestTitle, shortDateTime } from "@/shared/lib";
@@ -13,7 +13,8 @@ const SelfServiceDialog = ({ open, data, login, onClose, onSent }: { open: boole
   const mobile = useMediaQuery(useTheme().breakpoints.down("sm"));
   const { t } = useTheme();
   const abs = data.services?.absence;
-  const systems = (data.services?.access.systems ?? []).filter((s) => s.status === "not_requested" || s.status === "rejected");
+  // Список считается только при смене данных: иначе эффект ниже срабатывал на каждый рендер и стирал ошибку отправки.
+  const systems = useMemo(() => (data.services?.access.systems ?? []).filter((s) => s.status === "not_requested" || s.status === "rejected"), [data.services]);
   const [kind, setKind] = useState<Kind>("absence");
   const [type, setType] = useState("day_off");
   const [date, setDate] = useState("");

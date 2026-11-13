@@ -22,3 +22,6 @@ Object.defineProperty(window, "matchMedia", {
 });
 
 Object.defineProperty(window, "scrollTo", { value: vi.fn(), writable: true });
+
+// В jsdom нет прокрутки к элементу — чат прокручивает ленту к последнему сообщению.
+Element.prototype.scrollIntoView = vi.fn();

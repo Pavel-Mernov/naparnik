@@ -7,18 +7,18 @@ import type { DataState } from "@/shared/lib";
 import { Block, Empty, PageHead, Row, StatusTag } from "@/shared/ui";
 import { Progress, StepRow } from "@/entities/plan";
 
-const TodayBlock = ({ steps, today, onMarkDone, onHelp }: {
-  steps: PlanStep[]; today: string; onMarkDone: (s: PlanStep) => void; onHelp: (s: PlanStep) => void;
+const TodayBlock = ({ steps, today, onMarkDone, onHelp, onTeam }: {
+  steps: PlanStep[]; today: string; onMarkDone: (s: PlanStep) => void; onHelp: (s: PlanStep) => void; onTeam?: () => void;
 }) => (
   <Block title="Сегодня">
     {!steps.length ? <Empty text="Шагов на сегодня нет. Можно заглянуть в план или базу знаний." /> : (
-      steps.map((s) => <StepRow key={s.id} step={s} today={today} onMarkDone={onMarkDone} onHelp={onHelp} />)
+      steps.map((s) => <StepRow key={s.id} step={s} today={today} onMarkDone={onMarkDone} onHelp={onHelp} onTeam={onTeam} />)
     )}
   </Block>
 );
 
-export const DayPage = ({ data, asked = [], onMarkDone, onAsk, onOpenPlan, onOpenQuestions, waiting }: {
-  data: DataState; asked?: ChatTurn[]; onMarkDone: (s: PlanStep) => void; onAsk: (text: string) => void; onOpenPlan: () => void; onOpenQuestions?: () => void; waiting: ReactNode;
+export const DayPage = ({ data, asked = [], onMarkDone, onAsk, onOpenPlan, onOpenQuestions, onTeam, waiting }: {
+  data: DataState; asked?: ChatTurn[]; onTeam?: () => void; onMarkDone: (s: PlanStep) => void; onAsk: (text: string) => void; onOpenPlan: () => void; onOpenQuestions?: () => void; waiting: ReactNode;
 }) => {
   const { t } = useTheme();
   const first = data.me.name.split(" ")[0];
@@ -35,6 +35,7 @@ export const DayPage = ({ data, asked = [], onMarkDone, onAsk, onOpenPlan, onOpe
           today={data.me.today}
           onMarkDone={onMarkDone}
           onHelp={(x) => onAsk(`Помоги с шагом: ${x.title}`)}
+          onTeam={onTeam}
         />
         <Progress plan={data.plan} onOpen={onOpenPlan} />
       </Stack>

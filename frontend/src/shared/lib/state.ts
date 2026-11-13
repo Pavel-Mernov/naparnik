@@ -1,4 +1,4 @@
-import type { KbDraft, KbFolder, KbPage, Me, PlanData, Question, RequestItem, Services, TeamOverview, TodayData, User } from "@/shared/api";
+import type { KbDraft, KbFolder, KbPage, Me, PlanData, Question, RequestItem, Services, TeamOverview, TodayData, User, Meeting } from "@/shared/api";
 
 export type View = "day" | "plan" | "questions" | "knowledge" | "requests";
 export type Role = "lead" | "buddy" | "intern" | "expert";
@@ -16,6 +16,7 @@ export type DataState = {
   overview?: TeamOverview;
   managedPlans: Array<{ id: string; name: string; plan?: PlanData }>;
   services?: Services;
+  meetings: Meeting[];
 };
 
 export const primaryRole = (roles: string[]): Role =>

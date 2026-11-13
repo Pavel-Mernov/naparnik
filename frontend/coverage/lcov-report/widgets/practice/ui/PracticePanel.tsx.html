@@ -1,0 +1,594 @@
+
+<!doctype html>
+<html lang="en">
+
+<head>
+    <title>Code coverage report for widgets/practice/ui/PracticePanel.tsx</title>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../../../prettify.css" />
+    <link rel="stylesheet" href="../../../base.css" />
+    <link rel="shortcut icon" type="image/x-icon" href="../../../favicon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="../../../theme.js"></script>
+    <style type='text/css'>
+        .coverage-summary .sorter {
+            background-image: url(../../../sort-arrow-sprite.png);
+        }
+    </style>
+</head>
+    
+<body>
+<div class='wrapper'>
+    <div class='pad1'>
+        
+        <label class="theme-select quiet">
+            Theme
+            <select id="themeSelect" autocomplete="off">
+                <option value="light">Light</option>
+                <option value="dark">Dark</option>
+                <option value="legacy">Legacy</option>
+            </select>
+        </label>
+
+        <h1><a href="../../../index.html">All files</a> / <a href="index.html">widgets/practice/ui</a> PracticePanel.tsx</h1>
+        <div class='clearfix'>
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">90.16% </span>
+                <span class="quiet">Statements</span>
+                <span class='fraction'>110/122</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">85.71% </span>
+                <span class="quiet">Branches</span>
+                <span class='fraction'>120/140</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">85.1% </span>
+                <span class="quiet">Functions</span>
+                <span class='fraction'>40/47</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">97.53% </span>
+                <span class="quiet">Lines</span>
+                <span class='fraction'>79/81</span>
+            </div>
+        
+            
+        </div>
+        <p class="quiet">
+            Press <em>n</em> or <em>j</em> to go to the next uncovered block, <em>b</em>, <em>p</em> or <em>k</em> for the previous block.
+        </p>
+        <template id="filterTemplate">
+            <div class="quiet">
+                Filter:
+                <input type="search" id="fileSearch">
+            </div>
+        </template>
+    </div>
+    <div class='status-line high'></div>
+    <pre><table class="coverage">
+<tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
+<a name='L2'></a><a href='#L2'>2</a>
+<a name='L3'></a><a href='#L3'>3</a>
+<a name='L4'></a><a href='#L4'>4</a>
+<a name='L5'></a><a href='#L5'>5</a>
+<a name='L6'></a><a href='#L6'>6</a>
+<a name='L7'></a><a href='#L7'>7</a>
+<a name='L8'></a><a href='#L8'>8</a>
+<a name='L9'></a><a href='#L9'>9</a>
+<a name='L10'></a><a href='#L10'>10</a>
+<a name='L11'></a><a href='#L11'>11</a>
+<a name='L12'></a><a href='#L12'>12</a>
+<a name='L13'></a><a href='#L13'>13</a>
+<a name='L14'></a><a href='#L14'>14</a>
+<a name='L15'></a><a href='#L15'>15</a>
+<a name='L16'></a><a href='#L16'>16</a>
+<a name='L17'></a><a href='#L17'>17</a>
+<a name='L18'></a><a href='#L18'>18</a>
+<a name='L19'></a><a href='#L19'>19</a>
+<a name='L20'></a><a href='#L20'>20</a>
+<a name='L21'></a><a href='#L21'>21</a>
+<a name='L22'></a><a href='#L22'>22</a>
+<a name='L23'></a><a href='#L23'>23</a>
+<a name='L24'></a><a href='#L24'>24</a>
+<a name='L25'></a><a href='#L25'>25</a>
+<a name='L26'></a><a href='#L26'>26</a>
+<a name='L27'></a><a href='#L27'>27</a>
+<a name='L28'></a><a href='#L28'>28</a>
+<a name='L29'></a><a href='#L29'>29</a>
+<a name='L30'></a><a href='#L30'>30</a>
+<a name='L31'></a><a href='#L31'>31</a>
+<a name='L32'></a><a href='#L32'>32</a>
+<a name='L33'></a><a href='#L33'>33</a>
+<a name='L34'></a><a href='#L34'>34</a>
+<a name='L35'></a><a href='#L35'>35</a>
+<a name='L36'></a><a href='#L36'>36</a>
+<a name='L37'></a><a href='#L37'>37</a>
+<a name='L38'></a><a href='#L38'>38</a>
+<a name='L39'></a><a href='#L39'>39</a>
+<a name='L40'></a><a href='#L40'>40</a>
+<a name='L41'></a><a href='#L41'>41</a>
+<a name='L42'></a><a href='#L42'>42</a>
+<a name='L43'></a><a href='#L43'>43</a>
+<a name='L44'></a><a href='#L44'>44</a>
+<a name='L45'></a><a href='#L45'>45</a>
+<a name='L46'></a><a href='#L46'>46</a>
+<a name='L47'></a><a href='#L47'>47</a>
+<a name='L48'></a><a href='#L48'>48</a>
+<a name='L49'></a><a href='#L49'>49</a>
+<a name='L50'></a><a href='#L50'>50</a>
+<a name='L51'></a><a href='#L51'>51</a>
+<a name='L52'></a><a href='#L52'>52</a>
+<a name='L53'></a><a href='#L53'>53</a>
+<a name='L54'></a><a href='#L54'>54</a>
+<a name='L55'></a><a href='#L55'>55</a>
+<a name='L56'></a><a href='#L56'>56</a>
+<a name='L57'></a><a href='#L57'>57</a>
+<a name='L58'></a><a href='#L58'>58</a>
+<a name='L59'></a><a href='#L59'>59</a>
+<a name='L60'></a><a href='#L60'>60</a>
+<a name='L61'></a><a href='#L61'>61</a>
+<a name='L62'></a><a href='#L62'>62</a>
+<a name='L63'></a><a href='#L63'>63</a>
+<a name='L64'></a><a href='#L64'>64</a>
+<a name='L65'></a><a href='#L65'>65</a>
+<a name='L66'></a><a href='#L66'>66</a>
+<a name='L67'></a><a href='#L67'>67</a>
+<a name='L68'></a><a href='#L68'>68</a>
+<a name='L69'></a><a href='#L69'>69</a>
+<a name='L70'></a><a href='#L70'>70</a>
+<a name='L71'></a><a href='#L71'>71</a>
+<a name='L72'></a><a href='#L72'>72</a>
+<a name='L73'></a><a href='#L73'>73</a>
+<a name='L74'></a><a href='#L74'>74</a>
+<a name='L75'></a><a href='#L75'>75</a>
+<a name='L76'></a><a href='#L76'>76</a>
+<a name='L77'></a><a href='#L77'>77</a>
+<a name='L78'></a><a href='#L78'>78</a>
+<a name='L79'></a><a href='#L79'>79</a>
+<a name='L80'></a><a href='#L80'>80</a>
+<a name='L81'></a><a href='#L81'>81</a>
+<a name='L82'></a><a href='#L82'>82</a>
+<a name='L83'></a><a href='#L83'>83</a>
+<a name='L84'></a><a href='#L84'>84</a>
+<a name='L85'></a><a href='#L85'>85</a>
+<a name='L86'></a><a href='#L86'>86</a>
+<a name='L87'></a><a href='#L87'>87</a>
+<a name='L88'></a><a href='#L88'>88</a>
+<a name='L89'></a><a href='#L89'>89</a>
+<a name='L90'></a><a href='#L90'>90</a>
+<a name='L91'></a><a href='#L91'>91</a>
+<a name='L92'></a><a href='#L92'>92</a>
+<a name='L93'></a><a href='#L93'>93</a>
+<a name='L94'></a><a href='#L94'>94</a>
+<a name='L95'></a><a href='#L95'>95</a>
+<a name='L96'></a><a href='#L96'>96</a>
+<a name='L97'></a><a href='#L97'>97</a>
+<a name='L98'></a><a href='#L98'>98</a>
+<a name='L99'></a><a href='#L99'>99</a>
+<a name='L100'></a><a href='#L100'>100</a>
+<a name='L101'></a><a href='#L101'>101</a>
+<a name='L102'></a><a href='#L102'>102</a>
+<a name='L103'></a><a href='#L103'>103</a>
+<a name='L104'></a><a href='#L104'>104</a>
+<a name='L105'></a><a href='#L105'>105</a>
+<a name='L106'></a><a href='#L106'>106</a>
+<a name='L107'></a><a href='#L107'>107</a>
+<a name='L108'></a><a href='#L108'>108</a>
+<a name='L109'></a><a href='#L109'>109</a>
+<a name='L110'></a><a href='#L110'>110</a>
+<a name='L111'></a><a href='#L111'>111</a>
+<a name='L112'></a><a href='#L112'>112</a>
+<a name='L113'></a><a href='#L113'>113</a>
+<a name='L114'></a><a href='#L114'>114</a>
+<a name='L115'></a><a href='#L115'>115</a>
+<a name='L116'></a><a href='#L116'>116</a>
+<a name='L117'></a><a href='#L117'>117</a>
+<a name='L118'></a><a href='#L118'>118</a>
+<a name='L119'></a><a href='#L119'>119</a>
+<a name='L120'></a><a href='#L120'>120</a>
+<a name='L121'></a><a href='#L121'>121</a>
+<a name='L122'></a><a href='#L122'>122</a>
+<a name='L123'></a><a href='#L123'>123</a>
+<a name='L124'></a><a href='#L124'>124</a>
+<a name='L125'></a><a href='#L125'>125</a>
+<a name='L126'></a><a href='#L126'>126</a>
+<a name='L127'></a><a href='#L127'>127</a>
+<a name='L128'></a><a href='#L128'>128</a>
+<a name='L129'></a><a href='#L129'>129</a>
+<a name='L130'></a><a href='#L130'>130</a>
+<a name='L131'></a><a href='#L131'>131</a>
+<a name='L132'></a><a href='#L132'>132</a>
+<a name='L133'></a><a href='#L133'>133</a>
+<a name='L134'></a><a href='#L134'>134</a>
+<a name='L135'></a><a href='#L135'>135</a>
+<a name='L136'></a><a href='#L136'>136</a>
+<a name='L137'></a><a href='#L137'>137</a>
+<a name='L138'></a><a href='#L138'>138</a>
+<a name='L139'></a><a href='#L139'>139</a>
+<a name='L140'></a><a href='#L140'>140</a>
+<a name='L141'></a><a href='#L141'>141</a>
+<a name='L142'></a><a href='#L142'>142</a>
+<a name='L143'></a><a href='#L143'>143</a>
+<a name='L144'></a><a href='#L144'>144</a>
+<a name='L145'></a><a href='#L145'>145</a>
+<a name='L146'></a><a href='#L146'>146</a>
+<a name='L147'></a><a href='#L147'>147</a>
+<a name='L148'></a><a href='#L148'>148</a>
+<a name='L149'></a><a href='#L149'>149</a>
+<a name='L150'></a><a href='#L150'>150</a>
+<a name='L151'></a><a href='#L151'>151</a>
+<a name='L152'></a><a href='#L152'>152</a>
+<a name='L153'></a><a href='#L153'>153</a>
+<a name='L154'></a><a href='#L154'>154</a>
+<a name='L155'></a><a href='#L155'>155</a>
+<a name='L156'></a><a href='#L156'>156</a>
+<a name='L157'></a><a href='#L157'>157</a>
+<a name='L158'></a><a href='#L158'>158</a>
+<a name='L159'></a><a href='#L159'>159</a>
+<a name='L160'></a><a href='#L160'>160</a>
+<a name='L161'></a><a href='#L161'>161</a>
+<a name='L162'></a><a href='#L162'>162</a>
+<a name='L163'></a><a href='#L163'>163</a>
+<a name='L164'></a><a href='#L164'>164</a>
+<a name='L165'></a><a href='#L165'>165</a>
+<a name='L166'></a><a href='#L166'>166</a>
+<a name='L167'></a><a href='#L167'>167</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">284x</span>
+<span class="cline-any cline-yes">284x</span>
+<span class="cline-any cline-yes">284x</span>
+<span class="cline-any cline-yes">284x</span>
+<span class="cline-any cline-yes">284x</span>
+<span class="cline-any cline-yes">284x</span>
+<span class="cline-any cline-yes">284x</span>
+<span class="cline-any cline-yes">284x</span>
+<span class="cline-any cline-yes">284x</span>
+<span class="cline-any cline-yes">284x</span>
+<span class="cline-any cline-yes">284x</span>
+<span class="cline-any cline-yes">284x</span>
+<span class="cline-any cline-yes">284x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">28x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">112x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">24x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">20x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">38x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">10x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">8x</span>
+<span class="cline-any cline-yes">12x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">648x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">257x</span>
+<span class="cline-any cline-yes">257x</span>
+<span class="cline-any cline-yes">257x</span>
+<span class="cline-any cline-yes">257x</span>
+<span class="cline-any cline-yes">257x</span>
+<span class="cline-any cline-yes">257x</span>
+<span class="cline-any cline-yes">257x</span>
+<span class="cline-any cline-yes">257x</span>
+<span class="cline-any cline-yes">119x</span>
+<span class="cline-any cline-yes">119x</span>
+<span class="cline-any cline-yes">119x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">257x</span>
+<span class="cline-any cline-yes">34x</span>
+<span class="cline-any cline-yes">34x</span>
+<span class="cline-any cline-yes">34x</span>
+<span class="cline-any cline-yes">34x</span>
+<span class="cline-any cline-yes">34x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">34x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">34x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">257x</span>
+<span class="cline-any cline-yes">42x</span>
+<span class="cline-any cline-yes">42x</span>
+<span class="cline-any cline-yes">42x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">257x</span>
+<span class="cline-any cline-yes">11x</span>
+<span class="cline-any cline-yes">11x</span>
+<span class="cline-any cline-yes">11x</span>
+<span class="cline-any cline-yes">11x</span>
+<span class="cline-any cline-yes">10x</span>
+<span class="cline-any cline-yes">10x</span>
+<span class="cline-any cline-yes">10x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">11x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">257x</span>
+<span class="cline-any cline-yes">222x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">222x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { useEffect, useRef, useState } from "react";
+import { Alert, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, LinearProgress, Stack, TextField, Typography } from "@mui/material";
+import { api, unwrap } from "@/shared/api";
+import { DraftCard, Markdown, type Draft } from "@/widgets/chat";
+import { Block, TestLabel } from "@/shared/ui";
+&nbsp;
+type Source = { page_id: string; title: string; author: string; updated_at: string; body: string };
+type Term = { term: string; definition?: string; summary?: string; label?: string };
+type Task = { text: string; dataset: string; environment: string; criteria: string[] };
+type Attempt = { number: number; answer: string; review: { passed: boolean; score: number; checks: { criterion: number; passed: boolean; feedback: string; sources?: string[] }[] } };
+type Practice = {
+  id: string; intern_id: string; intern_name: string; step: { title: string }; offer: string; stage: string;
+  offered_today: boolean; available: boolean; task_status: string; task_version: number; approval_due?: string; approval_expired: boolean;
+  general_terms: Term[]; team_terms: Term[]; team_rules: { title: string }[]; sources: Source[]; task?: Task; checklist?: string[];
+  attempts?: Attempt[]; best_attempt?: Attempt; attempts_count: number; error_topics: string[]; help_available: boolean;
+};
+type Run = (path: string, body: unknown, key?: string) =&gt; Promise&lt;unknown&gt;;
+&nbsp;
+const PracticeCard = ({ item: p, buddy, busy, run, login }: { item: Practice; buddy: boolean; busy: boolean; run: Run; login: string }) =&gt; {
+  const path = `/api/practices/${p.intern_id}/${p.id}`;
+  const [text, setText] = useState(p.task?.text ?? "");
+  const [answer, setAnswer] = useState("");
+  const [draft, setDraft] = useState&lt;Draft | null&gt;(null);
+  const [sent, setSent] = useState(false);
+  const attemptKey = useRef&lt;{ signature: string; key: string } | null&gt;(null);
+  const [source, setSource] = useState&lt;Source | null&gt;(null);
+  useEffect(() =&gt; { setText(p.task?.text ?? ""); }, [p.task_version, p.task?.text]);
+  const advance = (action: string) =&gt; void run(`${path}/advance`, { action, expected_stage: p.stage });
+  const last = p.attempts?.at(-1);
+  const passed = p.attempts?.some((a) =&gt; a.review.passed);
+  const stageTitle: Record&lt;string, string&gt; = { offered: "Перед задачей", general_terms: "Общие термины", team_terms: "Термины и правила команды", training: "Учебное задание", real_task: "К реальной задаче" };
+  return &lt;Block title={buddy ? `Практика: ${p.intern_name}` : "Практика перед задачей"}&gt;
+    &lt;Stack gap={2}&gt;
+      &lt;Typography fontWeight={700}&gt;{p.step.title}&lt;/Typography&gt;
+      &lt;Typography variant="body2" color="text.secondary"&gt;{buddy ? "Одобри учебное задание. Стажёр может пройти практику или сразу взять реальную задачу." : p.offered_today ? <span class="branch-0 cbranch-no" title="branch not covered" >p.offer : "</span>Практика к будущему шагу плана — можно подготовиться заранее."}&lt;/Typography&gt;
+      {!p.available &amp;&amp; <span class="branch-1 cbranch-no" title="branch not covered" >&lt;Alert severity="info"&gt;Материалы пока недоступны. Можно повторить подготовку или перейти к задаче.&lt;/Alert&gt;}</span>
+      {buddy ? &lt;&gt;
+        {p.task_status === "Pending" &amp;&amp; &lt;&gt;&lt;Typography&gt;Черновик ещё не подготовлен.&lt;/Typography&gt;&lt;Button disabled={busy} onClick={() =&gt; void run(`${path}/generate`, {})}&gt;Подготовить задание&lt;/Button&gt;&lt;/&gt;}
+        {p.task &amp;&amp; &lt;&gt;
+          &lt;TestLabel /&gt;
+          &lt;Typography variant="body2"&gt;Учебные данные: {p.task.dataset}&lt;/Typography&gt;
+          {p.task_status === "Draft" ? &lt;&gt;
+            &lt;TextField fullWidth multiline minRows={4} label="Черновик учебного задания" value={text} onChange={(e) =&gt; setText(e.target.value)} /&gt;
+            &lt;Typography variant="body2" color="text.secondary"&gt;Одобрение до {p.approval_due}. Если не успеешь, стажёр продолжит без задания; черновик останется здесь.&lt;/Typography&gt;
+            &lt;Button variant="contained" disabled={busy || !text.trim()} onClick={() =&gt; void run(`${path}/approve`, { text, task_version: p.task_version })}&gt;Одобрить задание&lt;/Button&gt;
+          &lt;/&gt; : &lt;&gt;&lt;Typography color="success.main" fontWeight={700}&gt;Задание одобрено&lt;/Typography&gt;&lt;Markdown text={p.task.text} /&gt;&lt;/&gt;}
+          &lt;Box component="ul" sx={{ pl: 3 }}&gt;{p.task.criteria.map((c) =&gt; &lt;li key={c}&gt;{c}&lt;/li&gt;)}&lt;/Box&gt;
+        &lt;/&gt;}
+        &lt;Typography&gt;Попыток: {p.attempts_count}. Бадди видит лучшую попытку и темы ошибок; остальные ответы и диалог остаются у стажёра.&lt;/Typography&gt;
+        {p.best_attempt &amp;&amp; &lt;Box sx={{ p: 2, bgcolor: "background.default" }}&gt;
+          &lt;Typography fontWeight={700}&gt;Лучшая попытка №{p.best_attempt.number} · {p.best_attempt.review.score}%&lt;/Typography&gt;
+          &lt;Box component="pre" sx={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere", fontSize: 14 }}&gt;{p.best_attempt.answer}&lt;/Box&gt;
+        &lt;/Box&gt;}
+        {p.error_topics.length &gt; 0 &amp;&amp; &lt;Box&gt;&lt;Typography fontWeight={700}&gt;Темы ошибок&lt;/Typography&gt;&lt;Box component="ul" sx={{ pl: 3 }}&gt;{p.error_topics.map((x) =&gt; &lt;li key={x}&gt;{x}&lt;/li&gt;)}&lt;/Box&gt;&lt;/Box&gt;}
+      &lt;/&gt; : &lt;&gt;
+        &lt;Typography variant="h3"&gt;{stageTitle[p.stage]}&lt;/Typography&gt;
+        {p.stage === "offered" &amp;&amp; &lt;Button variant="contained" disabled={busy || !p.available} onClick={() =&gt; advance("start")}&gt;Начать практику&lt;/Button&gt;}
+        {(p.stage === "general_terms" || p.stage === "team_terms") &amp;&amp; &lt;&gt;
+          {(p.stage === "general_terms" ? p.general_terms : p.team_terms).map((term) =&gt; &lt;Box key={term.term}&gt;
+            &lt;Typography fontWeight={700}&gt;{term.term}{term.label ? ` · ${term.label}` : " · у нас так говорят"}&lt;/Typography&gt;
+            &lt;Typography&gt;{term.definition || term.summary}&lt;/Typography&gt;
+          &lt;/Box&gt;)}
+          {p.stage === "team_terms" &amp;&amp; p.team_rules.map((r) =&gt; &lt;Typography key={r.title}&gt;• {r.title}&lt;/Typography&gt;)}
+          &lt;Button variant="contained" disabled={busy || !p.available} onClick={() =&gt; advance("next")}&gt;Дальше&lt;/Button&gt;
+          &lt;Button disabled={busy} onClick={() =&gt; advance("skip_stage")}&gt;Пропустить этот этап&lt;/Button&gt;
+        &lt;/&gt;}
+        {p.stage === "training" &amp;&amp; &lt;&gt;
+          {!p.task ? &lt;Alert severity="info"&gt;{p.approval_expired ? "Бадди не ответил за рабочий день. Продолжай без учебного задания." : <span class="branch-1 cbranch-no" title="branch not covered" >"Бадди ещё не одобрил задание. Можно подождать или пропустить его."}&lt;/Alert&gt;</span> : &lt;&gt;
+            &lt;TestLabel /&gt;&lt;Markdown text={p.task.text} /&gt;
+            &lt;Box component="ul" sx={{ pl: 3 }}&gt;{p.task.criteria.map((c) =&gt; &lt;li key={c}&gt;{c}&lt;/li&gt;)}&lt;/Box&gt;
+            {!passed &amp;&amp; p.attempts_count &lt; 3 &amp;&amp; &lt;&gt;
+              &lt;TextField fullWidth multiline minRows={6} label="Твоя попытка" value={answer} onChange={(e) =&gt; setAnswer(e.target.value)}
+                helperText="Учебный SQL, имя таблицы, название графика и папка. Только синтетические данные. Код здесь не исполняется." /&gt;
+              &lt;Button variant="contained" disabled={busy || !answer.trim()} onClick={async () =&gt; {
+                const signature = JSON.stringify([answer, p.task_version]);
+                <span class="missing-if-branch" title="else path not taken" >E</span>if (attemptKey.current?.signature !== signature) attemptKey.current = { signature, key: crypto.randomUUID() };
+                const result = await run(`${path}/attempts`, { answer, task_version: p.task_version }, attemptKey.current.key);
+                <span class="missing-if-branch" title="else path not taken" >E</span>if (result !== undefined) attemptKey.current = null;
+              }}&gt;Проверить попытку&lt;/Button&gt;
+            &lt;/&gt;}
+            &lt;Typography&gt;Попыток: {p.attempts_count} из 3&lt;/Typography&gt;
+            {last &amp;&amp; &lt;Box aria-label="Обратная связь по попытке"&gt;
+              &lt;Typography fontWeight={700} color={last.review.passed ? "success.main" : "text.primary"}&gt;{last.review.passed ? "Учебное задание пройдено" : "Есть что поправить"} · {last.review.score}%&lt;/Typography&gt;
+              {last.review.checks.map((c) =&gt; &lt;Box key={c.criterion} sx={{ my: 1 }}&gt;&lt;Typography&gt;{c.passed ? "✓" : "•"} {c.feedback}&lt;/Typography&gt;
+                {c.sources?.map((id) =&gt; { const s=p.sources.find((s)=&gt;s.page_id===id);return s &amp;&amp; &lt;Button key={id} variant="text" size="small" <span class="fstat-no" title="function not covered" >onClick={()=&gt;<span class="cstat-no" title="statement not covered" >s</span>etSource(s)}&gt;{s</span>.title}&lt;/Button&gt;; })}
+              &lt;/Box&gt;)}
+            &lt;/Box&gt;}
+          &lt;/&gt;}
+          {(passed || p.approval_expired) &amp;&amp; &lt;Button variant="contained" disabled={busy} onClick={() =&gt; advance("next")}&gt;К реальной задаче&lt;/Button&gt;}
+          &lt;Button disabled={busy} onClick={() =&gt; advance("skip_stage")}&gt;Пропустить учебное задание&lt;/Button&gt;
+          {p.help_available &amp;&amp; !sent &amp;&amp; &lt;&gt;
+            {!draft ? &lt;Button disabled={busy} onClick={async () =&gt; { const result = await run(`${path}/help-draft`, {}); <span class="missing-if-branch" title="else path not taken" >E</span>if (result) setDraft(result as Draft); }}&gt;Спросить бадди&lt;/Button&gt; : &lt;&gt;
+              &lt;Typography fontWeight={700}&gt;Черновик вопроса бадди&lt;/Typography&gt;
+              &lt;DraftCard draft={draft} login={login} look={{ userName: () =&gt; "Бадди", <span class="fstat-no" title="function not covered" >systemTitle: (i</span>d) =&gt; <span class="cstat-no" title="statement not covered" >id, <span class="fstat-no" title="function not covered" >s</span>tepTitle: () =&gt; <span class="cstat-no" title="statement not covered" >p</span>.step.title }</span>}
+<span class="fstat-no" title="function not covered" >                onDone={(d</span>) =&gt; { <span class="cstat-no" title="statement not covered" >if (d?.status === "confirmed") <span class="cstat-no" title="statement not covered" >setSent(true); else <span class="cstat-no" title="statement not covered" >i</span>f (d?.status === "cancelled") <span class="cstat-no" title="statement not covered" >setDraft(null); }</span></span></span>} /&gt;
+            &lt;/&gt;}
+          &lt;/&gt;}
+          {sent &amp;&amp; <span class="branch-1 cbranch-no" title="branch not covered" >&lt;Alert severity="success"&gt;Вопрос отправлен бадди.&lt;/Alert&gt;}</span>
+        &lt;/&gt;}
+        {p.stage === "real_task" &amp;&amp; &lt;&gt;
+          &lt;Typography&gt;Практика завершена или пропущена. Реальную задачу выполняешь отдельно — шаг плана автоматически не отмечается.&lt;/Typography&gt;
+          &lt;Box component="ul" sx={{ pl: 3 }}&gt;{p.checklist?.map((c) =&gt; &lt;li key={c}&gt;{c}&lt;/li&gt;)}&lt;/Box&gt;
+        &lt;/&gt;}
+        {p.stage !== "real_task" &amp;&amp; &lt;Button disabled={busy} onClick={() =&gt; advance("skip_all")}&gt;Сразу к реальной задаче&lt;/Button&gt;}
+      &lt;/&gt;}
+      {p.sources.length &gt; 0 &amp;&amp; (buddy || p.stage !== "offered") &amp;&amp; &lt;Box&gt;
+        &lt;Typography variant="body2" fontWeight={700}&gt;Источники команды&lt;/Typography&gt;
+        &lt;Stack direction="row" flexWrap="wrap" gap={1}&gt;{p.sources.map((s) =&gt; &lt;Button key={s.page_id} size="small" variant="text" onClick={() =&gt; setSource(s)}&gt;{s.title}&lt;/Button&gt;)}&lt;/Stack&gt;
+      &lt;/Box&gt;}
+    &lt;/Stack&gt;
+    &lt;Dialog open={Boolean(source)} <span class="fstat-no" title="function not covered" >onClose={() =&gt; <span class="cstat-no" title="statement not covered" >s</span>etSource(null)} f</span>ullWidth maxWidth="md"&gt;
+      &lt;DialogTitle&gt;{source?.title}&lt;/DialogTitle&gt;&lt;DialogContent&gt;&lt;Typography color="text.secondary" mb={2}&gt;{source?.author} · {source?.updated_at}&lt;/Typography&gt;&lt;Markdown text={source?.body ?? ""} /&gt;&lt;/DialogContent&gt;
+      &lt;DialogActions&gt;&lt;Button onClick={() =&gt; setSource(null)}&gt;Закрыть источник&lt;/Button&gt;&lt;/DialogActions&gt;
+    &lt;/Dialog&gt;
+  &lt;/Block&gt;;
+};
+&nbsp;
+export const PracticePanel = ({ login, buddy, revision }: { login: string; buddy: boolean; revision: number }) =&gt; {
+  const [items, setItems] = useState&lt;Practice[]&gt;([]);
+  const [preparing, setPreparing] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const active = useRef(false);
+  const controllers = useRef(new Set&lt;AbortController&gt;());
+  const sequence = useRef(0);
+  const refresh = async (signal: AbortSignal) =&gt; {
+    const seq = ++sequence.current;
+    const data = unwrap(await api&lt;{ ok: boolean; data: Practice[] }&gt;(login, "/api/practices", { signal }));
+    if (active.current &amp;&amp; !signal.aborted &amp;&amp; sequence.current === seq) setItems(data);
+  };
+  useEffect(() =&gt; {
+    active.current = true;
+    const c = new AbortController(); controllers.current.add(c);
+    void (async () =&gt; {
+      setPreparing(true);
+      try { await refresh(c.signal); await api(login, "/api/practices/sync", { method: "POST", body: "{}", signal: c.signal }); await refresh(c.signal); }
+      catch (e) { <span class="missing-if-branch" title="else path not taken" >E</span>if (active.current &amp;&amp; !c.signal.aborted) setError(e instanceof Error ? e.message : <span class="branch-1 cbranch-no" title="branch not covered" >"Не удалось подготовить практику")</span>; }
+      finally { controllers.current.delete(c); <span class="missing-if-branch" title="else path not taken" >E</span>if (active.current &amp;&amp; !c.signal.aborted) setPreparing(false); }
+    })();
+    return () =&gt; { active.current = false; controllers.current.<span class="fstat-no" title="function not covered" >forEach((x</span>) =&gt; <span class="cstat-no" title="statement not covered" >x.abort())</span>; controllers.current.clear(); };
+    // Панель привязана к учётке через key: старые ответы при переключении отменяются.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [login]);
+  useEffect(() =&gt; {
+    const c = new AbortController(); controllers.current.add(c);
+    void refresh(c.signal).<span class="fstat-no" title="function not covered" >catch(() =&gt; <span class="cstat-no" title="statement not covered" >u</span>ndefined)</span>.finally(() =&gt; controllers.current.delete(c));
+    return () =&gt; c.abort();
+  }, [revision]);
+  const run: Run = async (path, body, key) =&gt; {
+    <span class="missing-if-branch" title="if path not taken" >I</span>if (busy || !active.current) <span class="cstat-no" title="statement not covered" >return;</span>
+    const c = new AbortController(); controllers.current.add(c); setBusy(true); setError("");
+    try {
+      const response = await api&lt;{ ok?: boolean; data?: unknown }&gt;(login, path, { method: "POST", body: JSON.stringify(body), signal: c.signal, headers: key ? { "Idempotency-Key": key } : {} });
+      <span class="missing-if-branch" title="if path not taken" >I</span>if (!active.current || c.signal.aborted) <span class="cstat-no" title="statement not covered" >return;</span>
+      await refresh(c.signal);
+      return response.data ?? response;
+    } catch (e) { <span class="missing-if-branch" title="else path not taken" >E</span>if (active.current &amp;&amp; !c.signal.aborted) setError(e instanceof Error ? e.message : <span class="branch-1 cbranch-no" title="branch not covered" >"Не удалось выполнить действие")</span>; }
+    finally { controllers.current.delete(c); <span class="missing-if-branch" title="else path not taken" >E</span>if (active.current &amp;&amp; !c.signal.aborted) setBusy(false); }
+  };
+  if (!items.length &amp;&amp; !preparing &amp;&amp; !error) return null;
+  return &lt;Stack spacing={3} mt={4}&gt;
+    {preparing &amp;&amp; <span class="branch-1 cbranch-no" title="branch not covered" >&lt;&gt;&lt;Typography color="text.secondary"&gt;Напарник готовит учебную практику…&lt;/Typography&gt;&lt;LinearProgress aria-label="Подготовка практики" /&gt;&lt;/&gt;}</span>
+    {error &amp;&amp; &lt;Alert severity="error" action={&lt;Button onClick={() =&gt; void run("/api/practices/sync", {})}&gt;Повторить&lt;/Button&gt;}&gt;{error}&lt;/Alert&gt;}
+    {items.map((p) =&gt; &lt;PracticeCard key={`${p.intern_id}/${p.id}`} item={p} buddy={buddy} busy={busy} run={run} login={login} /&gt;)}
+  &lt;/Stack&gt;;
+};
+&nbsp;</pre></td></tr></table></pre>
+
+                <div class='push'></div><!-- for sticky footer -->
+            </div><!-- /wrapper -->
+            <div class='footer quiet pad2 space-top1 center small'>
+                Code coverage generated by
+                <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
+                at 2026-11-13T16:13:13.860Z
+            </div>
+        <script src="../../../prettify.js"></script>
+        <script>
+            window.onload = function () {
+                prettyPrint();
+            };
+        </script>
+        <script src="../../../sorter.js"></script>
+        <script src="../../../block-navigation.js"></script>
+    </body>
+</html>
+    

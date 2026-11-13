@@ -44,6 +44,20 @@ type AbsenceService interface {
 	Submit(ctx context.Context, r AbsenceSubmit) (Receipt, error)
 }
 
+// AbsenceStatus — текущее состояние заявки в сервисе отсутствий: решение принимают там.
+type AbsenceStatus struct {
+	ID         string `json:"id"`
+	Status     string `json:"status"` // pending | approved | rejected
+	ReasonCode string `json:"reason_code,omitempty"`
+	Comment    string `json:"comment,omitempty"`
+}
+
+// AbsenceStatusSource — сервис отдаёт статус заявки. Напарник опрашивает его, пока нет вебхука:
+// решение согласующего в сервисе доходит до стажёра тем же путём, что и решение в интерфейсе.
+type AbsenceStatusSource interface {
+	Status(ctx context.Context, id string) (AbsenceStatus, error)
+}
+
 type AccessSubmit struct {
 	Key        string `json:"idempotency_key"`
 	EmployeeID string `json:"employee_id"`

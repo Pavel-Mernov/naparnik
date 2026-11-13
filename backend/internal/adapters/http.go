@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"sync"
 	"time"
 )
@@ -14,6 +15,7 @@ import (
 //
 //	GET  {base}/catalog   → AbsenceCatalog
 //	POST {base}/requests  ← AbsenceSubmit, заголовок Idempotency-Key → Receipt
+//	GET  {base}/requests/{id} → AbsenceStatus (опрос решения согласующего)
 //
 // Авторизация — сервисный токен в Authorization: Bearer (ABSENCE_SERVICE_TOKEN). Любой сетевой сбой,
 // 5xx или 429 → ErrUnavailable: черновик у стажёра сохраняется, «Повторить» безопасно благодаря ключу.
@@ -92,6 +94,18 @@ func (h *HTTPAbsence) Submit(ctx context.Context, r AbsenceSubmit) (Receipt, err
 	}
 	if out.Status == "" {
 		out.Status = "pending"
+	}
+	return out, nil
+}
+
+// Status — статус заявки в сервисе: решение согласующего принимается там.
+func (h *HTTPAbsence) Status(ctx context.Context, id string) (AbsenceStatus, error) {
+	var out AbsenceStatus
+	if err := h.do(ctx, http.MethodGet, "/requests/"+url.PathEscape(id), "", nil, &out); err != nil {
+		return AbsenceStatus{}, err
+	}
+	if out.ID == "" {
+		out.ID = id
 	}
 	return out, nil
 }

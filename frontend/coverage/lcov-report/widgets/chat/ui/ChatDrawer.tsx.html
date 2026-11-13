@@ -1,0 +1,948 @@
+
+<!doctype html>
+<html lang="en">
+
+<head>
+    <title>Code coverage report for widgets/chat/ui/ChatDrawer.tsx</title>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../../../prettify.css" />
+    <link rel="stylesheet" href="../../../base.css" />
+    <link rel="shortcut icon" type="image/x-icon" href="../../../favicon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="../../../theme.js"></script>
+    <style type='text/css'>
+        .coverage-summary .sorter {
+            background-image: url(../../../sort-arrow-sprite.png);
+        }
+    </style>
+</head>
+    
+<body>
+<div class='wrapper'>
+    <div class='pad1'>
+        
+        <label class="theme-select quiet">
+            Theme
+            <select id="themeSelect" autocomplete="off">
+                <option value="light">Light</option>
+                <option value="dark">Dark</option>
+                <option value="legacy">Legacy</option>
+            </select>
+        </label>
+
+        <h1><a href="../../../index.html">All files</a> / <a href="index.html">widgets/chat/ui</a> ChatDrawer.tsx</h1>
+        <div class='clearfix'>
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">93.49% </span>
+                <span class="quiet">Statements</span>
+                <span class='fraction'>158/169</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">87.7% </span>
+                <span class="quiet">Branches</span>
+                <span class='fraction'>157/179</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">91.11% </span>
+                <span class="quiet">Functions</span>
+                <span class='fraction'>41/45</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">98.37% </span>
+                <span class="quiet">Lines</span>
+                <span class='fraction'>121/123</span>
+            </div>
+        
+            
+        </div>
+        <p class="quiet">
+            Press <em>n</em> or <em>j</em> to go to the next uncovered block, <em>b</em>, <em>p</em> or <em>k</em> for the previous block.
+        </p>
+        <template id="filterTemplate">
+            <div class="quiet">
+                Filter:
+                <input type="search" id="fileSearch">
+            </div>
+        </template>
+    </div>
+    <div class='status-line high'></div>
+    <pre><table class="coverage">
+<tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
+<a name='L2'></a><a href='#L2'>2</a>
+<a name='L3'></a><a href='#L3'>3</a>
+<a name='L4'></a><a href='#L4'>4</a>
+<a name='L5'></a><a href='#L5'>5</a>
+<a name='L6'></a><a href='#L6'>6</a>
+<a name='L7'></a><a href='#L7'>7</a>
+<a name='L8'></a><a href='#L8'>8</a>
+<a name='L9'></a><a href='#L9'>9</a>
+<a name='L10'></a><a href='#L10'>10</a>
+<a name='L11'></a><a href='#L11'>11</a>
+<a name='L12'></a><a href='#L12'>12</a>
+<a name='L13'></a><a href='#L13'>13</a>
+<a name='L14'></a><a href='#L14'>14</a>
+<a name='L15'></a><a href='#L15'>15</a>
+<a name='L16'></a><a href='#L16'>16</a>
+<a name='L17'></a><a href='#L17'>17</a>
+<a name='L18'></a><a href='#L18'>18</a>
+<a name='L19'></a><a href='#L19'>19</a>
+<a name='L20'></a><a href='#L20'>20</a>
+<a name='L21'></a><a href='#L21'>21</a>
+<a name='L22'></a><a href='#L22'>22</a>
+<a name='L23'></a><a href='#L23'>23</a>
+<a name='L24'></a><a href='#L24'>24</a>
+<a name='L25'></a><a href='#L25'>25</a>
+<a name='L26'></a><a href='#L26'>26</a>
+<a name='L27'></a><a href='#L27'>27</a>
+<a name='L28'></a><a href='#L28'>28</a>
+<a name='L29'></a><a href='#L29'>29</a>
+<a name='L30'></a><a href='#L30'>30</a>
+<a name='L31'></a><a href='#L31'>31</a>
+<a name='L32'></a><a href='#L32'>32</a>
+<a name='L33'></a><a href='#L33'>33</a>
+<a name='L34'></a><a href='#L34'>34</a>
+<a name='L35'></a><a href='#L35'>35</a>
+<a name='L36'></a><a href='#L36'>36</a>
+<a name='L37'></a><a href='#L37'>37</a>
+<a name='L38'></a><a href='#L38'>38</a>
+<a name='L39'></a><a href='#L39'>39</a>
+<a name='L40'></a><a href='#L40'>40</a>
+<a name='L41'></a><a href='#L41'>41</a>
+<a name='L42'></a><a href='#L42'>42</a>
+<a name='L43'></a><a href='#L43'>43</a>
+<a name='L44'></a><a href='#L44'>44</a>
+<a name='L45'></a><a href='#L45'>45</a>
+<a name='L46'></a><a href='#L46'>46</a>
+<a name='L47'></a><a href='#L47'>47</a>
+<a name='L48'></a><a href='#L48'>48</a>
+<a name='L49'></a><a href='#L49'>49</a>
+<a name='L50'></a><a href='#L50'>50</a>
+<a name='L51'></a><a href='#L51'>51</a>
+<a name='L52'></a><a href='#L52'>52</a>
+<a name='L53'></a><a href='#L53'>53</a>
+<a name='L54'></a><a href='#L54'>54</a>
+<a name='L55'></a><a href='#L55'>55</a>
+<a name='L56'></a><a href='#L56'>56</a>
+<a name='L57'></a><a href='#L57'>57</a>
+<a name='L58'></a><a href='#L58'>58</a>
+<a name='L59'></a><a href='#L59'>59</a>
+<a name='L60'></a><a href='#L60'>60</a>
+<a name='L61'></a><a href='#L61'>61</a>
+<a name='L62'></a><a href='#L62'>62</a>
+<a name='L63'></a><a href='#L63'>63</a>
+<a name='L64'></a><a href='#L64'>64</a>
+<a name='L65'></a><a href='#L65'>65</a>
+<a name='L66'></a><a href='#L66'>66</a>
+<a name='L67'></a><a href='#L67'>67</a>
+<a name='L68'></a><a href='#L68'>68</a>
+<a name='L69'></a><a href='#L69'>69</a>
+<a name='L70'></a><a href='#L70'>70</a>
+<a name='L71'></a><a href='#L71'>71</a>
+<a name='L72'></a><a href='#L72'>72</a>
+<a name='L73'></a><a href='#L73'>73</a>
+<a name='L74'></a><a href='#L74'>74</a>
+<a name='L75'></a><a href='#L75'>75</a>
+<a name='L76'></a><a href='#L76'>76</a>
+<a name='L77'></a><a href='#L77'>77</a>
+<a name='L78'></a><a href='#L78'>78</a>
+<a name='L79'></a><a href='#L79'>79</a>
+<a name='L80'></a><a href='#L80'>80</a>
+<a name='L81'></a><a href='#L81'>81</a>
+<a name='L82'></a><a href='#L82'>82</a>
+<a name='L83'></a><a href='#L83'>83</a>
+<a name='L84'></a><a href='#L84'>84</a>
+<a name='L85'></a><a href='#L85'>85</a>
+<a name='L86'></a><a href='#L86'>86</a>
+<a name='L87'></a><a href='#L87'>87</a>
+<a name='L88'></a><a href='#L88'>88</a>
+<a name='L89'></a><a href='#L89'>89</a>
+<a name='L90'></a><a href='#L90'>90</a>
+<a name='L91'></a><a href='#L91'>91</a>
+<a name='L92'></a><a href='#L92'>92</a>
+<a name='L93'></a><a href='#L93'>93</a>
+<a name='L94'></a><a href='#L94'>94</a>
+<a name='L95'></a><a href='#L95'>95</a>
+<a name='L96'></a><a href='#L96'>96</a>
+<a name='L97'></a><a href='#L97'>97</a>
+<a name='L98'></a><a href='#L98'>98</a>
+<a name='L99'></a><a href='#L99'>99</a>
+<a name='L100'></a><a href='#L100'>100</a>
+<a name='L101'></a><a href='#L101'>101</a>
+<a name='L102'></a><a href='#L102'>102</a>
+<a name='L103'></a><a href='#L103'>103</a>
+<a name='L104'></a><a href='#L104'>104</a>
+<a name='L105'></a><a href='#L105'>105</a>
+<a name='L106'></a><a href='#L106'>106</a>
+<a name='L107'></a><a href='#L107'>107</a>
+<a name='L108'></a><a href='#L108'>108</a>
+<a name='L109'></a><a href='#L109'>109</a>
+<a name='L110'></a><a href='#L110'>110</a>
+<a name='L111'></a><a href='#L111'>111</a>
+<a name='L112'></a><a href='#L112'>112</a>
+<a name='L113'></a><a href='#L113'>113</a>
+<a name='L114'></a><a href='#L114'>114</a>
+<a name='L115'></a><a href='#L115'>115</a>
+<a name='L116'></a><a href='#L116'>116</a>
+<a name='L117'></a><a href='#L117'>117</a>
+<a name='L118'></a><a href='#L118'>118</a>
+<a name='L119'></a><a href='#L119'>119</a>
+<a name='L120'></a><a href='#L120'>120</a>
+<a name='L121'></a><a href='#L121'>121</a>
+<a name='L122'></a><a href='#L122'>122</a>
+<a name='L123'></a><a href='#L123'>123</a>
+<a name='L124'></a><a href='#L124'>124</a>
+<a name='L125'></a><a href='#L125'>125</a>
+<a name='L126'></a><a href='#L126'>126</a>
+<a name='L127'></a><a href='#L127'>127</a>
+<a name='L128'></a><a href='#L128'>128</a>
+<a name='L129'></a><a href='#L129'>129</a>
+<a name='L130'></a><a href='#L130'>130</a>
+<a name='L131'></a><a href='#L131'>131</a>
+<a name='L132'></a><a href='#L132'>132</a>
+<a name='L133'></a><a href='#L133'>133</a>
+<a name='L134'></a><a href='#L134'>134</a>
+<a name='L135'></a><a href='#L135'>135</a>
+<a name='L136'></a><a href='#L136'>136</a>
+<a name='L137'></a><a href='#L137'>137</a>
+<a name='L138'></a><a href='#L138'>138</a>
+<a name='L139'></a><a href='#L139'>139</a>
+<a name='L140'></a><a href='#L140'>140</a>
+<a name='L141'></a><a href='#L141'>141</a>
+<a name='L142'></a><a href='#L142'>142</a>
+<a name='L143'></a><a href='#L143'>143</a>
+<a name='L144'></a><a href='#L144'>144</a>
+<a name='L145'></a><a href='#L145'>145</a>
+<a name='L146'></a><a href='#L146'>146</a>
+<a name='L147'></a><a href='#L147'>147</a>
+<a name='L148'></a><a href='#L148'>148</a>
+<a name='L149'></a><a href='#L149'>149</a>
+<a name='L150'></a><a href='#L150'>150</a>
+<a name='L151'></a><a href='#L151'>151</a>
+<a name='L152'></a><a href='#L152'>152</a>
+<a name='L153'></a><a href='#L153'>153</a>
+<a name='L154'></a><a href='#L154'>154</a>
+<a name='L155'></a><a href='#L155'>155</a>
+<a name='L156'></a><a href='#L156'>156</a>
+<a name='L157'></a><a href='#L157'>157</a>
+<a name='L158'></a><a href='#L158'>158</a>
+<a name='L159'></a><a href='#L159'>159</a>
+<a name='L160'></a><a href='#L160'>160</a>
+<a name='L161'></a><a href='#L161'>161</a>
+<a name='L162'></a><a href='#L162'>162</a>
+<a name='L163'></a><a href='#L163'>163</a>
+<a name='L164'></a><a href='#L164'>164</a>
+<a name='L165'></a><a href='#L165'>165</a>
+<a name='L166'></a><a href='#L166'>166</a>
+<a name='L167'></a><a href='#L167'>167</a>
+<a name='L168'></a><a href='#L168'>168</a>
+<a name='L169'></a><a href='#L169'>169</a>
+<a name='L170'></a><a href='#L170'>170</a>
+<a name='L171'></a><a href='#L171'>171</a>
+<a name='L172'></a><a href='#L172'>172</a>
+<a name='L173'></a><a href='#L173'>173</a>
+<a name='L174'></a><a href='#L174'>174</a>
+<a name='L175'></a><a href='#L175'>175</a>
+<a name='L176'></a><a href='#L176'>176</a>
+<a name='L177'></a><a href='#L177'>177</a>
+<a name='L178'></a><a href='#L178'>178</a>
+<a name='L179'></a><a href='#L179'>179</a>
+<a name='L180'></a><a href='#L180'>180</a>
+<a name='L181'></a><a href='#L181'>181</a>
+<a name='L182'></a><a href='#L182'>182</a>
+<a name='L183'></a><a href='#L183'>183</a>
+<a name='L184'></a><a href='#L184'>184</a>
+<a name='L185'></a><a href='#L185'>185</a>
+<a name='L186'></a><a href='#L186'>186</a>
+<a name='L187'></a><a href='#L187'>187</a>
+<a name='L188'></a><a href='#L188'>188</a>
+<a name='L189'></a><a href='#L189'>189</a>
+<a name='L190'></a><a href='#L190'>190</a>
+<a name='L191'></a><a href='#L191'>191</a>
+<a name='L192'></a><a href='#L192'>192</a>
+<a name='L193'></a><a href='#L193'>193</a>
+<a name='L194'></a><a href='#L194'>194</a>
+<a name='L195'></a><a href='#L195'>195</a>
+<a name='L196'></a><a href='#L196'>196</a>
+<a name='L197'></a><a href='#L197'>197</a>
+<a name='L198'></a><a href='#L198'>198</a>
+<a name='L199'></a><a href='#L199'>199</a>
+<a name='L200'></a><a href='#L200'>200</a>
+<a name='L201'></a><a href='#L201'>201</a>
+<a name='L202'></a><a href='#L202'>202</a>
+<a name='L203'></a><a href='#L203'>203</a>
+<a name='L204'></a><a href='#L204'>204</a>
+<a name='L205'></a><a href='#L205'>205</a>
+<a name='L206'></a><a href='#L206'>206</a>
+<a name='L207'></a><a href='#L207'>207</a>
+<a name='L208'></a><a href='#L208'>208</a>
+<a name='L209'></a><a href='#L209'>209</a>
+<a name='L210'></a><a href='#L210'>210</a>
+<a name='L211'></a><a href='#L211'>211</a>
+<a name='L212'></a><a href='#L212'>212</a>
+<a name='L213'></a><a href='#L213'>213</a>
+<a name='L214'></a><a href='#L214'>214</a>
+<a name='L215'></a><a href='#L215'>215</a>
+<a name='L216'></a><a href='#L216'>216</a>
+<a name='L217'></a><a href='#L217'>217</a>
+<a name='L218'></a><a href='#L218'>218</a>
+<a name='L219'></a><a href='#L219'>219</a>
+<a name='L220'></a><a href='#L220'>220</a>
+<a name='L221'></a><a href='#L221'>221</a>
+<a name='L222'></a><a href='#L222'>222</a>
+<a name='L223'></a><a href='#L223'>223</a>
+<a name='L224'></a><a href='#L224'>224</a>
+<a name='L225'></a><a href='#L225'>225</a>
+<a name='L226'></a><a href='#L226'>226</a>
+<a name='L227'></a><a href='#L227'>227</a>
+<a name='L228'></a><a href='#L228'>228</a>
+<a name='L229'></a><a href='#L229'>229</a>
+<a name='L230'></a><a href='#L230'>230</a>
+<a name='L231'></a><a href='#L231'>231</a>
+<a name='L232'></a><a href='#L232'>232</a>
+<a name='L233'></a><a href='#L233'>233</a>
+<a name='L234'></a><a href='#L234'>234</a>
+<a name='L235'></a><a href='#L235'>235</a>
+<a name='L236'></a><a href='#L236'>236</a>
+<a name='L237'></a><a href='#L237'>237</a>
+<a name='L238'></a><a href='#L238'>238</a>
+<a name='L239'></a><a href='#L239'>239</a>
+<a name='L240'></a><a href='#L240'>240</a>
+<a name='L241'></a><a href='#L241'>241</a>
+<a name='L242'></a><a href='#L242'>242</a>
+<a name='L243'></a><a href='#L243'>243</a>
+<a name='L244'></a><a href='#L244'>244</a>
+<a name='L245'></a><a href='#L245'>245</a>
+<a name='L246'></a><a href='#L246'>246</a>
+<a name='L247'></a><a href='#L247'>247</a>
+<a name='L248'></a><a href='#L248'>248</a>
+<a name='L249'></a><a href='#L249'>249</a>
+<a name='L250'></a><a href='#L250'>250</a>
+<a name='L251'></a><a href='#L251'>251</a>
+<a name='L252'></a><a href='#L252'>252</a>
+<a name='L253'></a><a href='#L253'>253</a>
+<a name='L254'></a><a href='#L254'>254</a>
+<a name='L255'></a><a href='#L255'>255</a>
+<a name='L256'></a><a href='#L256'>256</a>
+<a name='L257'></a><a href='#L257'>257</a>
+<a name='L258'></a><a href='#L258'>258</a>
+<a name='L259'></a><a href='#L259'>259</a>
+<a name='L260'></a><a href='#L260'>260</a>
+<a name='L261'></a><a href='#L261'>261</a>
+<a name='L262'></a><a href='#L262'>262</a>
+<a name='L263'></a><a href='#L263'>263</a>
+<a name='L264'></a><a href='#L264'>264</a>
+<a name='L265'></a><a href='#L265'>265</a>
+<a name='L266'></a><a href='#L266'>266</a>
+<a name='L267'></a><a href='#L267'>267</a>
+<a name='L268'></a><a href='#L268'>268</a>
+<a name='L269'></a><a href='#L269'>269</a>
+<a name='L270'></a><a href='#L270'>270</a>
+<a name='L271'></a><a href='#L271'>271</a>
+<a name='L272'></a><a href='#L272'>272</a>
+<a name='L273'></a><a href='#L273'>273</a>
+<a name='L274'></a><a href='#L274'>274</a>
+<a name='L275'></a><a href='#L275'>275</a>
+<a name='L276'></a><a href='#L276'>276</a>
+<a name='L277'></a><a href='#L277'>277</a>
+<a name='L278'></a><a href='#L278'>278</a>
+<a name='L279'></a><a href='#L279'>279</a>
+<a name='L280'></a><a href='#L280'>280</a>
+<a name='L281'></a><a href='#L281'>281</a>
+<a name='L282'></a><a href='#L282'>282</a>
+<a name='L283'></a><a href='#L283'>283</a>
+<a name='L284'></a><a href='#L284'>284</a>
+<a name='L285'></a><a href='#L285'>285</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">1186x</span>
+<span class="cline-any cline-yes">1240x</span>
+<span class="cline-any cline-yes">1214x</span>
+<span class="cline-any cline-yes">1212x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">758x</span>
+<span class="cline-any cline-yes">758x</span>
+<span class="cline-any cline-yes">758x</span>
+<span class="cline-any cline-yes">1933x</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">1933x</span>
+<span class="cline-any cline-yes">1933x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">758x</span>
+<span class="cline-any cline-yes">1192x</span>
+<span class="cline-any cline-yes">1192x</span>
+<span class="cline-any cline-yes">1192x</span>
+<span class="cline-any cline-yes">23x</span>
+<span class="cline-any cline-yes">23x</span>
+<span class="cline-any cline-yes">23x</span>
+<span class="cline-any cline-yes">23x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1169x</span>
+<span class="cline-any cline-yes">1169x</span>
+<span class="cline-any cline-yes">1163x</span>
+<span class="cline-any cline-yes">1163x</span>
+<span class="cline-any cline-yes">1192x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">758x</span>
+<span class="cline-any cline-yes">758x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">149x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">492x</span>
+<span class="cline-any cline-yes">1449x</span>
+<span class="cline-any cline-yes">492x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">149x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">328x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">403x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">487x</span>
+<span class="cline-any cline-yes">487x</span>
+<span class="cline-any cline-yes">487x</span>
+<span class="cline-any cline-yes">487x</span>
+<span class="cline-any cline-yes">487x</span>
+<span class="cline-any cline-yes">487x</span>
+<span class="cline-any cline-yes">487x</span>
+<span class="cline-any cline-yes">487x</span>
+<span class="cline-any cline-yes">487x</span>
+<span class="cline-any cline-yes">487x</span>
+<span class="cline-any cline-yes">487x</span>
+<span class="cline-any cline-yes">487x</span>
+<span class="cline-any cline-yes">20x</span>
+<span class="cline-any cline-yes">16x</span>
+<span class="cline-any cline-yes">16x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">487x</span>
+<span class="cline-any cline-yes">38x</span>
+<span class="cline-any cline-yes">38x</span>
+<span class="cline-any cline-yes">12x</span>
+<span class="cline-any cline-yes">12x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">38x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">487x</span>
+<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">487x</span>
+<span class="cline-any cline-yes">487x</span>
+<span class="cline-any cline-yes">487x</span>
+<span class="cline-any cline-yes">84x</span>
+<span class="cline-any cline-yes">82x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">155x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">37x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">137x</span>
+<span class="cline-any cline-yes">137x</span>
+<span class="cline-any cline-yes">137x</span>
+<span class="cline-any cline-yes">137x</span>
+<span class="cline-any cline-yes">135x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">405x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">318x</span>
+<span class="cline-any cline-yes">318x</span>
+<span class="cline-any cline-yes">318x</span>
+<span class="cline-any cline-yes">318x</span>
+<span class="cline-any cline-yes">318x</span>
+<span class="cline-any cline-yes">318x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2014x</span>
+<span class="cline-any cline-yes">2014x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">829x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">636x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">428x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">102x</span>
+<span class="cline-any cline-yes">109x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">// Чат с Напарником: Markdown без HTML-вставок, читаемые черновики с «Подтвердить / Отмена»,
+// квитанция после подтверждения, «Повторить» при сбое (BR-11, BR-14, BR-43, BR-70, SC-05, SC-15).
+import { Fragment, useEffect, useRef, useState, type ReactNode } from "react";
+import { Box, Button, Checkbox, CircularProgress, Drawer, FormControlLabel, IconButton, Stack, TextField, Tooltip, Typography, useMediaQuery, useTheme } from "@mui/material";
+import { AddCommentOutlined, CloseRounded, SendRounded } from "@mui/icons-material";
+import { MascotBadge } from "@/shared/ui/Mascot";
+import { AiTag } from "@/shared/ui";
+import { ApiError, api, type ChatReply } from "@/shared/api";
+&nbsp;
+export type ChatMessage = { role: "user" | "assistant"; text: string; reply?: ChatReply; retryText?: string };
+export type Draft = ChatReply["drafts"][number];
+export type Lookup = { userName: (id: string) =&gt; string; systemTitle: (id: string) =&gt; string; stepTitle: (id: string) =&gt; string };
+&nbsp;
+// ---------- Markdown: жирный, код, списки, цитаты — только React-узлы ----------
+&nbsp;
+const inline = (text: string): ReactNode[] =&gt;
+  text.split(/(\*\*[^*]+\*\*|`[^`]+`)/g).filter(Boolean).map((part, i) =&gt; {
+    if (part.startsWith("**") &amp;&amp; part.endsWith("**")) return &lt;b key={i}&gt;{part.slice(2, -2)}&lt;/b&gt;;
+    if (part.startsWith("`") &amp;&amp; part.endsWith("`")) return &lt;Box key={i} component="code" sx={{ px: 0.5, bgcolor: "action.hover", fontSize: 13 }}&gt;{part.slice(1, -1)}&lt;/Box&gt;;
+    return &lt;Fragment key={i}&gt;{part}&lt;/Fragment&gt;;
+  });
+&nbsp;
+export const Markdown = ({ text }: { text: string }) =&gt; {
+  const blocks: ReactNode[] = [];
+  let list: { ordered: boolean; items: string[] } | null = null;
+  const flush = () =&gt; {
+    if (!list) return;
+    const Tag = list.ordered ? "ol" : "ul";
+    blocks.push(&lt;Box key={blocks.length} component={Tag} sx={{ my: 0.5, pl: 2.5 }}&gt;{list.items.map((it, i) =&gt; &lt;li key={i}&gt;{inline(it)}&lt;/li&gt;)}&lt;/Box&gt;);
+    list = null;
+  };
+  for (const raw of text.split("\n")) {
+    const line = raw.trimEnd();
+    const item = line.match(/^\s*([-*•]|\d+[.)])\s+(.*)$/);
+    if (item) {
+      const ordered = /\d/.test(item[1]);
+      if (!list || list.ordered !== ordered) { flush(); list = { ordered, items: [] }; }
+      list.items.push(item[2]);
+      continue;
+    }
+    flush();
+    if (!line.trim()) continue;
+    const quote = line.match(/^&gt;\s?(.*)$/);
+    const body = inline(quote ? quote[1] : line.replace(/^#{1,6}\s+/, ""));
+    blocks.push(quote
+      ? &lt;Box key={blocks.length} sx={{ borderLeft: 3, borderColor: "divider", pl: 1.5, my: 0.5 }}&gt;{body}&lt;/Box&gt;
+      : &lt;Typography key={blocks.length} sx={{ my: 0.5 }}&gt;{body}&lt;/Typography&gt;);
+  }
+  flush();
+  return &lt;&gt;{blocks}&lt;/&gt;;
+};
+&nbsp;
+// ---------- черновик действия ----------
+&nbsp;
+const ABSENCE: Record&lt;string, string&gt; = { day_off: "Отгул", vacation: "Отпуск", sick_leave: "Больничный" };
+const STATUS_RU: Record&lt;string, string&gt; = { pending: "на согласовании", approved: "согласовано", granted: "выдан", rejected: "отклонено", Sent: "отправлен", Done: "готово" };
+const ruDate = (iso: string) =&gt; (/^\d{4}-\d{2}-\d{2}$/.test(iso) ? new Date(`${iso}T12:00:00`).toLocaleDateString("ru-RU", { weekday: "long", day: "numeric", month: "long" }) : <span class="branch-1 cbranch-no" title="branch not covered" >iso);</span>
+&nbsp;
+// BR-14: человек видит, что именно уйдёт, а не имя инструмента.
+export const describeDraft = (d: Draft, look: Lookup): { title: string; rows: Array&lt;[string, string]&gt;; text?: string } =&gt; {
+  const a = d.args as Record&lt;string, string | boolean | undefined&gt;;
+  const s = (k: string) =&gt; (typeof a[k] === "string" ? (a[k] as string) : "");
+  switch (d.tool) {
+    case "create_absence_request":
+      return { title: `${ABSENCE[s("type")] ?? <span class="branch-1 cbranch-no" title="branch not covered" >"Отсутствие"}:</span> заявка в сервис отсутствий`, rows: [["Дата", ruDate(s("date"))], ["Комментарий", s("comment")]] };
+    case "request_access":
+      return { title: "Заявка на доступ", rows: [["Система", look.systemTitle(s("system"))], ["Зачем", s("reason")]] };
+    case "send_question":
+      return { title: `Вопрос: ${look.userName(s("addressee_id"))}`, rows: [["Почему", s("reason")], ["Срочность", a.urgent ? "срочно — сразу" : "обычный — в сводке"]], text: s("text") };
+    case "mark_step_done":
+      return { title: "Отметить шаг выполненным", rows: [["Шаг", look.stepTitle(s("step_id"))]] };
+    default:
+      return { title: "Действие", rows: [] };
+  }
+};
+&nbsp;
+// Черновик действия. Состояние подтверждает сервер: правки, подтверждение и отмена переживают перезагрузку
+// и другую вкладку (BR-14, SC-05). Из истории уже подтверждённый или отменённый черновик показывается сразу,
+// без запроса; ожидающий — перечитывается с сервера, чтобы показать актуальный текст и версию.
+const receiptNote = (r: Record&lt;string, string&gt; = {}) =&gt;
+  `Готово: ${[r.id, STATUS_RU[r.status] ?? <span class="branch-1 cbranch-no" title="branch not covered" >r.status, r</span>.approver, r.to &amp;&amp; `${r.to}, ${r.delivery}`].filter(Boolean).join(" · ")}`;
+&nbsp;
+export const DraftCard = ({ draft, login, look, onDone }: { draft: Draft; login: string; look: Lookup; onDone: (draft?: Draft) =&gt; void }) =&gt; {
+  const { t } = useTheme();
+  const settled = draft.status === "confirmed" || draft.status === "cancelled";
+  const [current, setCurrent] = useState(draft);
+  const [ready, setReady] = useState(settled);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [retry, setRetry] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [text, setText] = useState("");
+  const [urgent, setUrgent] = useState(false);
+  const controller = useRef&lt;AbortController | null&gt;(null);
+  const sync = async (signal: AbortSignal) =&gt; {
+    const r = await api&lt;{ draft: Draft }&gt;(login, `/api/drafts/${draft.id}`, { signal });
+    <span class="missing-if-branch" title="else path not taken" >E</span>if (!signal.aborted) { setCurrent(r.draft); setReady(true); }
+    return r.draft;
+  };
+  useEffect(() =&gt; {
+    const c = new AbortController(); controller.current = c;
+    if (!settled) {
+      setReady(false); setEditing(false); setError("");
+      void sync(c.signal).catch((e) =&gt; { <span class="missing-if-branch" title="else path not taken" >E</span>if (!c.signal.aborted) setError(e instanceof Error ? e.message : <span class="branch-1 cbranch-no" title="branch not covered" >"Не получилось загрузить черновик")</span>; });
+    }
+    return () =&gt; c.abort();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [login, draft.id]);
+  const run = async (method: "PATCH" | "POST" | "DELETE", body: unknown) =&gt; {
+    const signal = controller.current?.signal;
+    <span class="missing-if-branch" title="if path not taken" >I</span>if (busy || !ready || !signal || signal.aborted) <span class="cstat-no" title="statement not covered" >return;</span>
+    setBusy(true); setError(""); setRetry(false);
+    try {
+      await api(login, `/api/drafts/${draft.id}${method === "POST" ? "/confirm" : ""}`, { method, body: JSON.stringify(body), signal });
+      const saved = await sync(signal);
+      <span class="missing-if-branch" title="if path not taken" >I</span>if (signal.aborted) <span class="cstat-no" title="statement not covered" >return;</span>
+      setEditing(false); onDone(saved);
+    } catch (e) {
+      <span class="missing-if-branch" title="if path not taken" >I</span>if (signal.aborted) <span class="cstat-no" title="statement not covered" >return;</span>
+      setError(e instanceof Error ? e.message : <span class="branch-1 cbranch-no" title="branch not covered" >"Не получилось выполнить действие")</span>;
+      setRetry(e instanceof ApiError &amp;&amp; e.status === 503); // сервис недоступен — черновик сохранён, можно повторить
+      // Запрос мог выполниться, даже если ответ потерян: перечитываем состояние с сервера.
+      try {
+        const saved = await sync(signal);
+        <span class="missing-if-branch" title="if path not taken" >I</span>if (!signal.aborted &amp;&amp; saved.status !== "pending") { <span class="cstat-no" title="statement not covered" >setEditing(false); <span class="cstat-no" title="statement not covered" >o</span>nDone(saved); }</span>
+      } catch { /* кнопка «Обновить черновик» ниже */ <span class="cstat-no" title="statement not covered" >setReady(false); }</span>
+    } finally { <span class="missing-if-branch" title="else path not taken" >E</span>if (!signal.aborted) setBusy(false); }
+  };
+  const view = describeDraft(current, look);
+  const version = current.version ?? <span class="branch-1 cbranch-no" title="branch not covered" >1;</span>
+  if (ready &amp;&amp; current.status === "confirmed") return &lt;Box sx={{ p: 1.5, mt: 1, bgcolor: t.okSoft }}&gt;&lt;Typography fontWeight={600}&gt;✓ {receiptNote(current.result?.receipt)}&lt;/Typography&gt;&lt;/Box&gt;;
+  if (ready &amp;&amp; current.status === "cancelled") return &lt;Box sx={{ p: 1.5, mt: 1, border: `2px solid ${t.line}` }}&gt;&lt;Typography color="text.secondary"&gt;Отменено — ничего не отправлено.&lt;/Typography&gt;&lt;/Box&gt;;
+  return (
+    &lt;Box sx={{ p: 1.5, mt: 1, bgcolor: t.aiSoft }}&gt;
+      &lt;Typography variant="caption" sx={{ color: t.ai, fontWeight: 700 }}&gt;Черновик — проверь перед отправкой&lt;/Typography&gt;
+      &lt;Typography fontWeight={600} mt={0.5}&gt;{view.title}&lt;/Typography&gt;
+      {view.rows.filter(([, v]) =&gt; v).map(([k, v]) =&gt; &lt;Typography key={k} variant="body2"&gt;&lt;Box component="span" color="text.secondary"&gt;{k}: &lt;/Box&gt;{v}&lt;/Typography&gt;)}
+      {editing ? &lt;Stack gap={1} mt={1.5}&gt;
+        &lt;TextField label="Текст вопроса" value={text} onChange={(e) =&gt; setText(e.target.value)} fullWidth multiline minRows={3} disabled={busy}
+          sx={{ "&amp; .MuiInputBase-root": { bgcolor: t.bg }, "&amp; .MuiFormHelperText-root": { mx: 0 } }}
+          slotProps={{ htmlInput: { maxLength: 8000 } }} helperText="Исправь формулировку перед отправкой. Не добавляй паспортные или банковские данные." /&gt;
+        &lt;FormControlLabel control={&lt;Checkbox checked={urgent} disabled={busy} onChange={(e) =&gt; setUrgent(e.target.checked)} /&gt;} label="Срочно — без ответа не могу продолжить работу" /&gt;
+        &lt;Stack direction={{ xs: "column", sm: "row" }} gap={1}&gt;
+          &lt;Button variant="contained" disabled={busy || !text.trim()} onClick={() =&gt; void run("PATCH", { version, text, urgent })}&gt;Сохранить изменения&lt;/Button&gt;
+          &lt;Button variant="text" disabled={busy} onClick={() =&gt; setEditing(false)}&gt;Не сохранять&lt;/Button&gt;
+        &lt;/Stack&gt;
+      &lt;/Stack&gt; : view.text &amp;&amp; &lt;Box sx={{ p: 1.25, mt: 1, bgcolor: t.bg }}&gt;&lt;Markdown text={view.text} /&gt;&lt;/Box&gt;}
+      {error &amp;&amp; &lt;Typography variant="body2" color="error.main" mt={1} role="alert"&gt;{error}{retry ? " Черновик сохранён." : ""}&lt;/Typography&gt;}
+      {!ready &amp;&amp; error &amp;&amp; &lt;Button variant="text" onClick={() =&gt; { const signal = controller.current?.signal; <span class="missing-if-branch" title="else path not taken" >E</span>if (signal) { setError(""); void sync(signal).<span class="fstat-no" title="function not covered" >catch((e</span>) =&gt; { <span class="cstat-no" title="statement not covered" >if (!signal.aborted) <span class="cstat-no" title="statement not covered" >setError(e instanceof Error ? e.message : "Не получилось"); }</span></span>); } }}&gt;Обновить черновик&lt;/Button&gt;}
+      {current.tool === "send_question" &amp;&amp; !editing &amp;&amp; &lt;Button variant="text" disabled={!ready || busy} onClick={() =&gt; { setText(String(current.args.text ?? <span class="branch-1 cbranch-no" title="branch not covered" >"")</span>); setUrgent(Boolean(current.args.urgent)); setEditing(true); }}&gt;Изменить вопрос&lt;/Button&gt;}
+      &lt;Stack direction="row" spacing={1} mt={1.5}&gt;
+        &lt;Button variant="contained" fullWidth disabled={!ready || busy || editing} onClick={() =&gt; void run("POST", { version })}&gt;
+          {busy ? "Выполняю…" : retry ? "Повторить" : "Подтвердить"}
+        &lt;/Button&gt;
+        &lt;Button variant="outlined" fullWidth disabled={!ready || busy} onClick={() =&gt; void run("DELETE", { version })}&gt;Отмена&lt;/Button&gt;
+      &lt;/Stack&gt;
+    &lt;/Box&gt;
+  );
+};
+&nbsp;
+// ---------- окно чата ----------
+&nbsp;
+/** Отметка полезности ответа из базы (SCR-I2). «Не помогло» сразу ведёт к человеку. */
+const Feedback = ({ onNotHelpful, onRate }: { onNotHelpful: () =&gt; void; onRate: (value: string) =&gt; void }) =&gt; {
+  const [picked, setPicked] = useState("");
+  const options: Array&lt;[string, string]&gt; = [["helped", "Помогло"], ["not", "Не помогло"], ["stale", "Устарело"]];
+  const thanks: Record&lt;string, string&gt; = { helped: "Спасибо, учту", not: "Ищу, кто поможет…", stale: "Спасибо, передам владельцу базы" };
+  if (picked) return &lt;Typography variant="body2" color="text.secondary" sx={{ display: "block", mt: 1 }}&gt;{thanks[picked]}&lt;/Typography&gt;;
+  return &lt;Stack direction="row" gap={1} mt={1} flexWrap="wrap"&gt;
+    {options.map(([id, label]) =&gt; (
+      &lt;Button key={id} variant="text" size="small" sx={{ minHeight: 36, px: 1.5 }}
+        onClick={() =&gt; { setPicked(id); onRate(id === "not" ? "not_helped" : <span class="branch-1 cbranch-no" title="branch not covered" >id)</span>; <span class="missing-if-branch" title="else path not taken" >E</span>if (id === "not") onNotHelpful(); }}&gt;{label}&lt;/Button&gt;
+    ))}
+  &lt;/Stack&gt;;
+};
+&nbsp;
+type SoftKey = "todaySoft" | "aiSoft" | "okSoft" | "waitSoft";
+const QUICK: Array&lt;{ text: string; soft: SoftKey }&gt; = [
+  { text: "Что мне сегодня делать?", soft: "todaySoft" },
+  { text: "Что такое витрина?", soft: "aiSoft" },
+  { text: "Нужен отгул в пятницу", soft: "okSoft" },
+  { text: "Нужен доступ к Redash", soft: "waitSoft" },
+];
+&nbsp;
+/** На компьютере — панель справа, на телефоне — шторка снизу (как в дизайн-системе Авито). */
+export const ChatDrawer = ({ open, onClose, text, setText, messages, loading, onSend, login, look, onAction, onReset }: {
+  open: boolean; onClose: () =&gt; void; text: string; setText: (text: string) =&gt; void; messages: ChatMessage[]; loading: boolean;
+  onSend: (text?: string) =&gt; void; login: string; look: Lookup; onAction: () =&gt; void;
+  /** «Новый разговор»: окно пустеет, вопросы остаются в «Моих вопросах». */
+  onReset?: () =&gt; void;
+}) =&gt; {
+  const theme = useTheme();
+  const { t } = theme;
+  const mobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const end = useRef&lt;HTMLDivElement&gt;(null);
+  useEffect(() =&gt; { end.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, loading, open]);
+  return (
+    &lt;Drawer anchor={mobile ? "bottom" : "right"} open={open} onClose={onClose}
+      slotProps={{ paper: { sx: mobile ? { height: "88dvh", borderTop: `1px solid ${t.line}` } : { width: 440, borderLeft: `1px solid ${t.line}` } } }}&gt;
+      &lt;Stack height="100%" sx={{ bgcolor: t.bg }}&gt;
+        {mobile &amp;&amp; &lt;Box aria-hidden sx={{ width: 40, height: 4, bgcolor: t.line, mx: "auto", mt: 1 }} /&gt;}
+        &lt;Stack direction="row" alignItems="center" gap={1.5} sx={{ px: 2, py: 1.5, borderBottom: `1px solid ${t.line}` }}&gt;
+          &lt;MascotBadge size={48} /&gt;
+          &lt;Box flex={1} minWidth={0}&gt;
+            &lt;Stack direction="row" alignItems="center" gap={1} flexWrap="wrap"&gt;
+              &lt;Typography fontWeight={600} fontSize={17}&gt;Напарник&lt;/Typography&gt;
+              &lt;AiTag&gt;ИИ&lt;/AiTag&gt;
+            &lt;/Stack&gt;
+            &lt;Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}&gt;
+              {loading ? "Думаю…" : "Без подтверждения ничего не отправит"}
+            &lt;/Typography&gt;
+          &lt;/Box&gt;
+          {onReset &amp;&amp; messages.length &gt; 1 &amp;&amp; &lt;Tooltip title="Новый разговор"&gt;
+            &lt;IconButton onClick={onReset} disabled={loading} aria-label="Новый разговор"&gt;&lt;AddCommentOutlined /&gt;&lt;/IconButton&gt;
+          &lt;/Tooltip&gt;}
+          &lt;IconButton onClick={onClose} aria-label="Закрыть чат"&gt;&lt;CloseRounded /&gt;&lt;/IconButton&gt;
+        &lt;/Stack&gt;
+        &lt;Stack gap={2} sx={{ p: 2, flex: 1, overflowY: "auto" }}&gt;
+          {messages.map((m, index) =&gt; {
+            const intro = m.role === "assistant" &amp;&amp; index === 0 &amp;&amp; messages.length === 1;
+            return (
+              &lt;Box key={`${m.role}-${index}`} alignSelf={m.role === "user" ? "flex-end" : "stretch"}
+                sx={{ maxWidth: m.role === "user" ? "92%" : "100%", width: m.role === "assistant" ? "100%" : undefined }}&gt;
+                &lt;Box sx={{ px: 2, py: 1.5, bgcolor: m.role === "user" ? t.inverse : t.surface, color: m.role === "user" ? t.onInverse : t.text }}&gt;
+                  {m.reply?.degraded &amp;&amp; &lt;Typography variant="caption" sx={{ display: "block", color: t.muted, fontWeight: 600, mb: 0.5 }}&gt;Упрощённый режим · без модели&lt;/Typography&gt;}
+                  {m.role === "user" ? &lt;Typography&gt;{m.text}&lt;/Typography&gt; : &lt;Markdown text={m.text} /&gt;}
+                &lt;/Box&gt;
+                {m.reply?.sources.map((s) =&gt; (
+                  &lt;Box key={s.page_id} sx={{ px: 1.5, py: 1.25, mt: 1, bgcolor: t.surface }}&gt;
+                    &lt;Typography variant="body2" fontWeight={600}&gt;{s.title}&lt;/Typography&gt;
+                    &lt;Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}&gt;{s.author} · {s.updated_at}{s.label ? ` · ${s.label}` : ""}&lt;/Typography&gt;
+                  &lt;/Box&gt;
+                ))}
+                {m.reply?.drafts.map((d) =&gt; &lt;DraftCard key={d.id} draft={d} login={login} look={look} onDone={onAction} /&gt;)}
+                {m.reply &amp;&amp; m.reply.sources.length &gt; 0 &amp;&amp; !m.reply.drafts.length &amp;&amp; &lt;Feedback onNotHelpful={() =&gt; onSend(`Не помогло, нужен человек: ${messages[index - 1]?.text ?? <span class="branch-1 cbranch-no" title="branch not covered" >""}`)</span>}
+                  onRate={(value) =&gt; { void api(login, "/api/feedback", { method: "POST", body: JSON.stringify({ page_id: m.reply?.sources[0]?.page_id, value }) }).<span class="fstat-no" title="function not covered" >catch(() =&gt; <span class="cstat-no" title="statement not covered" >u</span>ndefined)</span>; }} /&gt;}
+                {m.reply?.actions &amp;&amp; m.reply.actions.length &gt; 0 &amp;&amp; index === messages.length - 1 &amp;&amp; !loading &amp;&amp; (
+                  &lt;Stack direction="row" gap={1} mt={1} flexWrap="wrap" aria-label="Быстрые действия"&gt;
+                    {m.reply.actions.map((x) =&gt; (
+                      &lt;Button key={x.label} variant="outlined" size="small" sx={{ minHeight: 36 }} onClick={() =&gt; onSend(x.text)}&gt;{x.label}&lt;/Button&gt;
+                    ))}
+                  &lt;/Stack&gt;
+                )}
+                {m.retryText &amp;&amp; &lt;Button variant="text" size="small" sx={{ mt: 1, minHeight: 36 }} onClick={() =&gt; onSend(m.retryText)}&gt;Повторить&lt;/Button&gt;}
+                {intro &amp;&amp; !loading &amp;&amp; (
+                  &lt;Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1, mt: 2 }}&gt;
+                    {QUICK.map((q) =&gt; (
+                      &lt;Button key={q.text} variant="text" <span class="fstat-no" title="function not covered" >onClick={() =&gt; <span class="cstat-no" title="statement not covered" >o</span>nSend(q.text)}</span>
+                        sx={{
+                          minHeight: 64, px: 1.5, py: 1.5, justifyContent: "flex-start", alignItems: "flex-start", textAlign: "left",
+                          bgcolor: t[q.soft], fontWeight: 600, lineHeight: 1.35, whiteSpace: "normal",
+                          "&amp;:hover": { bgcolor: t[q.soft], filter: "brightness(0.97)" },
+                        }}&gt;
+                        {q.text}
+                      &lt;/Button&gt;
+                    ))}
+                  &lt;/Box&gt;
+                )}
+              &lt;/Box&gt;
+            );
+          })}
+          {loading &amp;&amp; &lt;Stack direction="row" gap={1} alignItems="center"&gt;&lt;CircularProgress size={18} sx={{ color: t.ai }} /&gt;&lt;Typography color="text.secondary"&gt;Думаю…&lt;/Typography&gt;&lt;/Stack&gt;}
+          &lt;div ref={end} /&gt;
+        &lt;/Stack&gt;
+        &lt;Stack direction="row" gap={1} sx={{ p: 1.5, borderTop: `1px solid ${t.line}` }}&gt;
+          &lt;TextField autoFocus fullWidth multiline maxRows={4} value={text} onChange={(e) =&gt; setText(e.target.value)} placeholder="Спроси о команде или задачах"
+            aria-label="Сообщение Напарнику" onKeyDown={(e) =&gt; { if (e.key === "Enter" &amp;&amp; !e.shiftKey) { e.preventDefault(); onSend(); } }}
+            sx={{
+              // В чате чёрный фокус слишком жёсткий — мягкий контур цвета ИИ, поле остаётся заметным
+              "&amp; .MuiOutlinedInput-root.Mui-focused": { outline: `2px solid ${t.ai}`, outlineOffset: 0 },
+            }} /&gt;
+          &lt;IconButton <span class="fstat-no" title="function not covered" >onClick={() =&gt; <span class="cstat-no" title="statement not covered" >o</span>nSend()} d</span>isabled={!text.trim() || loading} aria-label="Отправить"
+            sx={{
+              width: 48, height: 48, borderRadius: 0, bgcolor: t.inverse, color: t.onInverse, alignSelf: "flex-end",
+              "&amp;:hover": { bgcolor: t.inverseHover },
+              "&amp;.Mui-disabled": { bgcolor: t.line, color: t.muted },
+            }}&gt;
+            &lt;SendRounded /&gt;
+          &lt;/IconButton&gt;
+        &lt;/Stack&gt;
+      &lt;/Stack&gt;
+    &lt;/Drawer&gt;
+  );
+};
+&nbsp;</pre></td></tr></table></pre>
+
+                <div class='push'></div><!-- for sticky footer -->
+            </div><!-- /wrapper -->
+            <div class='footer quiet pad2 space-top1 center small'>
+                Code coverage generated by
+                <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
+                at 2026-11-13T16:13:13.860Z
+            </div>
+        <script src="../../../prettify.js"></script>
+        <script>
+            window.onload = function () {
+                prettyPrint();
+            };
+        </script>
+        <script src="../../../sorter.js"></script>
+        <script src="../../../block-navigation.js"></script>
+    </body>
+</html>
+    

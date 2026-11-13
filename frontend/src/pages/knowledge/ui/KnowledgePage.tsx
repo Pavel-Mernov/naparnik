@@ -1,5 +1,5 @@
 // База знаний: поиск, папки-фильтры, страница целиком. Автор и дата — у каждой страницы (BR-01, BR-04).
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, InputAdornment, Stack, TextField, Typography, useMediaQuery, useTheme } from "@mui/material";
 import { SearchRounded } from "@mui/icons-material";
 import type { KbPage } from "@/shared/api";
@@ -36,7 +36,11 @@ const PageCard = ({ page, folder, folderIndex = 0, onOpen }: { page: KbPage; fol
   );
 };
 
-export const KnowledgePage = ({ data, onAsk }: { data: DataState; onAsk: (text: string) => void }) => {
+export const KnowledgePage = ({ data, onAsk, openId, onOpened }: {
+  data: DataState; onAsk: (text: string) => void;
+  /** Открыть страницу сразу — например, по ссылке из карты команды; onOpened сбрасывает запрос. */
+  openId?: string; onOpened?: () => void;
+}) => {
   const theme = useTheme();
   const { t, breakpoints, type } = theme;
   const softs = t.folderSoft;
@@ -45,6 +49,12 @@ export const KnowledgePage = ({ data, onAsk }: { data: DataState; onAsk: (text: 
   const [query, setQuery] = useState("");
   const [folder, setFolder] = useState("");
   const [open, setOpen] = useState<KbPage | null>(null);
+  useEffect(() => {
+    if (!openId) return;
+    const page = data.pages.find((p) => p.id === openId);
+    if (page) setOpen(page);
+    onOpened?.();
+  }, [openId, data.pages, onOpened]);
   const folderTitle = (id: string) => data.folders.find((f) => f.id === id)?.title;
   const pages = useMemo(() => {
     const q = query.trim().toLowerCase();

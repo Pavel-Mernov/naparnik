@@ -10,6 +10,7 @@ import (
 
 	"github.com/worker4556/naparnik/backend/internal/app"
 	"github.com/worker4556/naparnik/backend/internal/httpapi"
+	"github.com/worker4556/naparnik/backend/internal/tools"
 )
 
 func main() {
@@ -40,6 +41,9 @@ func main() {
 	if a.Events != nil {
 		go a.Events.Run(context.Background()) // выгрузка журнала событий в аналитику
 		log.Printf("события: выгрузка включена")
+	}
+	if a.AbsenceSync != nil { // решения согласующего в настоящем сервисе отсутствий доходят до стажёра
+		go tools.RunAbsenceSync(context.Background(), a.Store, a.AbsenceSync, a.AbsenceSyncInterval)
 	}
 	go a.TG.Run(context.Background()) // напоминания и Telegram в фоне; сбой Telegram не влияет на веб (BR-53)
 	log.Fatal(srv.ListenAndServe())
