@@ -76,7 +76,7 @@ describe("Mascot3D", () => {
     expect(screen.getByText("Z")).toBeInTheDocument();
     unmount();
     const drowsy = draw("drowsy");
-    expect(drowsy.container.querySelectorAll('[data-lid="0.55"]')).toHaveLength(2);
+    expect(drowsy.container.querySelectorAll('[data-lid="0.6"]')).toHaveLength(2);
     drowsy.unmount();
     const thinking = draw("thinking");
     expect(thinking.container.querySelectorAll('[data-mood="thinking"] span').length).toBeGreaterThanOrEqual(3);
@@ -94,8 +94,13 @@ describe("Mascot3D", () => {
     expect(idle.container.querySelector("[data-letter]")).toBeNull();
     idle.unmount();
     const sleeping = draw("sleeping");
-    expect(sleeping.container.querySelector<HTMLElement>('[data-paw="sleeping"]')!.getAttribute("class")).toBeTruthy();
     expect(sleeping.container.querySelector("[data-letter]")).toBeNull();
+    // Во сне ложится: появляются подушка и одеяло; проснувшись — убираются
+    expect(sleeping.container.querySelector('[data-pillow="true"]')).not.toBeNull();
+    expect(sleeping.container.querySelector('[data-blanket="true"]')).not.toBeNull();
+    sleeping.unmount();
+    const awake = draw("idle");
+    expect(awake.container.querySelector('[data-blanket="false"]')).not.toBeNull();
   });
 
   it("наклоняется к курсору в перспективе", () => {

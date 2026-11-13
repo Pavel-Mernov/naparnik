@@ -149,7 +149,7 @@ npm --prefix frontend run build             # TypeScript и сборка React
 
 **Backend:** отчёт — [docs/coverage/coverage.txt](docs/coverage/coverage.txt) (по функциям и итог) и `docs/coverage/coverage.html`. Покрытие строк — **93.7%**. Считаются `backend/internal` и `backend/cmd/buddy`; не входят зависимости, тесты и точка входа `cmd/server`.
 
-**Frontend:** отчёт — `frontend/coverage/index.html`. Считается **весь код приложения** в `frontend/src`, кроме тестов, точки входа и файлов с одними реэкспортами: строки **94.6%**, ветви **83.4%**, функции **89.2%**, операторы **91.6%**. Интеграционные тесты проходят интерфейс по ролям на настоящих ответах backend, записанных в режиме заглушки модели (`frontend/src/test/fixtures.json`).
+**Frontend:** отчёт — `frontend/coverage/index.html`. Считается **весь код приложения** в `frontend/src`, кроме тестов, точки входа и файлов с одними реэкспортами: строки **94.7%**, ветви **83.6%**, функции **89.2%**, операторы **91.6%**. Интеграционные тесты проходят интерфейс по ролям на настоящих ответах backend, записанных в режиме заглушки модели (`frontend/src/test/fixtures.json`).
 
 Порог 80% по всем метрикам проверяется в CI для обеих частей ([.github/workflows/tests.yml](.github/workflows/tests.yml)).
 
