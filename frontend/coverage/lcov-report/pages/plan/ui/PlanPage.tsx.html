@@ -43,7 +43,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">83.33% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>5/6</span>
+                <span class='fraction'>10/12</span>
             </div>
         
             
@@ -97,7 +97,11 @@
 <a name='L21'></a><a href='#L21'>21</a>
 <a name='L22'></a><a href='#L22'>22</a>
 <a name='L23'></a><a href='#L23'>23</a>
-<a name='L24'></a><a href='#L24'>24</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L24'></a><a href='#L24'>24</a>
+<a name='L25'></a><a href='#L25'>25</a>
+<a name='L26'></a><a href='#L26'>26</a>
+<a name='L27'></a><a href='#L27'>27</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -106,33 +110,37 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-yes">10x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">660x</span>
-<span class="cline-any cline-yes">45x</span>
-<span class="cline-any cline-yes">104x</span>
-<span class="cline-any cline-yes">29x</span>
-<span class="cline-any cline-yes">104x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">730x</span>
+<span class="cline-any cline-yes">50x</span>
+<span class="cline-any cline-yes">115x</span>
+<span class="cline-any cline-yes">32x</span>
+<span class="cline-any cline-yes">115x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">// Страница «Мой план» (FSD: pages/plan).
 import type { ReactNode } from "react";
-import { Stack, Typography } from "@mui/material";
+import { Button, Stack, Typography } from "@mui/material";
 import type { PlanData, PlanStep } from "@/shared/api";
 import { Block, Empty, PageHead } from "@/shared/ui";
 import { Progress, StepRow } from "@/entities/plan";
+import { PlanHistory } from "@/widgets/plan-draft";
 &nbsp;
-export const PlanPage = ({ plan, title, context, today, onMarkDone, picker, onTeam }: {
-  plan?: PlanData; title: string; context: string; today: string; onMarkDone?: (s: PlanStep) =&gt; void; picker?: ReactNode; onTeam?: () =&gt; void;
+export const PlanPage = ({ plan, title, context, today, onMarkDone, picker, onTeam, onManage }: {
+  plan?: PlanData; title: string; context: string; today: string; onMarkDone?: (s: PlanStep) =&gt; void; picker?: ReactNode; onTeam?: () =&gt; void; onManage?: () =&gt; void;
 }) =&gt; &lt;&gt;
-  &lt;PageHead context={context} title={title} action={picker} /&gt;
-  {!plan ? <span class="branch-0 cbranch-no" title="branch not covered" >&lt;Empty text="План ещё не утверждён." variant={2} /&gt; : &lt;S</span>tack gap={5}&gt;
+  &lt;PageHead context={context} title={title} action={&lt;Stack gap={1}&gt;{picker}{onManage &amp;&amp; &lt;Button onClick={onManage}&gt;Редакции и согласование&lt;/Button&gt;}&lt;/Stack&gt;} /&gt;
+  {!plan ? <span class="branch-0 cbranch-no" title="branch not covered" >&lt;Empty text="План ещё не утверждён." variant={2} /&gt; : &lt;S</span>tack gap={{ xs: 2, md: 5 }}&gt;
     &lt;Progress plan={plan} /&gt;
+    {plan.plan_revision &amp;&amp; <span class="branch-1 cbranch-no" title="branch not covered" >&lt;Typography variant="body2" color="text.secondary"&gt;Действующая редакция: {plan.plan_revision}&lt;/Typography&gt;}</span>
     {plan.stages.map((stage) =&gt; {
       const steps = plan.steps.filter((s) =&gt; s.stage === stage.id &amp;&amp; s.owner === "intern");
       if (!steps.length) return null;
@@ -141,6 +149,7 @@ export const PlanPage = ({ plan, title, context, today, onMarkDone, picker, onTe
         {steps.map((s) =&gt; &lt;StepRow key={s.id} step={s} today={today} onMarkDone={onMarkDone} onTeam={onTeam} /&gt;)}
       &lt;/Block&gt;;
     })}
+    &lt;PlanHistory history={plan.plan_history ?? []} /&gt;
   &lt;/Stack&gt;}
 &lt;/&gt;;
 &nbsp;</pre></td></tr></table></pre>
@@ -150,7 +159,7 @@ export const PlanPage = ({ plan, title, context, today, onMarkDone, picker, onTe
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-11-13T23:57:38.712Z
+                at 2026-11-14T22:36:36.112Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

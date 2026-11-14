@@ -39,9 +39,13 @@ func TestPlanDraftEditApprove(t *testing.T) {
 	if e != nil || v.EditedBy != "Екатерина Белова" || v.Comment == "" {
 		t.Fatal(v, e)
 	}
+	v, e = SubmitPlanDraft(buddy, "u-egorova", v.Version)
+	if e != nil {
+		t.Fatal(e)
+	}
 	ready := false
 	for _, n := range s.NotificationsFor("u-kovalev") {
-		ready = ready || n.Type == "plan_review" && strings.Contains(n.Text, "ждёт твоего утверждения")
+		ready = ready || n.Type == "plan_review" && strings.Contains(n.Text, "на согласование")
 	}
 	if !ready {
 		t.Fatal("руководитель не узнал, что план готов")

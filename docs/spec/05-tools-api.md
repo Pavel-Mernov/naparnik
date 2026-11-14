@@ -100,8 +100,8 @@ HTTP-коды в API: `forbidden` → 403, `not_found` → 404, `validation` →
 | POST | `/api/kb/duplicates/{id}` | `{decision: merge \| not_duplicate}` — объединить (старая ведёт на общую, авторы уведомлены, BR-39) или «не дубль» |
 | POST | `/api/kb/drafts/{id}/remind` | напомнить автору черновика |
 | GET | `/api/plans/{internId}/draft` | черновик или состояние плана — бадди и руководитель стажёра (SC-20): `status`, `can_edit`, `can_approve`, `auto_activate_at`, `stages`, `steps` |
-| PATCH | `/api/plans/{internId}/draft` | `{steps: [{step_id, due_date?, removed?}], comment?}` — правка бадди |
-| POST | `/api/plans/{internId}/approve` | утверждение руководителем |
+| PATCH | `/api/plans/{internId}/draft` | `{version, steps: [{step_id, due_date?, removed?}], comment}` — сохранить правки бадди без отправки |
+| POST | `/api/plans/{internId}/approve` | `{version}` — утверждение руководителем; [полный цикл и история](10-plan-lifecycle.md) |
 | GET | `/api/profile` | своя карточка |
 | PATCH | `/api/profile` | `{phone}` — свой рабочий телефон |
 | PUT / DELETE | `/api/profile/photo` | загрузить (тело — изображение) / убрать своё фото |
@@ -135,17 +135,10 @@ HTTP-коды в API: `forbidden` → 403, `not_found` → 404, `validation` →
 
 Тесты: `TestInternProfile`, `TestProfilePhone`, `TestProfilePhoto`, `TestContactsNotSentToModel`, `TestProfileAPI`, `TestProfileSnapshot`.
 
-## Черновик плана (SC-20, BR-81)
+## План адаптации (SC-20, BR-81, SCR-L2)
 
-Состояние плана — в `store` (`plans`, сохраняется в снимке PostgreSQL): `draft` → `approved` или `auto_activated`.
-
-- Черновик собирается из шаблона: срок шага — `due_offset` рабочих дней от `start_date` стажёра.
-- Стажёр плана не видит, пока он не активирован: `get_plan` → «План ещё готовится: черновик у бадди, утвердит руководитель».
-- Правит только бадди стажёра и только черновик: срок — рабочий день `ГГГГ-ММ-ДД`, `removed` убирает шаг, `comment` — руководителю. Руководитель получает «план ждёт утверждения».
-- Утверждает только руководитель стажёра: шаги (кроме убранных) становятся задачами трекера, стажёр и бадди уведомлены. Повтор — `validation`.
-- Без решения 2 рабочих дня руководителя с `created_at` → `auto_activated`: шаги по шаблону, `get_plan` возвращает `approval: «не утверждён…»`, руководителю напоминание. Утверждение позже снимает пометку.
-
-Тесты: `TestPlanDraftEditApprove`, `TestPlanAutoActivation`, `TestPlanDraftAPI`, `TestPlanStateSnapshot`.
+Полный контракт состояний, версий, возврата, повторного согласования и истории — [10-plan-lifecycle](10-plan-lifecycle.md).
+Все мутации плана требуют `version`; `PATCH /draft` сохраняет правки без отправки. Отправка — `POST /revisions/submit`. Новая редакция действующего плана применяется только после утверждения, с сохранением прогресса.
 
 ### Редактирование и отмена черновика (BR-14, BR-43, SC-05)
 

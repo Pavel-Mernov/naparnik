@@ -59,7 +59,7 @@ describe("вопросы: встречи, «не ко мне», переадре
       if (c.path === "/api/meetings") return { body: { meetings: [meeting] } };
       return undefined;
     });
-    expect(await screen.findByText(/📅 Встреча:/)).toBeInTheDocument();
+    expect(await screen.findByText(/Встреча:/)).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "Встреча записана — собрать ответ" }));
     await waitFor(() => expect(api.writesTo("/api/meetings/MTG-303/finish")[0]?.body).toEqual({ recorded: true }));
     await userEvent.click(await screen.findByRole("button", { name: "Записи не было" }));
@@ -174,7 +174,7 @@ describe("Telegram и уведомления", () => {
     expect(await within(dialog).findByText("123456")).toBeInTheDocument();
     expect(within(dialog).getByRole("link", { name: "Открыть @naparnik_bot" })).toHaveAttribute("href", "https://t.me/naparnik_bot?start=123456");
     connected = true;
-    expect(await within(dialog).findByText("✓ Telegram подключён", {}, { timeout: 4000 })).toBeInTheDocument();
+    expect(await within(dialog).findByText("Telegram подключён", {}, { timeout: 4000 })).toBeInTheDocument();
     await userEvent.click(within(dialog).getByRole("button", { name: "Отключить" }));
     expect(api.calls.some((c) => c.method === "DELETE" && c.path === "/api/telegram/link")).toBe(true);
     await userEvent.click(within(dialog).getByRole("button", { name: "Готово" }));

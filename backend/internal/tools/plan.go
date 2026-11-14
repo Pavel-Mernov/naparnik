@@ -73,6 +73,10 @@ func getPlan(c Ctx, args map[string]any) Result {
 	}
 	if p, found := c.Store.Plan(internID); found {
 		out["plan_status"] = p.Status
+		out["plan_revision"] = p.ActiveRevision
+		if c.User.ID != internID {
+			out["review_status"] = p.ReviewStatus
+		}
 		if p.Status == store.PlanAutoActivated {
 			out["approval"] = "не утверждён: активирован по шаблону, руководитель ещё не утвердил (BR-81)"
 		}

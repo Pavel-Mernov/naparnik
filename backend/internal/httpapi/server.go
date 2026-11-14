@@ -83,6 +83,8 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/plans/{internId}/draft", s.auth(s.planDraft)) // SC-20, BR-81
 	mux.HandleFunc("PATCH /api/plans/{internId}/draft", s.auth(s.planDraftEdit))
 	mux.HandleFunc("POST /api/plans/{internId}/approve", s.auth(s.planApprove))
+	mux.HandleFunc("POST /api/plans/{internId}/revisions/{action}", s.auth(s.planAction))
+	mux.HandleFunc("GET /api/plans/{internId}/history", s.auth(s.planHistory))
 	mux.HandleFunc("PATCH /api/plan-steps/{id}", s.auth(s.markStep))
 	mux.HandleFunc("GET /api/requests", s.auth(s.requests))
 	mux.HandleFunc("POST /api/requests", s.auth(s.createRequest))            // BR-42: «сделай сам» — форма сервиса
@@ -325,7 +327,18 @@ func (s *Server) confirm(w http.ResponseWriter, r *http.Request, u *mockdata.Use
 }
 
 func (s *Server) plan(w http.ResponseWriter, r *http.Request, u *mockdata.User) {
-	writeResult(w, tools.Run(tools.Ctx{Store: s.Store, User: u}, "get_plan", map[string]any{"intern_id": r.PathValue("internId")}))
+	c, id := s.ctx(u), r.PathValue("internId")
+	res := tools.Run(c, "get_plan", map[string]any{"intern_id": id})
+	if res.OK {
+		// История для человека: комментарии и повторяющиеся снимки не передаём инструментом модели.
+		history, e := tools.GetPlanHistory(c, id, true)
+		if e != nil {
+			writeResult(w, tools.Result{Error: e})
+			return
+		}
+		res.Data.(map[string]any)["plan_history"] = history.History
+	}
+	writeResult(w, res)
 }
 
 // markStep — клик человека в интерфейсе и есть подтверждение, черновик не нужен.

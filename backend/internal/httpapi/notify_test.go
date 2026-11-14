@@ -230,14 +230,17 @@ func TestPlanDraftAPI(t *testing.T) {
 	if code != 200 || v["status"] != "draft" || v["can_edit"] != true {
 		t.Fatal(code, v)
 	}
-	code, v = call(t, h, "PATCH", "/api/plans/u-egorova/draft", "buddy.belova", `{"steps":[{"step_id":"s-14","removed":true}],"comment":"без A/B"}`)
+	code, v = call(t, h, "PATCH", "/api/plans/u-egorova/draft", "buddy.belova", `{"version":1,"steps":[{"step_id":"s-14","removed":true}],"comment":"без A/B"}`)
 	if code != 200 || v["comment"] != "без A/B" {
 		t.Fatal(code, v)
 	}
-	if code, _ := call(t, h, "POST", "/api/plans/u-egorova/approve", "buddy.belova", ""); code != 403 {
+	if code, _ := call(t, h, "POST", "/api/plans/u-egorova/revisions/submit", "buddy.belova", `{"version":2}`); code != 200 {
 		t.Fatal(code)
 	}
-	code, v = call(t, h, "POST", "/api/plans/u-egorova/approve", "lead.kovalev", "")
+	if code, _ := call(t, h, "POST", "/api/plans/u-egorova/approve", "buddy.belova", `{"version":3}`); code != 403 {
+		t.Fatal(code)
+	}
+	code, v = call(t, h, "POST", "/api/plans/u-egorova/approve", "lead.kovalev", `{"version":3}`)
 	if code != 200 || v["status"] != "approved" {
 		t.Fatal(code, v)
 	}

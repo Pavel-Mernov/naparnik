@@ -155,6 +155,18 @@ func searchKB(c Ctx, args map[string]any) Result {
 	if c.Question != "" && c.Question != query {
 		hits = mergeHits(cached(c, "search", c.Question, func() []Hit { return SearchKB(c, c.Question) }), hits)
 	}
+	// BR-49: кэш не является источником прав или грифа — перед моделью сверяем страницы заново.
+	pages := map[string]mockdata.Page{}
+	for _, p := range readablePages(c) {
+		pages[p.ID] = p
+	}
+	safe := []Hit{}
+	for _, h := range hits {
+		if p, ok := pages[h.PageID]; ok {
+			safe = append(safe, hitOf(c, p, h.Score))
+		}
+	}
+	hits = safe
 	return ok(map[string]any{"found": len(hits) > 0, "hits": hits})
 }
 

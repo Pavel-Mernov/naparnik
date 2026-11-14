@@ -61,7 +61,7 @@ export const TeamPage = ({ overview, onRequests, onProfile, onPlanDraft }: { ove
     </Box>
     <Block title="Стажёры">
       {overview.interns.length ? overview.interns.map((i) => {
-        const showDraft = unapproved(i.plan_status);
+        const showDraft = unapproved(i.plan_status) || Boolean(i.review_status);
         const end = (i.overdue_steps > 0 || showDraft) ? (
           <>
             {i.overdue_steps > 0 && <StatusTag status="Overdue" label={`Просрочено: ${i.overdue_steps}`} />}
@@ -72,7 +72,7 @@ export const TeamPage = ({ overview, onRequests, onProfile, onPlanDraft }: { ove
               />
             )}
             {showDraft && onPlanDraft && (
-              <Button variant="text" size="small" onClick={() => onPlanDraft(i.id)} sx={actionBtn}>
+              <Button data-testid={`plan-control-${i.id}`} variant="text" size="small" onClick={() => onPlanDraft(i.id)} sx={actionBtn}>
                 Утвердить план
               </Button>
             )}
@@ -116,7 +116,7 @@ export const TeamPage = ({ overview, onRequests, onProfile, onPlanDraft }: { ove
                 </Stack>
               </Box>
             }
-            end={end}
+            end={<Stack gap={1}>{end}{!showDraft && onPlanDraft && <Button data-testid={`plan-control-${i.id}`} variant="text" size="small" onClick={() => onPlanDraft(i.id)}>План и согласование</Button>}</Stack>}
           />
         );
       }) : <Empty text="В отделе пока нет стажёров." />}

@@ -79,6 +79,30 @@ jobs:
   docker:
     name: Docker Compose — все образы
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
-      - run: docker compose build
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: scripts/requirements-acceptance.txt
+      - run: python -m pip install -r scripts/requirements-acceptance.txt
+      - run: python -m playwright install --with-deps chromium
+      - name: Собранный стенд с отдельными тестовыми томами
+        run: docker compose -p naparnik-acceptance -f docker-compose.yml -f docker/compose.acceptance.yml up -d --build --wait
+      - name: Приёмка по ролям, перезапуск и сбои
+        run: python scripts/test_mvp_acceptance.py
+      - name: Логи при ошибке
+        if: failure()
+        run: |
+          mkdir -p .artifacts/acceptance
+          docker compose -p naparnik-acceptance -f docker-compose.yml -f docker/compose.acceptance.yml logs --no-color > .artifacts/acceptance/compose.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mvp-acceptance
+          path: .artifacts/acceptance
+      - name: Очистить только стенд приёмки
+        if: always()
+        run: docker compose -p naparnik-acceptance -f docker-compose.yml -f docker/compose.acceptance.yml down --volumes --remove-orphans

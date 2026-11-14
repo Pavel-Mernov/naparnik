@@ -2,6 +2,7 @@
 __pycache__/
 *.pyc
 .venv/
+.venv-acceptance/
 .pytest_cache/
 
 # Node
@@ -21,3 +22,6 @@ coverage.out
 # IDE
 .idea/
 .vscode/
+
+# Результаты локальной и CI-приёмки
+.artifacts/

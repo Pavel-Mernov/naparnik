@@ -5,8 +5,35 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/worker4556/naparnik/backend/internal/cache"
 	"github.com/worker4556/naparnik/backend/internal/mockdata"
 )
+
+// Приёмка BR-49: прогретый кэш не переживает смену грифа или правку текста той же длины.
+func TestClassificationChangeInvalidatesCache(t *testing.T) {
+	old := KBCache
+	KBCache = cache.NewMemory()
+	defer func() { KBCache = old }()
+	s := newStore(t)
+	s.UpdatePage("kb-04", func(p *mockdata.Page) {
+		p.Title = "Canary"
+		p.Body = "Canary secret-one"
+		p.Classification = mockdata.ClassInternal
+	})
+	c := ctxFor(t, s, "intern.sokolov")
+	query := map[string]any{"query": "Canary"}
+	Run(c, "search_kb", query)
+	s.UpdatePage("kb-04", func(p *mockdata.Page) { p.Body = "Canary secret-two" })
+	raw, _ := json.Marshal(Run(c, "search_kb", query))
+	if !strings.Contains(string(raw), "secret-two") || strings.Contains(string(raw), "secret-one") {
+		t.Fatal(string(raw))
+	}
+	s.UpdatePage("kb-04", func(p *mockdata.Page) { p.Classification = mockdata.ClassConfidential })
+	raw, _ = json.Marshal(Run(c, "search_kb", query))
+	if strings.Contains(string(raw), "secret-two") || !strings.Contains(string(raw), ConfidentialLabel) {
+		t.Fatal(string(raw))
+	}
+}
 
 // secret — фраза из текста kb-41, которой не должно быть ни в одном результате для внешней модели.
 const secret = "пилот подписки"

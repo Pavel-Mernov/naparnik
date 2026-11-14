@@ -25,3 +25,8 @@ Object.defineProperty(window, "scrollTo", { value: vi.fn(), writable: true });
 
 // В jsdom нет прокрутки к элементу — чат прокручивает ленту к последнему сообщению.
 Element.prototype.scrollIntoView = vi.fn();
+
+// Pointer capture поддерживается браузером, но отсутствует в jsdom (перетаскивание маскота).
+Element.prototype.setPointerCapture ??= () => undefined;
+Element.prototype.releasePointerCapture ??= () => undefined;
+Element.prototype.hasPointerCapture ??= () => false;

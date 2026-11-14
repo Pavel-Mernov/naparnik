@@ -1,0 +1,30 @@
+# Только отдельный стенд приёмки: синтетика, без внешних моделей и сообщений людям.
+# docker compose -p naparnik-acceptance -f docker-compose.yml -f docker/compose.acceptance.yml up -d --build --wait
+services:
+  backend:
+    ports: !override ["127.0.0.1:18082:8080"]
+    env_file: !reset []
+    environment:
+      LLM_PROVIDER: stub
+      LLM_MODE: ${ACCEPTANCE_LLM_MODE:-stub_ok}
+      LLM_API_KEY: ""
+      ANTHROPIC_API_KEY: ""
+      DEEPSEEK_API_KEY: ""
+      TG_MODE: log
+      TG_BOT_TOKEN: ""
+      TOKEN_TG: ""
+      token_tg: ""
+      ABSENCE_SERVICE_URL: ""
+      ABSENCE_SERVICE_TOKEN: ""
+      EVENTS_URL: ""
+      EVENTS_FILE: ""
+      EVENTS_TOKEN: ""
+      FLAGS_FILE: ""
+      # Сроки и автоактивация проверяются Go-тестами с управляемыми часами.
+      FEATURE_FLAGS: watchers=off
+      MOCK_FAIL: ${ACCEPTANCE_MOCK_FAIL:-}
+      LLM_RATE_PER_MIN: "1000"
+      FRONTEND_URL: http://localhost:18001
+      WEB_URL: http://localhost:18001
+  frontend:
+    ports: !override ["127.0.0.1:18001:3000"]

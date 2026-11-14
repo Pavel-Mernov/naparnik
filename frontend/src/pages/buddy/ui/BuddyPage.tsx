@@ -93,7 +93,7 @@ export const BuddyPage = ({ data, onPlan, onQuestions, onProfile, onPlanDraft }:
             </Button>
           )
           : (
-            <Button variant="contained" size="small" onClick={() => onPlanDraft(i.id)} sx={{ minHeight: { xs: size.control, sm: size.controlSm } }}>
+            <Button data-testid={`plan-control-${i.id}`} variant="contained" size="small" onClick={() => onPlanDraft(i.id)} sx={{ minHeight: { xs: size.control, sm: size.controlSm } }}>
               Проверить черновик
             </Button>
           );
@@ -145,7 +145,7 @@ export const BuddyPage = ({ data, onPlan, onQuestions, onProfile, onPlanDraft }:
                 )}
               </Box>
             }
-            end={planAction}
+            end={<Stack gap={1}>{planAction}{i.plan && onPlanDraft && <Button data-testid={`plan-control-${i.id}`} variant="text" size="small" onClick={() => onPlanDraft(i.id)}>Редакции и согласование</Button>}</Stack>}
           />
         );
       }) : <Empty text="За тобой пока не закреплены стажёры." />}

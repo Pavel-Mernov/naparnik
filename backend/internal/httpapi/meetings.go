@@ -129,42 +129,6 @@ func (s *Server) kbRemind(w http.ResponseWriter, r *http.Request, u *mockdata.Us
 	writeJSON(w, 200, map[string]bool{"ok": true})
 }
 
-// Черновик плана (SC-20, BR-81): бадди и руководитель стажёра.
-func (s *Server) planDraft(w http.ResponseWriter, r *http.Request, u *mockdata.User) {
-	v, e := tools.GetPlanDraft(s.ctx(u), r.PathValue("internId"))
-	if e != nil {
-		writeResult(w, tools.Result{Error: e})
-		return
-	}
-	writeJSON(w, 200, v)
-}
-
-func (s *Server) planDraftEdit(w http.ResponseWriter, r *http.Request, u *mockdata.User) {
-	var body struct {
-		Steps   []tools.PlanEdit `json:"steps"`
-		Comment string           `json:"comment"`
-	}
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		writeResult(w, tools.Result{Error: &tools.Error{Code: "validation", Message: "Некорректный запрос."}})
-		return
-	}
-	v, e := tools.EditPlanDraft(s.ctx(u), r.PathValue("internId"), body.Steps, body.Comment)
-	if e != nil {
-		writeResult(w, tools.Result{Error: e})
-		return
-	}
-	writeJSON(w, 200, v)
-}
-
-func (s *Server) planApprove(w http.ResponseWriter, r *http.Request, u *mockdata.User) {
-	v, e := tools.ApprovePlan(s.ctx(u), r.PathValue("internId"))
-	if e != nil {
-		writeResult(w, tools.Result{Error: e})
-		return
-	}
-	writeJSON(w, 200, v)
-}
-
 func (s *Server) kbCheck(w http.ResponseWriter, _ *http.Request, u *mockdata.User) {
 	m, e := tools.CheckKBNow(s.ctx(u))
 	if e != nil {
