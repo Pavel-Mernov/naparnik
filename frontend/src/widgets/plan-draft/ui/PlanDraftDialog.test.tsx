@@ -8,6 +8,7 @@ import type { PlanDraft } from "@/shared/api";
 import { PlanDraftDialog } from "./PlanDraftDialog";
 
 const base: PlanDraft = {
+  version: 1, revision: 1, active_revision: 0, review_status: "review", changes: [], history: [], can_submit: false, can_return: false, can_start: false, can_cancel: false,
   intern_id: "u-egorova", intern: "Полина Егорова", status: "draft", created_at: "2026-11-11T09:00:00+03:00",
   auto_activate_at: "2026-11-13T09:00:00+03:00", can_edit: true, can_approve: false,
   stages: [{ id: "st-w2", title: "Неделя 2", order: 2 }, { id: "st-w1", title: "Неделя 1", order: 1 }],
@@ -52,6 +53,7 @@ describe("PlanDraftDialog", () => {
     expect(JSON.parse(String(init?.body))).toEqual({
       steps: [{ due_date: "2026-12-11", step_id: "s-01" }, { removed: true, step_id: "s-05" }],
       comment: "Без Tableau",
+      version: 1,
     });
     expect(await screen.findByText("Без Tableau")).toBeInTheDocument();
   });
@@ -76,7 +78,7 @@ describe("PlanDraftDialog", () => {
     expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Убрать" })).not.toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "Утвердить план" }));
-    await waitFor(() => expect(onClose).toHaveBeenCalled());
+    await waitFor(() => expect(onDone).toHaveBeenCalled());
     expect(fetchMock.mock.calls[1][0]).toBe("/api/plans/u-egorova/approve");
     expect(fetchMock.mock.calls[1][1]?.method).toBe("POST");
     expect(onDone).toHaveBeenCalledWith(expect.stringMatching(/План утверждён/));

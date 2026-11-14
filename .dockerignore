@@ -1,4 +1,6 @@
 .git
+.artifacts
+.venv-acceptance
 .env
 node_modules
 frontend/node_modules

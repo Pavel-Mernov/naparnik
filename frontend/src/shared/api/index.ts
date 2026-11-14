@@ -56,6 +56,9 @@ export type PlanData = {
   next_step?: PlanStep;
   /** BR-81: draft | approved | auto_activated; approval — пометка «не утверждён». */
   plan_status?: string;
+  plan_revision?: number;
+  review_status?: string;
+  plan_history?: PlanHistory[];
   approval?: string;
 };
 
@@ -105,7 +108,7 @@ export type RequestItem = {
 };
 
 export type InternOverview = {
-  id: string; name: string; buddy: string; week: number; plan_status: string;
+  id: string; name: string; buddy: string; week: number; plan_status: string; review_status?: string;
   stage: string; progress_pct: number; overdue_steps: number; open_questions: number;
 };
 
@@ -241,7 +244,9 @@ export const fetchPhoto = async (login: string, url: string, signal?: AbortSigna
 };
 
 // ---------- Черновик плана адаптации (SC-20, BR-81, spec/05 «Черновик плана») ----------
-export type PlanDraftStep = { id: string; title: string; stage: string; owner: string; due_date: string; removed?: boolean };
+export type PlanDraftStep = { id: string; title: string; stage: string; owner: string; due_date: string; removed?: boolean; done?: boolean };
+export type PlanChange = { step_id: string; old_due_date: string; due_date: string; was_removed: boolean; removed: boolean };
+export type PlanHistory = { version: number; revision: number; action: string; by: string; at: string; comment?: string; steps: PlanDraftStep[]; changes: PlanChange[] };
 export type PlanDraft = {
   intern_id: string;
   intern: string;
@@ -251,8 +256,19 @@ export type PlanDraft = {
   comment?: string;
   approved_by?: string;
   auto_activate_at?: string;
+  version: number;
+  revision: number;
+  active_revision: number;
+  review_status: string;
+  return_comment?: string;
+  changes: PlanChange[];
+  history: PlanHistory[];
   can_edit: boolean;
   can_approve: boolean;
+  can_submit: boolean;
+  can_return: boolean;
+  can_start: boolean;
+  can_cancel: boolean;
   stages: Array<{ id: string; title: string; order: number }>;
   steps: PlanDraftStep[];
 };
@@ -261,11 +277,14 @@ export type PlanDraftEdit = { step_id?: string; due_date?: string; removed?: boo
 export const getPlanDraft = (login: string, internId: string, init: RequestInit = {}) =>
   api<PlanDraft>(login, `/api/plans/${encodeURIComponent(internId)}/draft`, init);
 
-export const editPlanDraft = (login: string, internId: string, steps: PlanDraftEdit[], comment: string) =>
-  api<PlanDraft>(login, `/api/plans/${encodeURIComponent(internId)}/draft`, { method: "PATCH", body: JSON.stringify({ steps, comment }) });
+export const editPlanDraft = (login: string, internId: string, steps: PlanDraftEdit[], comment: string, version: number, signal?: AbortSignal) =>
+  api<PlanDraft>(login, `/api/plans/${encodeURIComponent(internId)}/draft`, { method: "PATCH", body: JSON.stringify({ version, steps, comment }), signal });
 
-export const approvePlan = (login: string, internId: string) =>
-  api<PlanDraft>(login, `/api/plans/${encodeURIComponent(internId)}/approve`, { method: "POST", body: "{}" });
+export const approvePlan = (login: string, internId: string, version: number, signal?: AbortSignal) =>
+  api<PlanDraft>(login, `/api/plans/${encodeURIComponent(internId)}/approve`, { method: "POST", body: JSON.stringify({ version }), signal });
+
+export const planRevisionAction = (login: string, internId: string, action: "start" | "submit" | "return" | "cancel", version: number, comment = "", signal?: AbortSignal) =>
+  api<PlanDraft>(login, `/api/plans/${encodeURIComponent(internId)}/revisions/${action}`, { method: "POST", body: JSON.stringify({ version, comment }), signal });
 
 // ---------- Живые обновления (SSE) ----------
 /**

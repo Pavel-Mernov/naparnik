@@ -96,6 +96,9 @@ func (s *Store) restore(v snapshot) error {
 			s.plans[p.InternID] = s.initialPlan(p)
 		}
 	}
+	for _, p := range s.plans {
+		s.initPlanVersion(p)
+	}
 	if s.kbDecisions == nil {
 		s.kbDecisions = map[string]string{}
 	}

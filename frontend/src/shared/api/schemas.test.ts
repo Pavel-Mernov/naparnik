@@ -1,8 +1,14 @@
 import { describe, expect, it, vi } from "vitest";
 import fixtures from "@/test/fixtures.json";
+import plans from "@/test/plan-fixtures.json";
 import { checkShape, schemaFor } from "./schemas";
 
 describe("проверка ответов сервера", () => {
+  it("контракты плана записаны с собранного backend", () => {
+    expect(checkShape("GET", "/api/plans/u-egorova/draft", plans.buddyDraft)).toBeNull();
+    expect(checkShape("GET", "/api/plans/u-egorova/draft", plans.leadDraft)).toBeNull();
+    expect(checkShape("GET", "/api/plans/u-sokolov/history", plans.internHistory)).toBeNull();
+  });
   // Записанные ответы настоящего backend должны проходить схемы — иначе проверка сломала бы рабочий экран.
   it("все записанные ответы backend проходят схемы", () => {
     let checked = 0;

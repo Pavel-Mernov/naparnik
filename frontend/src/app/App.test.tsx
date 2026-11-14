@@ -65,7 +65,7 @@ describe("стажёр", () => {
     await userEvent.click(await screen.findByText(/ABS-1042/));
     const dialog = await screen.findByRole("dialog");
     expect(within(dialog).getByText("История")).toBeInTheDocument();
-    await userEvent.click(within(dialog).getByRole("button", { name: "Закрыть" }));
+    await userEvent.click(within(dialog).getAllByRole("button", { name: "Закрыть" }).at(-1)!);
   });
 
   it("в чате видит сохранённую историю, подтверждает черновик и начинает новый разговор", async () => {
@@ -437,7 +437,7 @@ describe("карта команды (SC-02)", () => {
     await userEvent.click(within(card).getByRole("button", { name: "Скопировать" }));
     expect(within(card).getByRole("status")).toHaveTextContent("скопируй вручную");
     await userEvent.click(within(card).getByRole("button", { name: "Свернуть" }));
-    await userEvent.click(within(dialog).getByRole("button", { name: "Закрыть" }));
+    await userEvent.click(within(dialog).getAllByRole("button", { name: "Закрыть" }).at(-1)!);
 
     fail = true;
     await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());

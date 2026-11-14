@@ -36,28 +36,28 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>16/16</span>
+                <span class='fraction'>26/26</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>31/31</span>
+                <span class='fraction'>41/41</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>4/4</span>
+                <span class='fraction'>5/5</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>11/11</span>
+                <span class='fraction'>17/17</span>
             </div>
         
             
@@ -112,7 +112,16 @@
 <a name='L36'></a><a href='#L36'>36</a>
 <a name='L37'></a><a href='#L37'>37</a>
 <a name='L38'></a><a href='#L38'>38</a>
-<a name='L39'></a><a href='#L39'>39</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L39'></a><a href='#L39'>39</a>
+<a name='L40'></a><a href='#L40'>40</a>
+<a name='L41'></a><a href='#L41'>41</a>
+<a name='L42'></a><a href='#L42'>42</a>
+<a name='L43'></a><a href='#L43'>43</a>
+<a name='L44'></a><a href='#L44'>44</a>
+<a name='L45'></a><a href='#L45'>45</a>
+<a name='L46'></a><a href='#L46'>46</a>
+<a name='L47'></a><a href='#L47'>47</a>
+<a name='L48'></a><a href='#L48'>48</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -133,22 +142,31 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">13x</span>
-<span class="cline-any cline-yes">3380x</span>
+<span class="cline-any cline-yes">15x</span>
+<span class="cline-any cline-yes">3989x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">13x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">13x</span>
-<span class="cline-any cline-yes">2288x</span>
-<span class="cline-any cline-yes">1487x</span>
-<span class="cline-any cline-yes">1147x</span>
-<span class="cline-any cline-yes">782x</span>
-<span class="cline-any cline-yes">401x</span>
+<span class="cline-any cline-yes">15x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">404x</span>
-<span class="cline-any cline-yes">2020x</span>
+<span class="cline-any cline-yes">15x</span>
+<span class="cline-any cline-yes">2402x</span>
+<span class="cline-any cline-yes">1559x</span>
+<span class="cline-any cline-yes">1204x</span>
+<span class="cline-any cline-yes">822x</span>
+<span class="cline-any cline-yes">422x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">15x</span>
+<span class="cline-any cline-yes">300x</span>
+<span class="cline-any cline-yes">237x</span>
+<span class="cline-any cline-yes">181x</span>
+<span class="cline-any cline-yes">120x</span>
+<span class="cline-any cline-yes">63x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">425x</span>
+<span class="cline-any cline-yes">2125x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import type { KbDraft, KbFolder, KbPage, Me, PlanData, Question, RequestItem, Services, TeamOverview, TodayData, User, Meeting } from "@/shared/api";
 &nbsp;
@@ -185,6 +203,15 @@ export const viewLabel = (role: Role, view: View) =&gt; {
   return "База знаний";
 };
 &nbsp;
+/** Короткие подписи для нижней навигации на мобилке — длинные не влезают в 4–5 табов. */
+export const mobileNavLabel = (role: Role, view: View) =&gt; {
+  if (view === "day") return ({ lead: "Команда", buddy: "Стажёры", intern: "День", expert: "Входящие" })[role];
+  if (view === "plan") return "План";
+  if (view === "questions") return "Вопросы";
+  if (view === "requests") return role === "lead" ? "Заявки" : "Заявки";
+  return "База";
+};
+&nbsp;
 export const viewsFor = (role: Role): View[] =&gt; (["day", "plan", "questions", "knowledge", "requests"] as View[])
   .filter((v) =&gt; (v !== "plan" || role === "intern" || role === "buddy") &amp;&amp; (v !== "requests" || role === "intern" || role === "lead")
     &amp;&amp; !(role === "expert" &amp;&amp; v === "questions"));
@@ -195,7 +222,7 @@ export const viewsFor = (role: Role): View[] =&gt; (["day", "plan", "questions",
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-11-13T23:57:38.712Z
+                at 2026-11-14T22:36:36.112Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

@@ -344,12 +344,14 @@ function App() {
     if (view === "plan" && role === "buddy") {
       const chosen = data.managedPlans.find((i) => i.id === selectedIntern);
       return <PlanPage plan={chosen?.plan} title={chosen ? `План: ${chosen.name}` : "План стажёра"} context="Бадди может отмечать шаги стажёра" today={data.me.today}
+        onManage={chosen ? () => setPlanDraftOf(chosen.id) : undefined}
         onMarkDone={(s) => void markDone(s)}
         picker={data.managedPlans.length > 1 && (
           <Box sx={{ minWidth: 220 }}>
             <Typography
               component="label"
               htmlFor="buddy-intern-pick"
+              id="buddy-intern-label"
               variant="body2"
               fontWeight={600}
               sx={{ display: "block", mb: 0.75 }}
@@ -358,6 +360,7 @@ function App() {
             </Typography>
             <TextField
               id="buddy-intern-pick"
+              slotProps={{ select: { labelId: "buddy-intern-label" } }}
               select
               size="small"
               fullWidth
@@ -493,7 +496,7 @@ function App() {
           },
         }}>
           {views.map((v) => (
-            <BottomNavigationAction key={v} value={v} label={mobileNavLabel(role, v)} icon={ICONS[v]} disableRipple />
+            <BottomNavigationAction key={v} value={v} label={mobileNavLabel(role, v)} aria-label={viewLabel(role, v)} icon={ICONS[v]} disableRipple />
           ))}
         </BottomNavigation>}
 

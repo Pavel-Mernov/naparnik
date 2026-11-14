@@ -1,0 +1,1224 @@
+{
+  "buddyDraft": {
+    "intern_id": "u-egorova",
+    "intern": "Полина Егорова",
+    "status": "draft",
+    "created_at": "2026-11-11T09:00:00+03:00",
+    "auto_activate_at": "2026-11-12T19:00:00+03:00",
+    "can_edit": true,
+    "can_approve": false,
+    "can_submit": false,
+    "can_return": false,
+    "can_start": false,
+    "can_cancel": false,
+    "version": 1,
+    "revision": 1,
+    "active_revision": 0,
+    "review_status": "review",
+    "stages": [
+      {
+        "id": "st-w1",
+        "title": "Неделя 1: знакомство и доступы",
+        "order": 1
+      },
+      {
+        "id": "st-w2",
+        "title": "Неделя 2: инструменты и документация",
+        "order": 2
+      },
+      {
+        "id": "st-m1",
+        "title": "Месяц 1: первые задачи",
+        "order": 3
+      },
+      {
+        "id": "st-m2",
+        "title": "Месяц 2–3: самостоятельная работа",
+        "order": 4
+      },
+      {
+        "id": "st-eq",
+        "title": "Экватор (после 3 месяцев)",
+        "order": 5
+      }
+    ],
+    "steps": [
+      {
+        "id": "s-01",
+        "title": "Познакомься с командой",
+        "stage": "st-w1",
+        "owner": "intern",
+        "due_date": "2026-12-09",
+        "done": false
+      },
+      {
+        "id": "s-02",
+        "title": "Запроси доступ в пространство своей команды в базе знаний",
+        "stage": "st-w1",
+        "owner": "intern",
+        "due_date": "2026-12-08",
+        "done": false
+      },
+      {
+        "id": "s-03",
+        "title": "Работа с наставником: договорись о встречах, заведи конспект встреч",
+        "stage": "st-w1",
+        "owner": "intern",
+        "due_date": "2026-12-10",
+        "done": false
+      },
+      {
+        "id": "s-04",
+        "title": "Запроси доступ к Redash (дашборды отдела)",
+        "stage": "st-w1",
+        "owner": "intern",
+        "due_date": "2026-12-10",
+        "done": false
+      },
+      {
+        "id": "s-05",
+        "title": "Добавь стажёра в чаты и каналы, проверь, запросил ли он доступы",
+        "stage": "st-w1",
+        "owner": "buddy",
+        "due_date": "2026-12-09",
+        "done": false
+      },
+      {
+        "id": "s-06",
+        "title": "Назначь регулярные 1:1",
+        "stage": "st-w1",
+        "owner": "buddy",
+        "due_date": "2026-12-09",
+        "done": false
+      },
+      {
+        "id": "s-07",
+        "title": "Обсуди цели, план адаптации и критерии успешной стажировки",
+        "stage": "st-w1",
+        "owner": "lead",
+        "due_date": "2026-12-14",
+        "done": false
+      },
+      {
+        "id": "s-08",
+        "title": "Изучи документы и мануалы отдела, которыми поделился бадди",
+        "stage": "st-w2",
+        "owner": "intern",
+        "due_date": "2026-12-17",
+        "done": false
+      },
+      {
+        "id": "s-09",
+        "title": "Внеси в трекер прогресса цели, задачи и ожидания",
+        "stage": "st-w2",
+        "owner": "intern",
+        "due_date": "2026-12-18",
+        "done": false
+      },
+      {
+        "id": "s-10",
+        "title": "Запроси доступ на чтение к витринам DWH отдела",
+        "stage": "st-w2",
+        "owner": "intern",
+        "due_date": "2026-12-16",
+        "done": false
+      },
+      {
+        "id": "s-11",
+        "title": "Разберись, как устроены витрины объявлений",
+        "stage": "st-w2",
+        "owner": "intern",
+        "due_date": "2026-12-18",
+        "done": false
+      },
+      {
+        "id": "s-12",
+        "title": "Изучи основы защиты персональных данных и политику работы с конфиденциальной информацией",
+        "stage": "st-m1",
+        "owner": "intern",
+        "due_date": "2027-01-04",
+        "done": false
+      },
+      {
+        "id": "s-13",
+        "title": "Первая задача: собери дашборд конверсии карточки объявления",
+        "stage": "st-m1",
+        "owner": "intern",
+        "due_date": "2026-12-28",
+        "done": false
+      },
+      {
+        "id": "s-14",
+        "title": "Разбери, как в отделе проводят A/B-эксперименты",
+        "stage": "st-m1",
+        "owner": "intern",
+        "due_date": "2026-12-31",
+        "done": false
+      },
+      {
+        "id": "s-15",
+        "title": "Изучи памятку, как закрывать практику и писать учебные работы",
+        "stage": "st-m2",
+        "owner": "intern",
+        "due_date": "2027-02-01",
+        "done": false
+      },
+      {
+        "id": "s-16",
+        "title": "Самостоятельный разбор эксперимента",
+        "stage": "st-m2",
+        "owner": "intern",
+        "due_date": "2027-02-15",
+        "done": false
+      },
+      {
+        "id": "s-17",
+        "title": "Подготовься к экваторной встрече: мастер-классы, структура презентации",
+        "stage": "st-eq",
+        "owner": "intern",
+        "due_date": "2027-03-03",
+        "done": false
+      },
+      {
+        "id": "s-18",
+        "title": "Экваторная встреча: выступление и подведение итогов",
+        "stage": "st-eq",
+        "owner": "intern",
+        "due_date": "2027-03-08",
+        "done": false
+      },
+      {
+        "id": "s-19",
+        "title": "Проверь презентацию стажёра, по запросу проведи репетицию",
+        "stage": "st-eq",
+        "owner": "buddy",
+        "due_date": "2027-03-04",
+        "done": false
+      },
+      {
+        "id": "s-20",
+        "title": "Пройди опрос о том, как прошла стажировка",
+        "stage": "st-eq",
+        "owner": "intern",
+        "due_date": "2027-03-09",
+        "done": false
+      }
+    ],
+    "changes": [
+      {
+        "step_id": "s-01",
+        "old_due_date": "",
+        "due_date": "2026-12-09",
+        "was_removed": true,
+        "removed": false
+      },
+      {
+        "step_id": "s-02",
+        "old_due_date": "",
+        "due_date": "2026-12-08",
+        "was_removed": true,
+        "removed": false
+      },
+      {
+        "step_id": "s-03",
+        "old_due_date": "",
+        "due_date": "2026-12-10",
+        "was_removed": true,
+        "removed": false
+      },
+      {
+        "step_id": "s-04",
+        "old_due_date": "",
+        "due_date": "2026-12-10",
+        "was_removed": true,
+        "removed": false
+      },
+      {
+        "step_id": "s-05",
+        "old_due_date": "",
+        "due_date": "2026-12-09",
+        "was_removed": true,
+        "removed": false
+      },
+      {
+        "step_id": "s-06",
+        "old_due_date": "",
+        "due_date": "2026-12-09",
+        "was_removed": true,
+        "removed": false
+      },
+      {
+        "step_id": "s-07",
+        "old_due_date": "",
+        "due_date": "2026-12-14",
+        "was_removed": true,
+        "removed": false
+      },
+      {
+        "step_id": "s-08",
+        "old_due_date": "",
+        "due_date": "2026-12-17",
+        "was_removed": true,
+        "removed": false
+      },
+      {
+        "step_id": "s-09",
+        "old_due_date": "",
+        "due_date": "2026-12-18",
+        "was_removed": true,
+        "removed": false
+      },
+      {
+        "step_id": "s-10",
+        "old_due_date": "",
+        "due_date": "2026-12-16",
+        "was_removed": true,
+        "removed": false
+      },
+      {
+        "step_id": "s-11",
+        "old_due_date": "",
+        "due_date": "2026-12-18",
+        "was_removed": true,
+        "removed": false
+      },
+      {
+        "step_id": "s-12",
+        "old_due_date": "",
+        "due_date": "2027-01-04",
+        "was_removed": true,
+        "removed": false
+      },
+      {
+        "step_id": "s-13",
+        "old_due_date": "",
+        "due_date": "2026-12-28",
+        "was_removed": true,
+        "removed": false
+      },
+      {
+        "step_id": "s-14",
+        "old_due_date": "",
+        "due_date": "2026-12-31",
+        "was_removed": true,
+        "removed": false
+      },
+      {
+        "step_id": "s-15",
+        "old_due_date": "",
+        "due_date": "2027-02-01",
+        "was_removed": true,
+        "removed": false
+      },
+      {
+        "step_id": "s-16",
+        "old_due_date": "",
+        "due_date": "2027-02-15",
+        "was_removed": true,
+        "removed": false
+      },
+      {
+        "step_id": "s-17",
+        "old_due_date": "",
+        "due_date": "2027-03-03",
+        "was_removed": true,
+        "removed": false
+      },
+      {
+        "step_id": "s-18",
+        "old_due_date": "",
+        "due_date": "2027-03-08",
+        "was_removed": true,
+        "removed": false
+      },
+      {
+        "step_id": "s-19",
+        "old_due_date": "",
+        "due_date": "2027-03-04",
+        "was_removed": true,
+        "removed": false
+      },
+      {
+        "step_id": "s-20",
+        "old_due_date": "",
+        "due_date": "2027-03-09",
+        "was_removed": true,
+        "removed": false
+      }
+    ],
+    "history": [
+      {
+        "version": 1,
+        "revision": 1,
+        "action": "created",
+        "by": "system",
+        "at": "2026-11-11T09:00:00+03:00",
+        "steps": [
+          {
+            "id": "s-01",
+            "title": "Познакомься с командой",
+            "stage": "st-w1",
+            "owner": "intern",
+            "due_date": "2026-12-09",
+            "done": false
+          },
+          {
+            "id": "s-02",
+            "title": "Запроси доступ в пространство своей команды в базе знаний",
+            "stage": "st-w1",
+            "owner": "intern",
+            "due_date": "2026-12-08",
+            "done": false
+          },
+          {
+            "id": "s-03",
+            "title": "Работа с наставником: договорись о встречах, заведи конспект встреч",
+            "stage": "st-w1",
+            "owner": "intern",
+            "due_date": "2026-12-10",
+            "done": false
+          },
+          {
+            "id": "s-04",
+            "title": "Запроси доступ к Redash (дашборды отдела)",
+            "stage": "st-w1",
+            "owner": "intern",
+            "due_date": "2026-12-10",
+            "done": false
+          },
+          {
+            "id": "s-05",
+            "title": "Добавь стажёра в чаты и каналы, проверь, запросил ли он доступы",
+            "stage": "st-w1",
+            "owner": "buddy",
+            "due_date": "2026-12-09",
+            "done": false
+          },
+          {
+            "id": "s-06",
+            "title": "Назначь регулярные 1:1",
+            "stage": "st-w1",
+            "owner": "buddy",
+            "due_date": "2026-12-09",
+            "done": false
+          },
+          {
+            "id": "s-07",
+            "title": "Обсуди цели, план адаптации и критерии успешной стажировки",
+            "stage": "st-w1",
+            "owner": "lead",
+            "due_date": "2026-12-14",
+            "done": false
+          },
+          {
+            "id": "s-08",
+            "title": "Изучи документы и мануалы отдела, которыми поделился бадди",
+            "stage": "st-w2",
+            "owner": "intern",
+            "due_date": "2026-12-17",
+            "done": false
+          },
+          {
+            "id": "s-09",
+            "title": "Внеси в трекер прогресса цели, задачи и ожидания",
+            "stage": "st-w2",
+            "owner": "intern",
+            "due_date": "2026-12-18",
+            "done": false
+          },
+          {
+            "id": "s-10",
+            "title": "Запроси доступ на чтение к витринам DWH отдела",
+            "stage": "st-w2",
+            "owner": "intern",
+            "due_date": "2026-12-16",
+            "done": false
+          },
+          {
+            "id": "s-11",
+            "title": "Разберись, как устроены витрины объявлений",
+            "stage": "st-w2",
+            "owner": "intern",
+            "due_date": "2026-12-18",
+            "done": false
+          },
+          {
+            "id": "s-12",
+            "title": "Изучи основы защиты персональных данных и политику работы с конфиденциальной информацией",
+            "stage": "st-m1",
+            "owner": "intern",
+            "due_date": "2027-01-04",
+            "done": false
+          },
+          {
+            "id": "s-13",
+            "title": "Первая задача: собери дашборд конверсии карточки объявления",
+            "stage": "st-m1",
+            "owner": "intern",
+            "due_date": "2026-12-28",
+            "done": false
+          },
+          {
+            "id": "s-14",
+            "title": "Разбери, как в отделе проводят A/B-эксперименты",
+            "stage": "st-m1",
+            "owner": "intern",
+            "due_date": "2026-12-31",
+            "done": false
+          },
+          {
+            "id": "s-15",
+            "title": "Изучи памятку, как закрывать практику и писать учебные работы",
+            "stage": "st-m2",
+            "owner": "intern",
+            "due_date": "2027-02-01",
+            "done": false
+          },
+          {
+            "id": "s-16",
+            "title": "Самостоятельный разбор эксперимента",
+            "stage": "st-m2",
+            "owner": "intern",
+            "due_date": "2027-02-15",
+            "done": false
+          },
+          {
+            "id": "s-17",
+            "title": "Подготовься к экваторной встрече: мастер-классы, структура презентации",
+            "stage": "st-eq",
+            "owner": "intern",
+            "due_date": "2027-03-03",
+            "done": false
+          },
+          {
+            "id": "s-18",
+            "title": "Экваторная встреча: выступление и подведение итогов",
+            "stage": "st-eq",
+            "owner": "intern",
+            "due_date": "2027-03-08",
+            "done": false
+          },
+          {
+            "id": "s-19",
+            "title": "Проверь презентацию стажёра, по запросу проведи репетицию",
+            "stage": "st-eq",
+            "owner": "buddy",
+            "due_date": "2027-03-04",
+            "done": false
+          },
+          {
+            "id": "s-20",
+            "title": "Пройди опрос о том, как прошла стажировка",
+            "stage": "st-eq",
+            "owner": "intern",
+            "due_date": "2027-03-09",
+            "done": false
+          }
+        ],
+        "changes": []
+      }
+    ]
+  },
+  "leadDraft": {
+    "intern_id": "u-egorova",
+    "intern": "Полина Егорова",
+    "status": "draft",
+    "created_at": "2026-11-11T09:00:00+03:00",
+    "auto_activate_at": "2026-11-12T19:00:00+03:00",
+    "can_edit": false,
+    "can_approve": true,
+    "can_submit": false,
+    "can_return": true,
+    "can_start": false,
+    "can_cancel": false,
+    "version": 1,
+    "revision": 1,
+    "active_revision": 0,
+    "review_status": "review",
+    "stages": [
+      {
+        "id": "st-w1",
+        "title": "Неделя 1: знакомство и доступы",
+        "order": 1
+      },
+      {
+        "id": "st-w2",
+        "title": "Неделя 2: инструменты и документация",
+        "order": 2
+      },
+      {
+        "id": "st-m1",
+        "title": "Месяц 1: первые задачи",
+        "order": 3
+      },
+      {
+        "id": "st-m2",
+        "title": "Месяц 2–3: самостоятельная работа",
+        "order": 4
+      },
+      {
+        "id": "st-eq",
+        "title": "Экватор (после 3 месяцев)",
+        "order": 5
+      }
+    ],
+    "steps": [
+      {
+        "id": "s-01",
+        "title": "Познакомься с командой",
+        "stage": "st-w1",
+        "owner": "intern",
+        "due_date": "2026-12-09",
+        "done": false
+      },
+      {
+        "id": "s-02",
+        "title": "Запроси доступ в пространство своей команды в базе знаний",
+        "stage": "st-w1",
+        "owner": "intern",
+        "due_date": "2026-12-08",
+        "done": false
+      },
+      {
+        "id": "s-03",
+        "title": "Работа с наставником: договорись о встречах, заведи конспект встреч",
+        "stage": "st-w1",
+        "owner": "intern",
+        "due_date": "2026-12-10",
+        "done": false
+      },
+      {
+        "id": "s-04",
+        "title": "Запроси доступ к Redash (дашборды отдела)",
+        "stage": "st-w1",
+        "owner": "intern",
+        "due_date": "2026-12-10",
+        "done": false
+      },
+      {
+        "id": "s-05",
+        "title": "Добавь стажёра в чаты и каналы, проверь, запросил ли он доступы",
+        "stage": "st-w1",
+        "owner": "buddy",
+        "due_date": "2026-12-09",
+        "done": false
+      },
+      {
+        "id": "s-06",
+        "title": "Назначь регулярные 1:1",
+        "stage": "st-w1",
+        "owner": "buddy",
+        "due_date": "2026-12-09",
+        "done": false
+      },
+      {
+        "id": "s-07",
+        "title": "Обсуди цели, план адаптации и критерии успешной стажировки",
+        "stage": "st-w1",
+        "owner": "lead",
+        "due_date": "2026-12-14",
+        "done": false
+      },
+      {
+        "id": "s-08",
+        "title": "Изучи документы и мануалы отдела, которыми поделился бадди",
+        "stage": "st-w2",
+        "owner": "intern",
+        "due_date": "2026-12-17",
+        "done": false
+      },
+      {
+        "id": "s-09",
+        "title": "Внеси в трекер прогресса цели, задачи и ожидания",
+        "stage": "st-w2",
+        "owner": "intern",
+        "due_date": "2026-12-18",
+        "done": false
+      },
+      {
+        "id": "s-10",
+        "title": "Запроси доступ на чтение к витринам DWH отдела",
+        "stage": "st-w2",
+        "owner": "intern",
+        "due_date": "2026-12-16",
+        "done": false
+      },
+      {
+        "id": "s-11",
+        "title": "Разберись, как устроены витрины объявлений",
+        "stage": "st-w2",
+        "owner": "intern",
+        "due_date": "2026-12-18",
+        "done": false
+      },
+      {
+        "id": "s-12",
+        "title": "Изучи основы защиты персональных данных и политику работы с конфиденциальной информацией",
+        "stage": "st-m1",
+        "owner": "intern",
+        "due_date": "2027-01-04",
+        "done": false
+      },
+      {
+        "id": "s-13",
+        "title": "Первая задача: собери дашборд конверсии карточки объявления",
+        "stage": "st-m1",
+        "owner": "intern",
+        "due_date": "2026-12-28",
+        "done": false
+      },
+      {
+        "id": "s-14",
+        "title": "Разбери, как в отделе проводят A/B-эксперименты",
+        "stage": "st-m1",
+        "owner": "intern",
+        "due_date": "2026-12-31",
+        "done": false
+      },
+      {
+        "id": "s-15",
+        "title": "Изучи памятку, как закрывать практику и писать учебные работы",
+        "stage": "st-m2",
+        "owner": "intern",
+        "due_date": "2027-02-01",
+        "done": false
+      },
+      {
+        "id": "s-16",
+        "title": "Самостоятельный разбор эксперимента",
+        "stage": "st-m2",
+        "owner": "intern",
+        "due_date": "2027-02-15",
+        "done": false
+      },
+      {
+        "id": "s-17",
+        "title": "Подготовься к экваторной встрече: мастер-классы, структура презентации",
+        "stage": "st-eq",
+        "owner": "intern",
+        "due_date": "2027-03-03",
+        "done": false
+      },
+      {
+        "id": "s-18",
+        "title": "Экваторная встреча: выступление и подведение итогов",
+        "stage": "st-eq",
+        "owner": "intern",
+        "due_date": "2027-03-08",
+        "done": false
+      },
+      {
+        "id": "s-19",
+        "title": "Проверь презентацию стажёра, по запросу проведи репетицию",
+        "stage": "st-eq",
+        "owner": "buddy",
+        "due_date": "2027-03-04",
+        "done": false
+      },
+      {
+        "id": "s-20",
+        "title": "Пройди опрос о том, как прошла стажировка",
+        "stage": "st-eq",
+        "owner": "intern",
+        "due_date": "2027-03-09",
+        "done": false
+      }
+    ],
+    "changes": [
+      {
+        "step_id": "s-01",
+        "old_due_date": "",
+        "due_date": "2026-12-09",
+        "was_removed": true,
+        "removed": false
+      },
+      {
+        "step_id": "s-02",
+        "old_due_date": "",
+        "due_date": "2026-12-08",
+        "was_removed": true,
+        "removed": false
+      },
+      {
+        "step_id": "s-03",
+        "old_due_date": "",
+        "due_date": "2026-12-10",
+        "was_removed": true,
+        "removed": false
+      },
+      {
+        "step_id": "s-04",
+        "old_due_date": "",
+        "due_date": "2026-12-10",
+        "was_removed": true,
+        "removed": false
+      },
+      {
+        "step_id": "s-05",
+        "old_due_date": "",
+        "due_date": "2026-12-09",
+        "was_removed": true,
+        "removed": false
+      },
+      {
+        "step_id": "s-06",
+        "old_due_date": "",
+        "due_date": "2026-12-09",
+        "was_removed": true,
+        "removed": false
+      },
+      {
+        "step_id": "s-07",
+        "old_due_date": "",
+        "due_date": "2026-12-14",
+        "was_removed": true,
+        "removed": false
+      },
+      {
+        "step_id": "s-08",
+        "old_due_date": "",
+        "due_date": "2026-12-17",
+        "was_removed": true,
+        "removed": false
+      },
+      {
+        "step_id": "s-09",
+        "old_due_date": "",
+        "due_date": "2026-12-18",
+        "was_removed": true,
+        "removed": false
+      },
+      {
+        "step_id": "s-10",
+        "old_due_date": "",
+        "due_date": "2026-12-16",
+        "was_removed": true,
+        "removed": false
+      },
+      {
+        "step_id": "s-11",
+        "old_due_date": "",
+        "due_date": "2026-12-18",
+        "was_removed": true,
+        "removed": false
+      },
+      {
+        "step_id": "s-12",
+        "old_due_date": "",
+        "due_date": "2027-01-04",
+        "was_removed": true,
+        "removed": false
+      },
+      {
+        "step_id": "s-13",
+        "old_due_date": "",
+        "due_date": "2026-12-28",
+        "was_removed": true,
+        "removed": false
+      },
+      {
+        "step_id": "s-14",
+        "old_due_date": "",
+        "due_date": "2026-12-31",
+        "was_removed": true,
+        "removed": false
+      },
+      {
+        "step_id": "s-15",
+        "old_due_date": "",
+        "due_date": "2027-02-01",
+        "was_removed": true,
+        "removed": false
+      },
+      {
+        "step_id": "s-16",
+        "old_due_date": "",
+        "due_date": "2027-02-15",
+        "was_removed": true,
+        "removed": false
+      },
+      {
+        "step_id": "s-17",
+        "old_due_date": "",
+        "due_date": "2027-03-03",
+        "was_removed": true,
+        "removed": false
+      },
+      {
+        "step_id": "s-18",
+        "old_due_date": "",
+        "due_date": "2027-03-08",
+        "was_removed": true,
+        "removed": false
+      },
+      {
+        "step_id": "s-19",
+        "old_due_date": "",
+        "due_date": "2027-03-04",
+        "was_removed": true,
+        "removed": false
+      },
+      {
+        "step_id": "s-20",
+        "old_due_date": "",
+        "due_date": "2027-03-09",
+        "was_removed": true,
+        "removed": false
+      }
+    ],
+    "history": [
+      {
+        "version": 1,
+        "revision": 1,
+        "action": "created",
+        "by": "system",
+        "at": "2026-11-11T09:00:00+03:00",
+        "steps": [
+          {
+            "id": "s-01",
+            "title": "Познакомься с командой",
+            "stage": "st-w1",
+            "owner": "intern",
+            "due_date": "2026-12-09",
+            "done": false
+          },
+          {
+            "id": "s-02",
+            "title": "Запроси доступ в пространство своей команды в базе знаний",
+            "stage": "st-w1",
+            "owner": "intern",
+            "due_date": "2026-12-08",
+            "done": false
+          },
+          {
+            "id": "s-03",
+            "title": "Работа с наставником: договорись о встречах, заведи конспект встреч",
+            "stage": "st-w1",
+            "owner": "intern",
+            "due_date": "2026-12-10",
+            "done": false
+          },
+          {
+            "id": "s-04",
+            "title": "Запроси доступ к Redash (дашборды отдела)",
+            "stage": "st-w1",
+            "owner": "intern",
+            "due_date": "2026-12-10",
+            "done": false
+          },
+          {
+            "id": "s-05",
+            "title": "Добавь стажёра в чаты и каналы, проверь, запросил ли он доступы",
+            "stage": "st-w1",
+            "owner": "buddy",
+            "due_date": "2026-12-09",
+            "done": false
+          },
+          {
+            "id": "s-06",
+            "title": "Назначь регулярные 1:1",
+            "stage": "st-w1",
+            "owner": "buddy",
+            "due_date": "2026-12-09",
+            "done": false
+          },
+          {
+            "id": "s-07",
+            "title": "Обсуди цели, план адаптации и критерии успешной стажировки",
+            "stage": "st-w1",
+            "owner": "lead",
+            "due_date": "2026-12-14",
+            "done": false
+          },
+          {
+            "id": "s-08",
+            "title": "Изучи документы и мануалы отдела, которыми поделился бадди",
+            "stage": "st-w2",
+            "owner": "intern",
+            "due_date": "2026-12-17",
+            "done": false
+          },
+          {
+            "id": "s-09",
+            "title": "Внеси в трекер прогресса цели, задачи и ожидания",
+            "stage": "st-w2",
+            "owner": "intern",
+            "due_date": "2026-12-18",
+            "done": false
+          },
+          {
+            "id": "s-10",
+            "title": "Запроси доступ на чтение к витринам DWH отдела",
+            "stage": "st-w2",
+            "owner": "intern",
+            "due_date": "2026-12-16",
+            "done": false
+          },
+          {
+            "id": "s-11",
+            "title": "Разберись, как устроены витрины объявлений",
+            "stage": "st-w2",
+            "owner": "intern",
+            "due_date": "2026-12-18",
+            "done": false
+          },
+          {
+            "id": "s-12",
+            "title": "Изучи основы защиты персональных данных и политику работы с конфиденциальной информацией",
+            "stage": "st-m1",
+            "owner": "intern",
+            "due_date": "2027-01-04",
+            "done": false
+          },
+          {
+            "id": "s-13",
+            "title": "Первая задача: собери дашборд конверсии карточки объявления",
+            "stage": "st-m1",
+            "owner": "intern",
+            "due_date": "2026-12-28",
+            "done": false
+          },
+          {
+            "id": "s-14",
+            "title": "Разбери, как в отделе проводят A/B-эксперименты",
+            "stage": "st-m1",
+            "owner": "intern",
+            "due_date": "2026-12-31",
+            "done": false
+          },
+          {
+            "id": "s-15",
+            "title": "Изучи памятку, как закрывать практику и писать учебные работы",
+            "stage": "st-m2",
+            "owner": "intern",
+            "due_date": "2027-02-01",
+            "done": false
+          },
+          {
+            "id": "s-16",
+            "title": "Самостоятельный разбор эксперимента",
+            "stage": "st-m2",
+            "owner": "intern",
+            "due_date": "2027-02-15",
+            "done": false
+          },
+          {
+            "id": "s-17",
+            "title": "Подготовься к экваторной встрече: мастер-классы, структура презентации",
+            "stage": "st-eq",
+            "owner": "intern",
+            "due_date": "2027-03-03",
+            "done": false
+          },
+          {
+            "id": "s-18",
+            "title": "Экваторная встреча: выступление и подведение итогов",
+            "stage": "st-eq",
+            "owner": "intern",
+            "due_date": "2027-03-08",
+            "done": false
+          },
+          {
+            "id": "s-19",
+            "title": "Проверь презентацию стажёра, по запросу проведи репетицию",
+            "stage": "st-eq",
+            "owner": "buddy",
+            "due_date": "2027-03-04",
+            "done": false
+          },
+          {
+            "id": "s-20",
+            "title": "Пройди опрос о том, как прошла стажировка",
+            "stage": "st-eq",
+            "owner": "intern",
+            "due_date": "2027-03-09",
+            "done": false
+          }
+        ],
+        "changes": []
+      }
+    ]
+  },
+  "internHistory": {
+    "intern_id": "u-sokolov",
+    "active_revision": 1,
+    "history": [
+      {
+        "version": 1,
+        "revision": 1,
+        "action": "approved",
+        "by": "Андрей Ковалёв",
+        "at": "2026-11-06T15:20:00+03:00",
+        "steps": [
+          {
+            "id": "s-01",
+            "title": "Познакомься с командой",
+            "stage": "st-w1",
+            "owner": "intern",
+            "due_date": "2026-11-11",
+            "done": false
+          },
+          {
+            "id": "s-02",
+            "title": "Запроси доступ в пространство своей команды в базе знаний",
+            "stage": "st-w1",
+            "owner": "intern",
+            "due_date": "2026-11-10",
+            "done": false
+          },
+          {
+            "id": "s-03",
+            "title": "Работа с наставником: договорись о встречах, заведи конспект встреч",
+            "stage": "st-w1",
+            "owner": "intern",
+            "due_date": "2026-11-12",
+            "done": false
+          },
+          {
+            "id": "s-04",
+            "title": "Запроси доступ к Redash (дашборды отдела)",
+            "stage": "st-w1",
+            "owner": "intern",
+            "due_date": "2026-11-10",
+            "done": false
+          },
+          {
+            "id": "s-05",
+            "title": "Добавь стажёра в чаты и каналы, проверь, запросил ли он доступы",
+            "stage": "st-w1",
+            "owner": "buddy",
+            "due_date": "2026-11-11",
+            "done": false
+          },
+          {
+            "id": "s-06",
+            "title": "Назначь регулярные 1:1",
+            "stage": "st-w1",
+            "owner": "buddy",
+            "due_date": "2026-11-11",
+            "done": false
+          },
+          {
+            "id": "s-07",
+            "title": "Обсуди цели, план адаптации и критерии успешной стажировки",
+            "stage": "st-w1",
+            "owner": "lead",
+            "due_date": "2026-11-16",
+            "done": false
+          },
+          {
+            "id": "s-08",
+            "title": "Изучи документы и мануалы отдела, которыми поделился бадди",
+            "stage": "st-w2",
+            "owner": "intern",
+            "due_date": "2026-11-19",
+            "done": false
+          },
+          {
+            "id": "s-09",
+            "title": "Внеси в трекер прогресса цели, задачи и ожидания",
+            "stage": "st-w2",
+            "owner": "intern",
+            "due_date": "2026-11-20",
+            "done": false
+          },
+          {
+            "id": "s-10",
+            "title": "Запроси доступ на чтение к витринам DWH отдела",
+            "stage": "st-w2",
+            "owner": "intern",
+            "due_date": "2026-11-18",
+            "done": false
+          },
+          {
+            "id": "s-11",
+            "title": "Разберись, как устроены витрины объявлений",
+            "stage": "st-w2",
+            "owner": "intern",
+            "due_date": "2026-11-20",
+            "done": false
+          },
+          {
+            "id": "s-12",
+            "title": "Изучи основы защиты персональных данных и политику работы с конфиденциальной информацией",
+            "stage": "st-m1",
+            "owner": "intern",
+            "due_date": "2026-12-07",
+            "done": false
+          },
+          {
+            "id": "s-13",
+            "title": "Первая задача: собери дашборд конверсии карточки объявления",
+            "stage": "st-m1",
+            "owner": "intern",
+            "due_date": "2026-11-30",
+            "done": false
+          },
+          {
+            "id": "s-14",
+            "title": "Разбери, как в отделе проводят A/B-эксперименты",
+            "stage": "st-m1",
+            "owner": "intern",
+            "due_date": "2026-12-03",
+            "done": false
+          },
+          {
+            "id": "s-15",
+            "title": "Изучи памятку, как закрывать практику и писать учебные работы",
+            "stage": "st-m2",
+            "owner": "intern",
+            "due_date": "",
+            "removed": true,
+            "done": false
+          },
+          {
+            "id": "s-16",
+            "title": "Самостоятельный разбор эксперимента",
+            "stage": "st-m2",
+            "owner": "intern",
+            "due_date": "",
+            "removed": true,
+            "done": false
+          },
+          {
+            "id": "s-17",
+            "title": "Подготовься к экваторной встрече: мастер-классы, структура презентации",
+            "stage": "st-eq",
+            "owner": "intern",
+            "due_date": "",
+            "removed": true,
+            "done": false
+          },
+          {
+            "id": "s-18",
+            "title": "Экваторная встреча: выступление и подведение итогов",
+            "stage": "st-eq",
+            "owner": "intern",
+            "due_date": "",
+            "removed": true,
+            "done": false
+          },
+          {
+            "id": "s-19",
+            "title": "Проверь презентацию стажёра, по запросу проведи репетицию",
+            "stage": "st-eq",
+            "owner": "buddy",
+            "due_date": "",
+            "removed": true,
+            "done": false
+          },
+          {
+            "id": "s-20",
+            "title": "Пройди опрос о том, как прошла стажировка",
+            "stage": "st-eq",
+            "owner": "intern",
+            "due_date": "",
+            "removed": true,
+            "done": false
+          }
+        ],
+        "changes": []
+      }
+    ]
+  }
+}

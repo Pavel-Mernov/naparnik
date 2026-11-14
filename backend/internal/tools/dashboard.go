@@ -13,6 +13,7 @@ type internOverview struct {
 	Buddy         string `json:"buddy"`
 	Week          int    `json:"week"`
 	PlanStatus    string `json:"plan_status"`
+	ReviewStatus  string `json:"review_status,omitempty"`
 	Stage         string `json:"stage"`
 	Progress      int    `json:"progress_pct"`
 	OverdueSteps  int    `json:"overdue_steps"`
@@ -89,6 +90,7 @@ func overviewOf(c Ctx, intern mockdata.User, questions []store.Question) internO
 	// Жизненный цикл плана (BR-81): draft → approved | auto_activated — из состояния плана, а не из трекера.
 	if p, ok := c.Store.Plan(intern.ID); ok {
 		v.PlanStatus = p.Status
+		v.ReviewStatus = p.ReviewStatus
 	}
 	mine, done := 0, 0
 	for _, step := range planViews(c, intern.ID) {

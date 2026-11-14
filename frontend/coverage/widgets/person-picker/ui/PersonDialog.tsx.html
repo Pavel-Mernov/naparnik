@@ -135,7 +135,12 @@
 <a name='L59'></a><a href='#L59'>59</a>
 <a name='L60'></a><a href='#L60'>60</a>
 <a name='L61'></a><a href='#L61'>61</a>
-<a name='L62'></a><a href='#L62'>62</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L62'></a><a href='#L62'>62</a>
+<a name='L63'></a><a href='#L63'>63</a>
+<a name='L64'></a><a href='#L64'>64</a>
+<a name='L65'></a><a href='#L65'>65</a>
+<a name='L66'></a><a href='#L66'>66</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -143,7 +148,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">7x</span>
-<span class="cline-any cline-yes">48x</span>
+<span class="cline-any cline-yes">59x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -153,17 +158,20 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">123x</span>
-<span class="cline-any cline-yes">123x</span>
-<span class="cline-any cline-yes">123x</span>
+<span class="cline-any cline-yes">134x</span>
+<span class="cline-any cline-yes">134x</span>
+<span class="cline-any cline-yes">134x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">123x</span>
-<span class="cline-any cline-yes">123x</span>
+<span class="cline-any cline-yes">134x</span>
+<span class="cline-any cline-yes">134x</span>
 <span class="cline-any cline-yes">6x</span>
 <span class="cline-any cline-yes">6x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">123x</span>
-<span class="cline-any cline-yes">123x</span>
+<span class="cline-any cline-yes">134x</span>
+<span class="cline-any cline-yes">134x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -176,17 +184,17 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">51x</span>
+<span class="cline-any cline-yes">53x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">99x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">104x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">589x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">646x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -202,6 +210,7 @@
 import { useRef, useState } from "react";
 import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, MenuItem, TextField, Typography, useTheme } from "@mui/material";
 import type { User } from "@/shared/api";
+import { DialogClose, dialogTitleSx } from "@/shared/ui";
 &nbsp;
 const Person = ({ name, hint }: { name: string; hint?: string }) =&gt; (
   &lt;Box sx={{ minWidth: 0, py: 0.25 }}&gt;
@@ -226,7 +235,10 @@ export const PersonDialog = ({ open, title, text, people, allowAuto, confirm, on
   const label = (id: string) =&gt; (id === "auto" ? "Пусть Напарник подберёт" : people.find((u) =&gt; u.id === id)?.name ?? <span class="branch-1 cbranch-no" title="branch not covered" >"");</span>
   return (
     &lt;Dialog open={open} onClose={onClose} fullWidth maxWidth="xs"&gt;
-      &lt;DialogTitle&gt;{title}&lt;/DialogTitle&gt;
+      &lt;DialogTitle sx={dialogTitleSx}&gt;
+        &lt;Box component="span" sx={{ flex: 1, minWidth: 0, pr: 1 }}&gt;{title}&lt;/Box&gt;
+        &lt;DialogClose onClose={onClose} /&gt;
+      &lt;/DialogTitle&gt;
       &lt;DialogContent&gt;
         &lt;Typography color="text.secondary" mb={2}&gt;{text}&lt;/Typography&gt;
         &lt;Typography component="label" id="person-label" htmlFor="person-select" variant="body2" fontWeight={600} sx={{ display: "block", mb: 0.75 }}&gt;Кому&lt;/Typography&gt;
@@ -264,7 +276,7 @@ export const PersonDialog = ({ open, title, text, people, allowAuto, confirm, on
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-11-13T23:57:38.644Z
+                at 2026-11-14T22:36:36.039Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

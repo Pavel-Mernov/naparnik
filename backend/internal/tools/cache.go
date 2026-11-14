@@ -32,8 +32,9 @@ func CacheStats() (hits, misses int64) { return cacheHits.Load(), cacheMisses.Lo
 func kbVersion(c Ctx) string {
 	h := sha256.New()
 	for _, p := range readablePages(c) {
-		h.Write([]byte(p.ID + "|" + p.Status + "|" + p.UpdatedAt + "|" + p.Title + "\n"))
-		h.Write([]byte{byte(len(p.Body)), byte(len(p.Body) >> 8)})
+		h.Write([]byte(p.ID + "|" + p.Status + "|" + p.UpdatedAt + "|" + p.Title + "|" + p.Classification + "\n"))
+		h.Write([]byte(p.Body))
+		h.Write([]byte{0})
 	}
 	return hex.EncodeToString(h.Sum(nil))[:16]
 }
@@ -49,7 +50,7 @@ func kbKey(c Ctx, kind, query string) string {
 	q := strings.Join(stems, " ")
 	sum := sha256.Sum256([]byte(q))
 	// Новый namespace не читает ответы прежней версии с URL записей в тексте.
-	return "kb:public-v2:" + kind + ":" + c.User.ID + ":" + kbVersion(c) + ":" + hex.EncodeToString(sum[:8])
+	return "kb:public-v3:" + kind + ":" + c.User.ID + ":" + kbVersion(c) + ":" + hex.EncodeToString(sum[:8])
 }
 
 // cached достаёт значение из кэша или считает его и кладёт. Сбой кэша не ломает ответ — просто считаем.

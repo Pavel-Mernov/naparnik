@@ -51,11 +51,12 @@ const (
 	EvQuestionOpen       = "question_open"
 	EvQuestionRerouted   = "question_rerouted"
 	EvPagesMerged        = "pages_merged"
-	EvQuestionOverdue    = "question_overdue" // SLA ответа истёк (BR-18)
-	EvInternIdle         = "intern_idle"      // стажёр простаивает (BR-85)
-	EvPlanEdited         = "plan_edited"      // бадди поправил черновик плана (BR-81)
-	EvPlanDecided        = "plan_decided"     // план утверждён или активирован без утверждения
-	EvProfileUpdated     = "profile_updated"  // сотрудник поправил телефон или фото (значения в журнал не пишутся)
+	EvQuestionOverdue    = "question_overdue"    // SLA ответа истёк (BR-18)
+	EvInternIdle         = "intern_idle"         // стажёр простаивает (BR-85)
+	EvPlanEdited         = "plan_edited"         // бадди поправил черновик плана (BR-81)
+	EvPlanDecided        = "plan_decided"        // план утверждён или активирован без утверждения
+	EvPlanReview         = "plan_review_changed" // редакция начата, отправлена, возвращена или отменена
+	EvProfileUpdated     = "profile_updated"     // сотрудник поправил телефон или фото (значения в журнал не пишутся)
 )
 
 // Now — часы для журнала; в тестах подменяются.
