@@ -139,12 +139,6 @@ React отправляет запрос в Go API. Агент получает �
 Это гипотезы эффекта, а не результаты внедрения. [Ценность по ролям](docs/03-requirements/10-ROLE-VALUE.md) · [Метрики и план пилота](docs/03-requirements/09-METRICS.md). Главная продуктовая метрика — время до первой полезной задачи.
 
 <a id="video"></a>
-
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/readme/svg/video-dark.svg">
-  <img src="docs/readme/svg/video-light.svg" width="100%" alt="05 · Видео и презентация">
-</picture>
-
 <a href="https://disk.yandex.ru/d/xxAoKDQs5wWt0g">
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/readme/svg/video-dark.svg">
