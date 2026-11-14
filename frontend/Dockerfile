@@ -10,8 +10,6 @@ RUN --mount=type=secret,id=proxy_ca,required=false \
       npm ci --strict-ssl=true; \
     fi
 COPY . .
-ARG VITE_MOCK=0
-ENV VITE_MOCK=$VITE_MOCK
 RUN npm run build
 
 # --- serve ---

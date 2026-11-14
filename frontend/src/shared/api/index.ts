@@ -1,3 +1,5 @@
+import { checkShape } from "./schemas";
+
 export type User = {
   id: string;
   login: string;
@@ -184,6 +186,8 @@ export const api = async <T>(login: string, path: string, init: RequestInit = {}
     const envelope = payload as ApiEnvelope<T>;
     throw new ApiError(response.status, envelope.error?.message ?? "Не удалось выполнить запрос");
   }
+  const problem = checkShape((init.method ?? "GET").toUpperCase(), path, payload);
+  if (problem) throw new ApiError(response.status, problem);
   return payload as T;
 };
 
@@ -262,3 +266,37 @@ export const editPlanDraft = (login: string, internId: string, steps: PlanDraftE
 
 export const approvePlan = (login: string, internId: string) =>
   api<PlanDraft>(login, `/api/plans/${encodeURIComponent(internId)}/approve`, { method: "POST", body: "{}" });
+
+// ---------- Живые обновления (SSE) ----------
+/**
+ * Подписка на /api/stream: сервер присылает «changed», когда у человека что-то изменилось.
+ * Читаем поток через fetch, а не EventSource: так уходит заголовок X-User, как у остальных запросов.
+ * Поток оборвался — переподключаемся через retryMs; пока его нет, работает обычный опрос.
+ */
+export const subscribeChanges = (login: string, onChange: () => void, retryMs = 5000): (() => void) => {
+  const controller = new AbortController();
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const connect = async () => {
+    try {
+      const response = await fetch("/api/stream", { headers: { "X-User": login, Accept: "text/event-stream" }, signal: controller.signal });
+      const reader = response.ok ? response.body?.getReader() : undefined;
+      if (!reader) throw new Error("нет потока");
+      const decoder = new TextDecoder();
+      let buffer = "";
+      for (;;) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        let end: number;
+        while ((end = buffer.indexOf("\n\n")) >= 0) {
+          const block = buffer.slice(0, end);
+          buffer = buffer.slice(end + 2);
+          if (block.split("\n").includes("event: changed")) onChange();
+        }
+      }
+    } catch { /* сеть, 404 или отмена — ниже решаем, переподключаться ли */ }
+    if (!controller.signal.aborted) timer = setTimeout(() => void connect(), retryMs);
+  };
+  void connect();
+  return () => { controller.abort(); clearTimeout(timer); };
+};

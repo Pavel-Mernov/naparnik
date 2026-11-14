@@ -1,7 +1,7 @@
 // Функции, которые были у старого фронта и вернулись в новый: встречи, «Не ко мне» и переадресация,
 // правка черновика вопроса, оценка ответа, практика, Telegram, польза и поддержка базы у руководителя.
 // Данные — настоящие ответы backend (src/test/fixtures.json), состояния подменяются в mockApi.
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import fixtures from "@/test/fixtures.json";
@@ -215,6 +215,28 @@ describe("руководитель: польза Напарника и подд�
     await userEvent.click((await screen.findAllByRole("button", { name: "Не дубль" }))[0]);
     await userEvent.click((await screen.findAllByRole("button", { name: "Напомнить" }))[0]);
     await waitFor(() => expect(api.calls.some((c) => c.method === "POST" && /\/remind$/.test(c.path))).toBe(true));
+    await userEvent.click(screen.getByRole("button", { name: "Проверить сейчас" }));
+    expect(await screen.findByText(/последняя — 11 ноября 2026/)).toBeInTheDocument();
+  });
+
+  it("BR-34: руководитель передаёт базу эксперту — у эксперта «Поддержка базы» в разделе «База знаний»", async () => {
+    const api = start("lead.kovalev");
+    expect(await screen.findByText(/руководитель отдела/)).toBeInTheDocument();
+    await userEvent.click(await screen.findByRole("button", { name: "Передать другому" }));
+    const dialog = await screen.findByRole("dialog", { name: "Владелец базы знаний" });
+    await userEvent.click(within(dialog).getByRole("combobox"));
+    await userEvent.click(await screen.findByRole("option", { name: /Ольга Смирнова/ }));
+    await userEvent.click(within(dialog).getByRole("button", { name: "Передать" }));
+    await waitFor(() => expect(api.writesTo("/api/kb/owner")[0]?.body).toEqual({ user_id: "u-smirnova" }));
+    expect(await screen.findByText(/сейчас разбирает Ольга Смирнова/)).toBeInTheDocument();
+    cleanup();
+    const asOwner = { owner_id: "u-smirnova", default_id: "u-kovalev", is_owner: true, can_change: false };
+    const maint = { ...(fx["lead.kovalev"]["/api/kb/maintenance"] as object), owner_id: "u-smirnova" };
+    start("expert.smirnova", (c) => (c.path === "/api/kb/owner" ? { body: asOwner } : c.path === "/api/kb/maintenance" ? { body: maint } : undefined));
+    await userEvent.click(await screen.findByRole("button", { name: "База знаний" }));
+    expect(await screen.findByText("Поддержка базы знаний")).toBeInTheDocument();
+    expect(screen.getByText("ты")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Передать другому" })).not.toBeInTheDocument();
   });
 });
 

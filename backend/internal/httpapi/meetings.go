@@ -164,3 +164,32 @@ func (s *Server) planApprove(w http.ResponseWriter, r *http.Request, u *mockdata
 	}
 	writeJSON(w, 200, v)
 }
+
+func (s *Server) kbCheck(w http.ResponseWriter, _ *http.Request, u *mockdata.User) {
+	m, e := tools.CheckKBNow(s.ctx(u))
+	if e != nil {
+		writeResult(w, tools.Result{Error: e})
+		return
+	}
+	writeJSON(w, 200, m)
+}
+
+func (s *Server) kbOwner(w http.ResponseWriter, _ *http.Request, u *mockdata.User) {
+	writeJSON(w, 200, tools.KBOwner(s.ctx(u)))
+}
+
+func (s *Server) kbSetOwner(w http.ResponseWriter, r *http.Request, u *mockdata.User) {
+	var body struct {
+		UserID string `json:"user_id"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil || body.UserID == "" {
+		writeJSON(w, 422, errBody("validation", "Укажи сотрудника."))
+		return
+	}
+	info, e := tools.SetKBOwner(s.ctx(u), body.UserID)
+	if e != nil {
+		writeResult(w, tools.Result{Error: e})
+		return
+	}
+	writeJSON(w, 200, info)
+}

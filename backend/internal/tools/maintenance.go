@@ -12,7 +12,7 @@ import (
 // страницы, отмеченные устаревшими, и пары похожих страниц от плановой проверки (BR-38) с решением
 // «объединить» (старые ведут на общую, авторы уведомлены, BR-39) или «не дубль».
 
-func isKBOwner(c Ctx) bool { return c.User.ID == c.Store.Data.Team.Department.KBOwnerID }
+func isKBOwner(c Ctx) bool { return c.User.ID == c.Store.KBOwner() }
 
 type OpenItem struct {
 	ID      string `json:"id"`
@@ -52,6 +52,8 @@ type Maintenance struct {
 	Stale      []StaleItem     `json:"stale"`
 	Duplicates []DuplicateItem `json:"duplicates"`
 	NextCheck  string          `json:"next_check"`
+	LastCheck  string          `json:"last_check,omitempty"`
+	OwnerID    string          `json:"owner_id"`
 }
 
 func pageByID(c Ctx, id string) (mockdata.Page, bool) {
@@ -69,7 +71,8 @@ func KBMaintenance(c Ctx) (Maintenance, *Error) {
 		return Maintenance{}, &Error{Code: "forbidden", Message: "Поддержка базы — у владельца базы."}
 	}
 	seed := c.Store.Data.KB.Maintenance
-	out := Maintenance{Open: []OpenItem{}, Drafts: []DraftItem{}, Stale: []StaleItem{}, Duplicates: []DuplicateItem{}, NextCheck: seed.NextScheduledCheck}
+	out := Maintenance{Open: []OpenItem{}, Drafts: []DraftItem{}, Stale: []StaleItem{}, Duplicates: []DuplicateItem{},
+		NextCheck: c.Store.NextKBCheck(), LastCheck: c.Store.LastKBCheck(), OwnerID: c.Store.KBOwner()}
 	for _, q := range c.Store.Questions() {
 		if q.Status == "Open" {
 			out.Open = append(out.Open, OpenItem{ID: q.ID, Title: q.Title, AskedBy: q.AskedBy, Reason: "Встреча без записи, ответ текстом не дан"})
@@ -80,13 +83,12 @@ func KBMaintenance(c Ctx) (Maintenance, *Error) {
 			out.Open = append(out.Open, OpenItem{ID: s.ID, Title: s.Text, AskedBy: s.AskedBy, Reason: s.Reason, Seed: true})
 		}
 	}
-	for _, p := range c.Store.Pages() {
-		if p.Status == "Draft" {
-			out.Drafts = append(out.Drafts, DraftItem{ID: p.ID, Title: p.Title, AuthorID: p.AuthorID, Since: p.UpdatedAt})
+	// BR-33: черновик попадает сюда, когда автор не дал «Ок» 6 рабочих дней (после напоминания на 3-й).
+	now := time.Now()
+	for _, d := range c.Store.KBDrafts() {
+		if c.Store.DraftOverdue(d, now) {
+			out.Drafts = append(out.Drafts, DraftItem{ID: d.ID, Title: d.Title, AuthorID: d.AuthorID, Since: d.Since.In(store.MSK).Format(time.DateOnly)})
 		}
-	}
-	for _, d := range seed.UnconfirmedDrafts {
-		out.Drafts = append(out.Drafts, DraftItem{ID: d.ID, Title: d.Title, AuthorID: d.AuthorID, Since: d.CreatedAt})
 	}
 	marks := map[string]int{}
 	for _, e := range c.Store.Events() {
@@ -105,6 +107,24 @@ func KBMaintenance(c Ctx) (Maintenance, *Error) {
 			p, _ := pageByID(c, id)
 			item.Titles, item.Authors = append(item.Titles, p.Title), append(item.Authors, p.AuthorID)
 		}
+		out.Duplicates = append(out.Duplicates, item)
+	}
+	// Пары, найденные плановой проверкой (BR-38): общий заголовок — у страницы с более полным текстом.
+	for _, d := range c.Store.AutoPairs() {
+		item := DuplicateItem{ID: d.ID, Pages: d.Pages, Decision: c.Store.KBDecision("dup:" + d.ID),
+			Note: "Похожи заголовком и текстом — проверь, одна ли это тема"}
+		var longest mockdata.Page
+		for _, id := range d.Pages {
+			p, _ := pageByID(c, id)
+			item.Titles, item.Authors = append(item.Titles, p.Title), append(item.Authors, p.AuthorID)
+			if len(p.Body) > len(longest.Body) {
+				longest = p
+			}
+		}
+		if item.Decision == "" && len(item.Titles) == 2 && (item.Titles[0] == "" || item.Titles[1] == "") {
+			continue // одна из страниц уже объединена или снята
+		}
+		item.ProposedTitle = longest.Title
 		out.Duplicates = append(out.Duplicates, item)
 	}
 	return out, nil
@@ -205,4 +225,56 @@ func asErr(err error) *Error {
 		return &Error{Code: "unavailable", Message: "Не удалось сохранить. Повтори запрос."}
 	}
 	return nil
+}
+
+// CheckKBNow — владелец запускает плановую проверку не дожидаясь даты (BR-38).
+func CheckKBNow(c Ctx) (Maintenance, *Error) {
+	if !isKBOwner(c) {
+		return Maintenance{}, &Error{Code: "forbidden", Message: "Проверку запускает владелец базы."}
+	}
+	if e := asErr(c.Store.Transaction(func(s *store.Store) error { s.CheckKB(time.Now()); return nil })); e != nil {
+		return Maintenance{}, e
+	}
+	return KBMaintenance(c)
+}
+
+// KBOwnerInfo — кто владелец базы и может ли этот человек его сменить.
+type KBOwnerInfo struct {
+	OwnerID   string `json:"owner_id"`
+	CanChange bool   `json:"can_change"`
+	IsOwner   bool   `json:"is_owner"`
+	DefaultID string `json:"default_id"`
+}
+
+func canChangeOwner(c Ctx) bool { return c.User.ID == c.Store.Data.Team.Department.LeadID }
+
+func KBOwner(c Ctx) KBOwnerInfo {
+	return KBOwnerInfo{OwnerID: c.Store.KBOwner(), CanChange: canChangeOwner(c), IsOwner: isKBOwner(c), DefaultID: c.Store.Data.Team.Department.KBOwnerID}
+}
+
+// SetKBOwner — BR-34: владелец по умолчанию — руководитель отдела; он может назначить другого сотрудника.
+// Стажёр владельцем быть не может: ему разбирать чужие вопросы и дубли рано.
+func SetKBOwner(c Ctx, userID string) (KBOwnerInfo, *Error) {
+	return atomic(c, func(c Ctx) (KBOwnerInfo, *Error) {
+		if !canChangeOwner(c) {
+			return KBOwnerInfo{}, &Error{Code: "forbidden", Message: "Владельца базы назначает руководитель отдела.", WhoCan: c.Store.Name(c.Store.Data.Team.Department.LeadID)}
+		}
+		u, ok := c.Store.User(userID)
+		if !ok {
+			return KBOwnerInfo{}, &Error{Code: "not_found", Message: "Сотрудник не найден."}
+		}
+		if store.HasRole(u, store.RoleIntern) {
+			return KBOwnerInfo{}, &Error{Code: "validation", Message: "Стажёр не может быть владельцем базы."}
+		}
+		prev := c.Store.KBOwner()
+		if prev == userID {
+			return KBOwner(c), nil
+		}
+		c.Store.SetKBOwner(userID)
+		if userID != c.User.ID {
+			c.Store.Notify(store.Notification{ID: "kbowner:" + userID + ":" + time.Now().Format(time.RFC3339), UserID: userID, Type: "kb_owner", View: "knowledge", TG: "pending",
+				Text: "📚 " + c.Store.Name(c.User.ID) + " назначил(а) тебя владельцем базы знаний отдела.\nЧто это: открытые вопросы, черновики без «Ок» и дубли теперь приходят тебе — смотри «Поддержку базы» в разделе «База знаний»."})
+		}
+		return KBOwner(c), nil
+	})
 }

@@ -95,7 +95,7 @@ func Redirect(c Ctx, questionID, to string) (store.Question, *Error) {
 			return q, &Error{Code: "not_found", Message: "Вопрос не найден."}
 		}
 		isBuddy := c.User.ID == c.Store.UserBuddy(q.AskedBy)
-		isOwner := c.User.ID == c.Store.Data.Team.Department.KBOwnerID
+		isOwner := c.User.ID == c.Store.KBOwner()
 		switch {
 		case q.Status == "Open" && isOwner:
 			return reroute(c, q, to, "assign")

@@ -1511,6 +1511,12 @@
      }
     ]
    }
+  },
+  "/api/kb/owner": {
+   "can_change": false,
+   "default_id": "u-kovalev",
+   "is_owner": false,
+   "owner_id": "u-kovalev"
   }
  },
  "buddy.belova": {
@@ -2971,6 +2977,12 @@
      }
     ]
    }
+  },
+  "/api/kb/owner": {
+   "can_change": false,
+   "default_id": "u-kovalev",
+   "is_owner": false,
+   "owner_id": "u-kovalev"
   }
  },
  "lead.kovalev": {
@@ -3965,7 +3977,8 @@
      "note": "Разные метрики: просмотр контактов и сделка"
     }
    ],
-   "next_check": "2027-01-15"
+   "next_check": "2027-01-15",
+   "owner_id": "u-kovalev"
   },
   "/api/settings": {
    "ok": true,
@@ -4386,6 +4399,12 @@
      }
     ]
    }
+  },
+  "/api/kb/owner": {
+   "can_change": true,
+   "default_id": "u-kovalev",
+   "is_owner": true,
+   "owner_id": "u-kovalev"
   }
  },
  "expert.smirnova": {
@@ -5208,6 +5227,12 @@
     ],
     "working_hours": "09:00-18:00"
    }
+  },
+  "/api/kb/owner": {
+   "can_change": false,
+   "default_id": "u-kovalev",
+   "is_owner": false,
+   "owner_id": "u-kovalev"
   }
  },
  "intern.egorova": {
@@ -6308,6 +6333,12 @@
      }
     ]
    }
+  },
+  "/api/kb/owner": {
+   "can_change": false,
+   "default_id": "u-kovalev",
+   "is_owner": false,
+   "owner_id": "u-kovalev"
   }
  }
 }

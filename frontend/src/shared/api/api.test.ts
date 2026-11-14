@@ -7,11 +7,17 @@ describe("API client", () => {
   it("adds user and JSON headers", async () => {
     const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ value: 1 }), { status: 200 }));
     vi.stubGlobal("fetch", fetchMock);
-    await expect(api<{ value: number }>("intern", "/api/me")).resolves.toEqual({ value: 1 });
+    await expect(api<{ value: number }>("intern", "/api/meetings")).resolves.toEqual({ value: 1 });
     const [, init] = fetchMock.mock.calls[0];
     expect(new Headers(init.headers)).toMatchObject(expect.any(Headers));
     expect(new Headers(init.headers).get("X-User")).toBe("intern");
     expect(new Headers(init.headers).get("Content-Type")).toBe("application/json");
+  });
+
+  it("rejects a response of the wrong shape with a readable message", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({ value: 1 }), { status: 200 })));
+    await expect(api("intern", "/api/me")).rejects.toThrow(/неожиданном формате/);
   });
 
   it("reuses an idempotency key after a server error and clears it after success", async () => {

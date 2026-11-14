@@ -117,6 +117,8 @@ func (s *Store) Watch(now time.Time) {
 	}
 	s.watchIdle(now)
 	s.watchPlans(now)
+	s.watchKBDrafts(now)
+	s.watchKBCheck(now)
 }
 
 // watchIdle — BR-85: 2 рабочих дня без активности по плану → мягкий сигнал бадди (только в вебе).

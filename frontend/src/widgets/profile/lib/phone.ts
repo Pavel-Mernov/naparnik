@@ -34,11 +34,6 @@ export const formatLocal = (digits: string): string => {
   return `${d.slice(0, 3)} ${d.slice(3, 6)}-${d.slice(6, 8)}-${d.slice(8)}`;
 };
 
-export const formatFull = (digits: string) => {
-  const d = phoneDigits(digits);
-  return `+7 (${d.slice(0, 3)}) ${d.slice(3, 6)}-${d.slice(6, 8)}-${d.slice(8, 10)}`;
-};
-
 /** Как backend: 10 цифр → «+7 900 123-45-67». */
 export const normalizePhone = (raw: string): string | null => {
   const digits = phoneDigits(raw);

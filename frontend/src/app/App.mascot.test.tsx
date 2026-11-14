@@ -1,6 +1,6 @@
 // Маскот машет письмом только на новое важное (08-DESIGN §2.4): открыл чат или колокольчик — успокоился;
 // просмотренное помнится после перезагрузки, новое важное — снова письмо.
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import fixtures from "@/test/fixtures.json";
@@ -47,5 +47,48 @@ describe("маскот и важное", () => {
     await userEvent.click(mascot());
     await userEvent.click(await screen.findByRole("button", { name: "Закрыть чат" }));
     await waitFor(() => expect(mascot()).toHaveAttribute("data-mood", "idle"), { timeout: 3000 });
+  });
+});
+
+// 08-DESIGN §2.5: перетаскивание к краю, меню по правому клику; всё запоминается для учётки.
+describe("маскот: место и меню", () => {
+  const place = () => JSON.parse(localStorage.getItem("naparnik.mascot.place.intern.sokolov") ?? "null");
+
+  it("перетащили влево — прилип к левому краю, чат не открылся, место помнится после перезагрузки", async () => {
+    const first = start();
+    await screen.findByRole("heading", { name: /Даниил, на сегодня/ });
+    const m = mascot();
+    fireEvent.pointerDown(m, { button: 0, clientX: 1000, clientY: 700, pointerId: 1 });
+    fireEvent.pointerMove(m, { clientX: 600, clientY: 500, pointerId: 1 });
+    expect(m.style.left).not.toBe(""); // во время перетаскивания идёт за курсором
+    fireEvent.pointerMove(m, { clientX: 40, clientY: 300, pointerId: 1 });
+    fireEvent.pointerUp(m, { clientX: 40, clientY: 300, pointerId: 1 });
+    fireEvent.click(m);
+    expect(screen.queryByRole("dialog", { name: /Напарник/ })).not.toBeInTheDocument();
+    expect(m.getAttribute("data-edge")).toBe("left");
+    expect(place()).toMatchObject({ edge: "left", minimized: false });
+    first.unmount();
+    start();
+    await screen.findByRole("heading", { name: /Даниил, на сегодня/ });
+    expect(mascot().getAttribute("data-edge")).toBe("left");
+  });
+
+  it("правый клик: свернуть до точки и развернуть кликом; скрыть на час и вернуть из меню профиля", async () => {
+    start();
+    await screen.findByRole("heading", { name: /Даниил, на сегодня/ });
+    fireEvent.contextMenu(mascot(), { clientX: 900, clientY: 600 });
+    await userEvent.click(within(await screen.findByRole("menu")).getByRole("menuitem", { name: "Свернуть" }));
+    const dot = await screen.findByRole("button", { name: "Развернуть Напарника" });
+    expect(place().minimized).toBe(true);
+    await userEvent.click(dot);
+    expect(await screen.findByRole("button", { name: "Открыть чат с Напарником" })).toBeInTheDocument();
+
+    fireEvent.contextMenu(mascot(), { clientX: 900, clientY: 600 });
+    await userEvent.click(within(await screen.findByRole("menu")).getByRole("menuitem", { name: "Скрыть на час" }));
+    await waitFor(() => expect(screen.queryByRole("button", { name: "Открыть чат с Напарником" })).not.toBeInTheDocument());
+    expect(place().hiddenUntil).toBeGreaterThan(Date.now());
+    await userEvent.click(screen.getByRole("button", { name: /Даниил Соколов|Профиль|Аккаунт/ }));
+    await userEvent.click(await screen.findByRole("menuitem", { name: /Показать Напарника/ }));
+    expect(await screen.findByRole("button", { name: "Открыть чат с Напарником" })).toBeInTheDocument();
   });
 });

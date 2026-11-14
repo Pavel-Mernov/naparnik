@@ -263,7 +263,7 @@ func LeaveOpen(c Ctx, questionID string) (store.Question, *Error) {
 			return q, &Error{Code: "validation", Message: "Оставить открытым можно вопрос после встречи без записи."}
 		}
 		out, _ := c.Store.UpdateQuestion(q.ID, func(x *store.Question) { x.Status = "Open" })
-		c.Store.Emit(store.EvQuestionOpen, c.User.ID, q.ID, map[string]string{"asker": q.AskedBy, "owner": c.Store.Data.Team.Department.KBOwnerID})
+		c.Store.Emit(store.EvQuestionOpen, c.User.ID, q.ID, map[string]string{"asker": q.AskedBy, "owner": c.Store.KBOwner()})
 		return out, nil
 	})
 }

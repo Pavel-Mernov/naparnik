@@ -222,3 +222,20 @@ func (s *Store) UserByTelegram(chatID int64) (string, bool) {
 	}
 	return "", false
 }
+
+// ChangeMark — отпечаток того, что видит пользователь: меняется при любом событии журнала, новом
+// или прочитанном уведомлении. По нему поток /api/stream говорит вебу «обнови экран».
+func (s *Store) ChangeMark(userID string) string {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	n, read := 0, 0
+	for _, x := range s.notifications {
+		if x.UserID == userID {
+			n++
+			if x.Read {
+				read++
+			}
+		}
+	}
+	return fmt.Sprintf("%d.%d.%d.%d", len(s.events), n, read, len(s.pages))
+}

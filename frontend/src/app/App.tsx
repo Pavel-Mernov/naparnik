@@ -20,11 +20,12 @@ import { PlanDraftDialog } from "@/widgets/plan-draft";
 import { TeamMapDialog } from "@/widgets/team-map";
 import { TelegramDialog } from "@/widgets/telegram";
 import { SettingsDialog } from "@/widgets/settings";
-import { Mascot3D, moodLabel, useMascotMood } from "@/widgets/mascot";
+import { Mascot3D, moodLabel, useMascotMood, useMascotPlacement } from "@/widgets/mascot";
 import { PracticePanel } from "@/widgets/practice";
 import { LeadPanels } from "@/widgets/lead-panels";
+import { KbSupport } from "@/widgets/kb-support";
 import {
-  api, ApiError, getProfile, unwrap, type ChatReply, type Meeting, type KbDraft, type KbFolder, type KbPage, type Me, type PlanData, type PlanStep,
+  api, ApiError, getProfile, subscribeChanges, unwrap, type ChatReply, type Meeting, type KbDraft, type KbFolder, type KbPage, type Me, type PlanData, type PlanStep,
   type Question, type RequestItem, type Services, type TeamOverview, type TodayData, type User, type ChatHistory, type ChatTurn,
 } from "@/shared/api";
 import { STORAGE } from "@/shared/config";
@@ -163,14 +164,22 @@ function App() {
     }
   }, [login]);
 
+  const reload = useRef(load);
+  reload.current = load;
   useEffect(() => { void load(); return () => { loadController.current?.abort(); }; }, [load]);
   useEffect(() => {
     let alive = true;
     const pull = () => api<{ notifications: ServerNote[] }>(login, "/api/notifications")
       .then((r) => { if (alive) setServerNotes(r.notifications.filter((n) => SERVER_ONLY.includes(n.type))); }).catch(() => undefined);
     void pull();
-    const timer = setInterval(pull, 30000);
-    return () => { alive = false; clearInterval(timer); };
+    const timer = setInterval(pull, 30000); // запасной путь, если живой поток недоступен
+    // Живые обновления: ответ эксперта, решение по заявке, новое уведомление — экран обновляется сам.
+    let soon: ReturnType<typeof setTimeout> | undefined;
+    const stop = subscribeChanges(login, () => {
+      clearTimeout(soon);
+      soon = setTimeout(() => { void pull(); void reload.current(); }, 300);
+    });
+    return () => { alive = false; clearInterval(timer); clearTimeout(soon); stop(); };
   }, [login]);
   useEffect(() => () => { actions.current.forEach((c) => c.abort()); }, []);
   // Чат на экране начинается с чистого листа — и разговор с агентом на сервере тоже.
@@ -291,6 +300,9 @@ function App() {
   };
   markSeenRef.current = markSeen;
   const lastMessage = messages[messages.length - 1];
+  const mascotSize = mobile ? 72 : 96;
+  const placement = useMascotPlacement(login, mascotSize * 1.2, mobile ? 70 : 20);
+  const { place } = placement;
   const { mood } = useMascotMood({
     thinking: chatLoading,
     error: lastMessage?.role === "assistant" && Boolean(lastMessage.retryText) && !lastMessage.reply,
@@ -332,7 +344,9 @@ function App() {
     if (view === "questions" || (view === "day" && role === "expert")) return <QuestionsPage data={data} role={role} login={login} asked={asked} onAction={perform} onAsk={() => openChat()} onOpenChat={() => setChatOpen(true)}
       onAnswer={(q, text) => perform(`/api/questions/${q.id}/answer`, "POST", { text }, "Ответ ушёл стажёру. Проверь страницу для базы")}
       onApprove={async (d, title, body) => { await perform(`/api/kb/pages/${d.id}/approve`, "POST", { title, body }, "Страница опубликована в базе знаний"); }} />;
-    if (view === "knowledge") return <KnowledgePage data={data} onAsk={openChat} openId={kbOpen} onOpened={clearKbOpen} />;
+    // Владельцу базы, если это не руководитель (BR-34), «Поддержка базы» — под базой знаний.
+    if (view === "knowledge") return <><KnowledgePage data={data} onAsk={openChat} openId={kbOpen} onOpened={clearKbOpen} />
+      {role !== "lead" && role !== "intern" && <Box mt={5}><KbSupport login={login} users={data.users} onAction={perform} /></Box>}</>;
     if (view === "requests") return <RequestsPage data={data} login={login} isLead={role === "lead"} busy={busy} onAgent={() => openChat("Мне нужен отгул ")}
       onSent={(m) => { setSnack(m); void load(); }}
       onMarkStep={role === "intern" ? (id) => { const st = data.plan?.steps.find((x) => x.id === id); if (st) void markDone(st); } : undefined}
@@ -417,14 +431,24 @@ function App() {
 
         {/* Маскот — на всех экранах, 96 px (08-DESIGN): клик открывает чат, бейдж — сколько ждёт внимания,
             «Думаю…» — пока отвечает модель. Плавное «дыхание» отключается при prefers-reduced-motion. */}
-        {role && !chatOpen && <Box component="button" onClick={() => openChat()} aria-label="Открыть чат с Напарником" aria-description={`Напарник: ${moodLabel(mood).toLowerCase()}`} data-mood={mood} sx={{
-          position: "fixed", right: { xs: 8, md: 24 }, bottom: { xs: 70, md: 20 }, zIndex: 12, p: 0, border: "none", bgcolor: "transparent",
-          overflow: "visible", lineHeight: 0,
-          transition: "transform .2s ease", "&:hover, &:focus-visible": { transform: "translateY(-3px)" },
+        {/* Перетаскивается к любому краю, меню по правому клику или долгому нажатию (08-DESIGN §2.5). */}
+        {role && !chatOpen && !placement.hidden && <Box component="button" {...placement.handlers}
+          onClick={() => { if (placement.consumeClick()) return; if (place.minimized) placement.minimize(false); else openChat(); }}
+          aria-label={place.minimized ? "Развернуть Напарника" : "Открыть чат с Напарником"} aria-description={`Напарник: ${moodLabel(mood).toLowerCase()}. Меню — правой кнопкой`} data-mood={mood}
+          data-edge={place.edge}
+          style={placement.drag ? { left: placement.drag.x - mascotSize * 0.6, top: placement.drag.y - mascotSize * 0.6, right: "auto", bottom: "auto", transition: "none", cursor: "grabbing" } : undefined}
+          sx={{
+          position: "fixed", [place.edge]: { xs: 8, md: 24 }, bottom: place.bottom, zIndex: 12, p: 0, border: "none", bgcolor: "transparent",
+          overflow: "visible", lineHeight: 0, touchAction: "none", cursor: "grab",
+          transition: "transform .2s ease, left .25s ease, right .25s ease, bottom .25s ease", "&:hover, &:focus-visible": { transform: "translateY(-3px)" },
           "&:hover .mascot-label, &:focus-visible .mascot-label": { opacity: 1, transform: "translateY(-50%)" },
         }}>
-          <Mascot3D
-            size={mobile ? 72 : 96}
+          {place.minimized ? <Box component="span" sx={{
+            display: "block", width: 32, height: 32, borderRadius: "50%", bgcolor: "primary.main", border: `3px solid ${t.bg}`,
+            boxShadow: "0 2px 8px rgba(0,0,0,.25)", position: "relative",
+            ...(urgent > 0 && { "&::after": { content: '""', position: "absolute", top: -4, right: -4, width: 12, height: 12, borderRadius: "50%", bgcolor: "error.main" } }),
+          }} /> : <Mascot3D
+            size={mascotSize}
             mood={mood}
             badge={urgent > 0 ? (
               <Box component="span" sx={{
@@ -435,23 +459,30 @@ function App() {
                 boxSizing: "border-box",
               }}>{urgent}</Box>
             ) : undefined}
-          />
+          />}
           <Box component="span" className="mascot-label" sx={{
-            position: "absolute", right: "100%", top: "50%", mr: 1.5,
+            position: "absolute", top: "50%", ...(place.edge === "right" ? { right: "100%", mr: 1.5 } : { left: "100%", ml: 1.5 }),
             px: 1.5, py: 1, bgcolor: t.inverse, color: t.onInverse,
             fontSize: 13, fontWeight: 600, lineHeight: 1.3, whiteSpace: "nowrap",
-            opacity: chatLoading ? 1 : 0,
-            transform: chatLoading ? "translateY(-50%)" : "translate(8px, -50%)",
+            opacity: chatLoading && !placement.drag ? 1 : 0,
+            transform: chatLoading ? "translateY(-50%)" : `translate(${place.edge === "right" ? 8 : -8}px, -50%)`,
             transition: "opacity .2s ease, transform .2s ease",
             pointerEvents: "none", display: { xs: "none", md: "block" },
             "&::after": {
-              content: '""', position: "absolute", left: "100%", top: "50%",
-              transform: "translateY(-50%)",
-              borderStyle: "solid", borderWidth: "6px 0 6px 6px",
-              borderColor: `transparent transparent transparent ${t.inverse}`,
+              content: '""', position: "absolute", top: "50%", transform: "translateY(-50%)", borderStyle: "solid",
+              ...(place.edge === "right"
+                ? { left: "100%", borderWidth: "6px 0 6px 6px", borderColor: `transparent transparent transparent ${t.inverse}` }
+                : { right: "100%", borderWidth: "6px 6px 6px 0", borderColor: `transparent ${t.inverse} transparent transparent` }),
             },
-          }}>{chatLoading ? "Думаю…" : urgent ? `Есть новое: ${urgent}` : moodLabel(mood)}</Box>
+          }}>{chatLoading ? "Думаю…" : urgent ? `Есть новое: ${urgent}` : place.minimized ? "Напарник свёрнут — нажми, чтобы развернуть" : moodLabel(mood)}</Box>
         </Box>}
+        <Menu open={Boolean(placement.menuAt)} onClose={placement.closeMenu} anchorReference="anchorPosition"
+          anchorPosition={placement.menuAt ? { top: placement.menuAt.y, left: placement.menuAt.x } : undefined}>
+          <MenuItem onClick={() => { placement.closeMenu(); placement.minimize(!place.minimized); }}>{place.minimized ? "Развернуть" : "Свернуть"}</MenuItem>
+          <MenuItem onClick={() => { placement.closeMenu(); placement.hideForHour(); setSnack("Напарник скрыт на час. Вернуть — в меню профиля"); }}>Скрыть на час</MenuItem>
+          <MenuItem onClick={() => { placement.closeMenu(); placement.reset(); }}>Вернуть в угол</MenuItem>
+          <MenuItem onClick={() => { placement.closeMenu(); setSettingsOpen(true); }}>Настройки</MenuItem>
+        </Menu>
 
         <Popover open={Boolean(notesAnchor)} anchorEl={notesAnchor} onClose={() => setNotesAnchor(null)} anchorOrigin={{ vertical: "bottom", horizontal: "right" }} transformOrigin={{ vertical: "top", horizontal: "right" }}
           slotProps={{ paper: { sx: { width: 360, maxWidth: "calc(100vw - 24px)", maxHeight: 480 } } }}>
@@ -477,6 +508,9 @@ function App() {
                 secondary: { variant: "body2" },
               }}
             />
+          </MenuItem>}
+          {me && placement.hidden && <MenuItem onClick={() => { setAccountAnchor(null); placement.show(); }}>
+            <ListItemText primary="Показать Напарника" secondary="Он скрыт на час" slotProps={{ primary: { variant: "body1", sx: { fontSize: 14 } } }} />
           </MenuItem>}
           {me && <MenuItem onClick={() => { setAccountAnchor(null); setSettingsOpen(true); }}>
             <SettingsOutlined sx={{ mr: 1.5, color: t.muted }} />

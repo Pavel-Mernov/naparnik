@@ -4,4 +4,3 @@ export const STORAGE = {
   login: "naparnik.login",
 } as const;
 
-export const APP_NAME = "Напарник";

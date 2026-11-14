@@ -93,6 +93,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/questions", s.auth(s.questions))
 	mux.HandleFunc("GET /api/today", s.auth(s.today))
 	mux.HandleFunc("GET /api/users", s.users)
+	mux.HandleFunc("GET /api/stream", s.auth(s.stream))               // живые обновления (SSE)
 	mux.HandleFunc("GET /api/notifications", s.auth(s.notifications)) // центр уведомлений (BR-50…53)
 	mux.HandleFunc("POST /api/notifications/read", s.auth(s.notificationsRead))
 	mux.HandleFunc("POST /api/telegram/link", s.auth(s.telegramLink)) // BR-50: одноразовый код
@@ -113,6 +114,9 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/kb/maintenance", s.auth(s.kbMaintenance))      // SC-22
 	mux.HandleFunc("POST /api/kb/duplicates/{id}", s.auth(s.kbDuplicate))
 	mux.HandleFunc("POST /api/kb/drafts/{id}/remind", s.auth(s.kbRemind))
+	mux.HandleFunc("POST /api/kb/check", s.auth(s.kbCheck)) // BR-38: плановая проверка сейчас
+	mux.HandleFunc("GET /api/kb/owner", s.auth(s.kbOwner))  // BR-34
+	mux.HandleFunc("PUT /api/kb/owner", s.auth(s.kbSetOwner))
 	mux.HandleFunc("POST /api/meetings/{id}/finish", s.auth(s.finishMeeting)) // в проде — сигнал ВКС
 	if s.StaticDir != "" {
 		files := http.FileServer(http.Dir(s.StaticDir))
@@ -432,7 +436,7 @@ func (s *Server) questions(w http.ResponseWriter, _ *http.Request, u *mockdata.U
 				v.Title, v.Text, v.Answer, v.Reason, v.TextHidden = "", "", "", "", true // BR-86: скрыт и текст, и ответ
 			}
 			out = append(out, v)
-		case q.Status == "Open" && u.ID == s.Store.Data.Team.Department.KBOwnerID:
+		case q.Status == "Open" && u.ID == s.Store.KBOwner():
 			out = append(out, v) // BR-37: открытые вопросы видит владелец базы, чтобы назначить, кто ответит
 		case asker != nil && asker.LeadID == u.ID:
 			count++

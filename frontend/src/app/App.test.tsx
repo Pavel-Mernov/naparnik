@@ -309,7 +309,7 @@ const decided = { requests: [
 ] };
 const plannedQuestions = { questions: [
   ...(intern["/api/questions"] as { questions: Array<Record<string, unknown>> }).questions.map((q) => (q.status === "Sent" ? { ...q, overdue: true, urgent: true } : q)),
-  { id: "Q-900", asked_by: "u-sokolov", addressee_id: "u-orlov", addressee: "Михаил Орлов", status: "Sent", text_hidden: true, reason: "автор страниц про витрины" },
+  { id: "Q-900", asked_by: "u-sokolov", addressee_id: "u-orlov", addressee: "Михаил Орлов", status: "Sent", urgent: false, text_hidden: true, reason: "автор страниц про витрины" },
 ] };
 
 describe("ветви интерфейса стажёра", () => {
