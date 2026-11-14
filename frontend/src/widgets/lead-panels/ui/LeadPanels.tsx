@@ -8,6 +8,7 @@ import { KbSupport } from "@/widgets/kb-support";
 
 type LoadRow = { id: string; name: string; role: string; received: number; answered: number; meetings: number; pages: number; minutes: number };
 type Metrics = { kb_answers: number; questions_to_people: number; kb_share: number; median_answer_minutes: number; pages_published: number; csat: number; load: LoadRow[] };
+type Soft = "aiSoft" | "okSoft" | "waitSoft" | "todaySoft";
 
 const pct = (x: number) => `${Math.round(x * 100)}%`;
 const mins = (m: number) => (m < 60 ? `${Math.round(m)} мин` : `${Math.floor(m / 60)} ч ${Math.round(m % 60)} мин`);
@@ -22,28 +23,35 @@ export const LeadPanels = ({ login, users, onAction }: {
   }, [login]);
   useEffect(reload, [reload]);
 
-  const tile = (value: string, label: string, hint: string) => (
-    <Box sx={{ bgcolor: t.surface, p: 2 }}>
-      <Typography sx={{ fontSize: 30, fontWeight: 300, lineHeight: 1.1 }}>{value}</Typography>
-      <Typography variant="body2">{label}</Typography>
-      <Typography variant="caption" color="text.secondary">{hint}</Typography>
-    </Box>
-  );
+  // Soft-токены как у быстрых чипов дня: цвет несёт смысл, цифра — regular 400.
+  const tile = (value: string, label: string, hint: string, soft: Soft) => {
+    const empty = value === "—";
+    return (
+      <Box sx={{ bgcolor: t[soft], p: 2, minHeight: { xs: 104, md: 112 } }}>
+        <Typography sx={{
+          fontSize: { xs: 28, md: 36 }, fontWeight: (theme) => theme.type.weight.regular, lineHeight: 1.1,
+          color: empty ? "text.secondary" : "text.primary",
+        }}>{value}</Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.75 }}>{label}</Typography>
+        <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.25 }}>{hint}</Typography>
+      </Box>
+    );
+  };
 
-  return <Stack gap={5} mt={5}>
+  return <Stack gap={{ xs: 2, md: 5 }} mt={{ xs: 2, md: 5 }}>
     <Block title="Польза Напарника">
       {m ? <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr 1fr", md: "repeat(4, 1fr)" }, gap: 1.5 }}>
-        {tile(pct(m.kb_share), "вопросов закрыла база", `${m.kb_answers} из базы, ${m.questions_to_people} — людям`)}
-        {tile(m.median_answer_minutes ? mins(m.median_answer_minutes) : "—", "медиана ответа человека", "от вопроса до ответа")}
-        {tile(String(m.pages_published), "новых страниц в базе", "ответы людей стали знанием")}
-        {tile(m.csat ? pct(m.csat) : "—", "ответов «помогло»", "оценки стажёров")}
+        {tile(pct(m.kb_share), "вопросов закрыла база", `${m.kb_answers} из базы, ${m.questions_to_people} — людям`, "aiSoft")}
+        {tile(m.median_answer_minutes ? mins(m.median_answer_minutes) : "—", "медиана ответа человека", "от вопроса до ответа", "waitSoft")}
+        {tile(String(m.pages_published), "новых страниц в базе", "ответы людей стали знанием", "okSoft")}
+        {tile(m.csat ? pct(m.csat) : "—", "ответов «помогло»", "оценки стажёров", "todaySoft")}
       </Box> : <Typography color="text.secondary">Считаю…</Typography>}
     </Block>
 
     <Block title="Нагрузка бадди и экспертов" aside={<Typography variant="body2" color="text.secondary">оценка: ответ ≈ 10 мин, встреча ≈ 30 мин</Typography>}>
       {m?.load.length ? m.load.map((r) => <Row key={r.id} title={`${r.name} · ${r.role}`}
         sub={`вопросов: ${r.received} · ответил(а): ${r.answered} · встреч: ${r.meetings} · страниц в базе: ${r.pages}`}
-        end={<Typography fontWeight={600}>{mins(r.minutes)}</Typography>} />) : <Empty text="Нагрузка появится, когда стажёры начнут задавать вопросы людям." />}
+        end={<Typography fontWeight={(theme) => theme.type.weight.regular}>{mins(r.minutes)}</Typography>} />) : <Empty text="Нагрузка появится, когда стажёры начнут задавать вопросы людям." />}
     </Block>
 
     <KbSupport login={login} users={users} onAction={onAction} />

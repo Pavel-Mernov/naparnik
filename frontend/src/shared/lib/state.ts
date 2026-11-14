@@ -33,6 +33,15 @@ export const viewLabel = (role: Role, view: View) => {
   return "База знаний";
 };
 
+/** Короткие подписи для нижней навигации на мобилке — длинные не влезают в 4–5 табов. */
+export const mobileNavLabel = (role: Role, view: View) => {
+  if (view === "day") return ({ lead: "Команда", buddy: "Стажёры", intern: "День", expert: "Входящие" })[role];
+  if (view === "plan") return "План";
+  if (view === "questions") return "Вопросы";
+  if (view === "requests") return role === "lead" ? "Заявки" : "Заявки";
+  return "База";
+};
+
 export const viewsFor = (role: Role): View[] => (["day", "plan", "questions", "knowledge", "requests"] as View[])
   .filter((v) => (v !== "plan" || role === "intern" || role === "buddy") && (v !== "requests" || role === "intern" || role === "lead")
     && !(role === "expert" && v === "questions"));

@@ -57,30 +57,33 @@ export const KbSupport = ({ login, users, onAction }: {
         <Box>
           <Typography variant="h3" component="h3" mb={1}>Открытые вопросы</Typography>
           {kb.open_questions.length ? kb.open_questions.map((q) => <Row key={q.id} title={q.title} sub={`${name(q.asked_by)} · ${q.reason}`}
-            end={<Button variant="contained" size="small" sx={{ minHeight: 36 }} onClick={() => setAssigning(q.id)}>Назначить</Button>} />)
+            stackEndOnMobile
+            end={<Button variant="contained" size="small" sx={{ minHeight: 36, width: { xs: "100%", sm: "auto" } }} onClick={() => setAssigning(q.id)}>Назначить</Button>} />)
             : <Typography variant="body2" color="text.secondary">Открытых вопросов нет.</Typography>}
         </Box>
         <Box>
-          <Stack direction="row" justifyContent="space-between" alignItems="baseline" gap={2} flexWrap="wrap" mb={1}>
+          <Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" alignItems={{ xs: "stretch", sm: "baseline" }} gap={1.5} mb={1}>
             <Typography variant="h3" component="h3">Дубли от плановой проверки</Typography>
-            <Stack direction="row" alignItems="baseline" gap={1.5}>
+            <Stack direction={{ xs: "column", sm: "row" }} alignItems={{ xs: "stretch", sm: "baseline" }} gap={1.5}>
               <Typography variant="body2" color="text.secondary">{kb.last_check ? `последняя — ${ruDate(kb.last_check)}` : "раз в 4 месяца"}</Typography>
-              <Button variant="outlined" size="small" sx={{ minHeight: 36 }} onClick={() => void act("/api/kb/check", "POST", {}, "Проверил базу: похожие страницы — в списке")}>Проверить сейчас</Button>
+              <Button variant="outlined" size="small" sx={{ minHeight: 36, width: { xs: "100%", sm: "auto" } }} onClick={() => void act("/api/kb/check", "POST", {}, "Проверил базу: похожие страницы — в списке")}>Проверить сейчас</Button>
             </Stack>
           </Stack>
           {kb.duplicates.length ? kb.duplicates.map((d) => <Row key={d.id} title={d.titles.join("  ≈  ")}
+            stackEndOnMobile
             sub={d.decision ? (d.decision === "merge" ? `Объединено${d.proposed_title ? `: «${d.proposed_title}»` : ""}` : "Отмечено: не дубль")
               : d.proposed_title ? `Предлагаю общий заголовок: «${d.proposed_title}»${d.note ? ` · ${d.note}` : ""}` : `Похоже, это разные темы: ${d.note ?? "проверь сам"}`}
             end={!d.decision && <>
-              <Button variant="contained" size="small" sx={{ minHeight: 36 }} onClick={() => void act(`/api/kb/duplicates/${d.id}`, "POST", { decision: "merge" }, "Страницы объединены, авторы уведомлены")}>Объединить</Button>
-              <Button variant="text" size="small" sx={{ minHeight: 36 }} onClick={() => void act(`/api/kb/duplicates/${d.id}`, "POST", { decision: "not_duplicate" }, "Отмечено: не дубль")}>Не дубль</Button>
+              <Button variant="contained" size="small" sx={{ minHeight: 36, width: { xs: "100%", sm: "auto" } }} onClick={() => void act(`/api/kb/duplicates/${d.id}`, "POST", { decision: "merge" }, "Страницы объединены, авторы уведомлены")}>Объединить</Button>
+              <Button variant="text" size="small" sx={{ minHeight: 36, width: { xs: "100%", sm: "auto" } }} onClick={() => void act(`/api/kb/duplicates/${d.id}`, "POST", { decision: "not_duplicate" }, "Отмечено: не дубль")}>Не дубль</Button>
             </>} />) : <Typography variant="body2" color="text.secondary">Похожих страниц не нашлось.</Typography>}
         </Box>
         <Box>
           <Typography variant="h3" component="h3" mb={1}>Черновики без «Ок» автора</Typography>
           <Typography variant="body2" color="text.secondary" mb={1}>Через 3 рабочих дня автору приходит напоминание, через 6 — черновик попадает сюда.</Typography>
           {kb.drafts.length ? kb.drafts.map((d) => <Row key={d.id} title={d.title} sub={`${name(d.author_id)} · с ${ruDate(d.since)}`}
-            end={<Button variant="text" size="small" sx={{ minHeight: 36 }} onClick={() => void act(`/api/kb/drafts/${d.id}/remind`, "POST", {}, "Напомнил автору")}>Напомнить</Button>} />)
+            stackEndOnMobile
+            end={<Button variant="text" size="small" sx={{ minHeight: 36, width: { xs: "100%", sm: "auto" } }} onClick={() => void act(`/api/kb/drafts/${d.id}/remind`, "POST", {}, "Напомнил автору")}>Напомнить</Button>} />)
             : <Typography variant="body2" color="text.secondary">Все черновики подтверждены.</Typography>}
         </Box>
         <Box>

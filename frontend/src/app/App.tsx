@@ -3,12 +3,12 @@
 // цвета логотипа как акценты, фиолетовый — цвет ИИ. Главное на каждом экране — в первой строке.
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactElement } from "react";
 import {
-  Alert, Avatar, Badge, Box, BottomNavigation, BottomNavigationAction, Button, Container, IconButton, LinearProgress,
-  Divider, ListItemText, Menu, MenuItem, Popover, Snackbar, Stack, TextField, Typography, useMediaQuery,
+  Alert, Avatar, Badge, Box, BottomNavigation, BottomNavigationAction, Button, Container, Dialog,
+  IconButton, LinearProgress, Divider, ListItemText, Menu, MenuItem, Popover, Snackbar, Stack, TextField, Typography, useMediaQuery,
 } from "@mui/material";
 import {
-  AccountCircleOutlined, DescriptionOutlined, ForumOutlined, HomeOutlined, MenuBookOutlined, SendOutlined, SettingsOutlined,
-  NotificationsNoneOutlined, TaskAltOutlined,
+  AccountCircleOutlined, AutoStoriesOutlined, ChatBubbleOutlineOutlined, DescriptionOutlined, HomeOutlined,
+  ListAltOutlined, NotificationsNoneOutlined, SendOutlined, SettingsOutlined, VisibilityOutlined,
 } from "@mui/icons-material";
 import avitoLogo from "@/shared/assets/logo.svg";
 import avitoLogoDark from "@/shared/assets/logo-dark.svg";
@@ -30,8 +30,8 @@ import {
 } from "@/shared/api";
 import { STORAGE } from "@/shared/config";
 import { makeTheme, tokens, type Mode } from "@/shared/theme";
-import { buildNotes, initials, requestTitle, statusOf, ROLE_RU, primaryRole, viewLabel, viewsFor, type DataState, type Note, type View } from "@/shared/lib";
-import { Block, DaySkeleton, Empty, KnowledgeSkeleton, ListSkeleton, Row, StatusTag } from "@/shared/ui";
+import { buildNotes, initials, requestTitle, statusOf, ROLE_RU, primaryRole, mobileNavLabel, viewLabel, viewsFor, type DataState, type Note, type View } from "@/shared/lib";
+import { Block, DaySkeleton, DialogClose, Empty, KnowledgeSkeleton, ListSkeleton, Row, StatusTag } from "@/shared/ui";
 import { DayPage } from "@/pages/day";
 import { PlanPage } from "@/pages/plan";
 import { QuestionsPage } from "@/pages/questions";
@@ -40,8 +40,14 @@ import { RequestsPage } from "@/pages/requests";
 import { BuddyPage } from "@/pages/buddy";
 import { TeamPage } from "@/pages/team";
 
+// Нижняя навигация: один набор Outlined, без «жирных» TaskAlt/MenuBook — как плоские иконки Akita.
+const navIconSx = { fontSize: 20 };
 const ICONS: Record<View, ReactElement> = {
-  day: <HomeOutlined />, plan: <TaskAltOutlined />, questions: <ForumOutlined />, knowledge: <MenuBookOutlined />, requests: <DescriptionOutlined />,
+  day: <HomeOutlined sx={navIconSx} />,
+  plan: <ListAltOutlined sx={navIconSx} />,
+  questions: <ChatBubbleOutlineOutlined sx={navIconSx} />,
+  knowledge: <AutoStoriesOutlined sx={navIconSx} />,
+  requests: <DescriptionOutlined sx={navIconSx} />,
 };
 // Уведомления, которые рождаются на сервере по времени (утренний план, напоминание о событии, устаревшая страница):
 // их нет в данных экранов, поэтому подтягиваем раз в полминуты.
@@ -194,7 +200,8 @@ function App() {
     api<ChatHistory>(login, "/api/chat/history", { signal: controller.signal }).then((h) => {
       if (account.current !== login) return;
       conversation.current = h.conversation;
-      setAsked(h.turns);
+      const turns = h.turns;
+      setAsked(turns);
       // Если человек уже успел написать, пока грузилась история, его сообщения не затираем.
       setMessages((m) => (m.length > 1 ? m : [GREETING, ...turnsToMessages(h.turns.filter((x) => x.conversation === h.conversation))]));
     }).catch(() => undefined);
@@ -301,7 +308,7 @@ function App() {
   markSeenRef.current = markSeen;
   const lastMessage = messages[messages.length - 1];
   const mascotSize = mobile ? 72 : 96;
-  const placement = useMascotPlacement(login, mascotSize * 1.2, mobile ? 70 : 20);
+  const placement = useMascotPlacement(login, mascotSize * 1.2, mobile ? 80 : 20);
   const { place } = placement;
   const { mood } = useMascotMood({
     thinking: chatLoading,
@@ -338,15 +345,36 @@ function App() {
       const chosen = data.managedPlans.find((i) => i.id === selectedIntern);
       return <PlanPage plan={chosen?.plan} title={chosen ? `План: ${chosen.name}` : "План стажёра"} context="Бадди может отмечать шаги стажёра" today={data.me.today}
         onMarkDone={(s) => void markDone(s)}
-        picker={data.managedPlans.length > 1 && <TextField select size="small" label="Стажёр" value={selectedIntern} onChange={(e) => setSelectedIntern(e.target.value)} sx={{ minWidth: 220 }}>
-          {data.managedPlans.map((i) => <MenuItem key={i.id} value={i.id}>{i.name}</MenuItem>)}</TextField>} />;
+        picker={data.managedPlans.length > 1 && (
+          <Box sx={{ minWidth: 220 }}>
+            <Typography
+              component="label"
+              htmlFor="buddy-intern-pick"
+              variant="body2"
+              fontWeight={600}
+              sx={{ display: "block", mb: 0.75 }}
+            >
+              Стажёр
+            </Typography>
+            <TextField
+              id="buddy-intern-pick"
+              select
+              size="small"
+              fullWidth
+              value={selectedIntern}
+              onChange={(e) => setSelectedIntern(e.target.value)}
+            >
+              {data.managedPlans.map((i) => <MenuItem key={i.id} value={i.id}>{i.name}</MenuItem>)}
+            </TextField>
+          </Box>
+        )} />;
     }
     if (view === "questions" || (view === "day" && role === "expert")) return <QuestionsPage data={data} role={role} login={login} asked={asked} onAction={perform} onAsk={() => openChat()} onOpenChat={() => setChatOpen(true)}
       onAnswer={(q, text) => perform(`/api/questions/${q.id}/answer`, "POST", { text }, "Ответ ушёл стажёру. Проверь страницу для базы")}
       onApprove={async (d, title, body) => { await perform(`/api/kb/pages/${d.id}/approve`, "POST", { title, body }, "Страница опубликована в базе знаний"); }} />;
     // Владельцу базы, если это не руководитель (BR-34), «Поддержка базы» — под базой знаний.
     if (view === "knowledge") return <><KnowledgePage data={data} onAsk={openChat} openId={kbOpen} onOpened={clearKbOpen} />
-      {role !== "lead" && role !== "intern" && <Box mt={5}><KbSupport login={login} users={data.users} onAction={perform} /></Box>}</>;
+      {role !== "lead" && role !== "intern" && <Box mt={{ xs: 2, md: 5 }}><KbSupport login={login} users={data.users} onAction={perform} /></Box>}</>;
     if (view === "requests") return <RequestsPage data={data} login={login} isLead={role === "lead"} busy={busy} onAgent={() => openChat("Мне нужен отгул ")}
       onSent={(m) => { setSnack(m); void load(); }}
       onMarkStep={role === "intern" ? (id) => { const st = data.plan?.steps.find((x) => x.id === id); if (st) void markDone(st); } : undefined}
@@ -362,7 +390,7 @@ function App() {
 
   return (
     <AppProviders theme={theme}>
-      <Box sx={{ minHeight: "100dvh", pb: { xs: 10, md: 0 }, bgcolor: t.bg }}>
+      <Box sx={{ minHeight: "100%", bgcolor: t.bg }}>
         <Box component="header" sx={{ position: "sticky", top: 0, zIndex: 10, bgcolor: t.bg, borderBottom: `1px solid ${t.line}` }}>
           <Container maxWidth="lg">
             <Box sx={{ display: "flex", alignItems: "center", height: (th) => th.size.header, gap: 0.5 }}>
@@ -409,7 +437,16 @@ function App() {
         </Box>
         {loading && <LinearProgress aria-label="Загрузка" sx={{ position: "fixed", top: 64, left: 0, right: 0, zIndex: 11, height: 2 }} />}
 
-        <Container maxWidth="lg" component="main" sx={{ pt: { xs: 3, md: 5 }, pb: { xs: 10, md: 12 } }}>
+        <Container
+          maxWidth="lg"
+          component="main"
+          sx={{
+            pt: { xs: 2.5, md: 5 },
+            // Мобилка: зазор над нижней навигацией + safe-area.
+            pb: { xs: "calc(64px + 12px + env(safe-area-inset-bottom, 0px))", md: 12 },
+            px: { xs: 2, sm: 3 },
+          }}
+        >
           {error && <Alert severity="error" sx={{ mb: 3, borderRadius: 0 }} action={<Button variant="text" onClick={() => void load()}>Повторить</Button>}>Не получилось загрузить данные: {error}</Alert>}
           {data && data.me.login === login ? page() : !error && (
             view === "knowledge" ? <KnowledgeSkeleton />
@@ -422,11 +459,42 @@ function App() {
         </Container>
 
         {mobile && role && <BottomNavigation component="nav" aria-label="Разделы" showLabels value={view} onChange={(_, v: View) => nav(v)} sx={{
-          position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 10, height: 64, bgcolor: t.bg, borderTop: `2px solid ${t.line}`,
-          "& .MuiBottomNavigationAction-root": { minWidth: 0, color: t.muted, px: 0.5 }, "& .Mui-selected": { color: `${t.text} !important` },
-          "& .MuiBottomNavigationAction-label": { fontSize: "11px !important", lineHeight: 1.2, whiteSpace: "nowrap" },
+          position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 10,
+          height: "calc(64px + env(safe-area-inset-bottom, 0px))",
+          pb: "env(safe-area-inset-bottom, 0px)",
+          bgcolor: t.bg, borderTop: `2px solid ${t.line}`,
+          // Без MUI-анимации «подпрыгивающей» подписи — только цвет, как у десктоп-навигации.
+          "& .MuiBottomNavigationAction-root": {
+            minWidth: 0,
+            px: 0.25,
+            py: 0,
+            gap: "2px",
+            color: mode === "light" ? "#A3A4A3" : "rgba(243,243,243,0.45)",
+            transition: (th) => `color ${th.motion.fast}`,
+            WebkitTapHighlightColor: "transparent",
+            "& .MuiSvgIcon-root": { display: "block", transition: "none" },
+            "&:active": { bgcolor: "transparent" },
+          },
+          "& .Mui-selected": {
+            color: `${mode === "light" ? "#5C5C5C" : "rgba(243,243,243,0.82)"} !important`,
+            paddingTop: "0 !important",
+          },
+          "& .MuiBottomNavigationAction-label": {
+            fontSize: "11px !important",
+            lineHeight: 1.2,
+            whiteSpace: "nowrap",
+            opacity: "1 !important",
+            transition: "none",
+            fontWeight: (th) => th.type.weight.medium,
+            "&.Mui-selected": {
+              fontSize: "11px !important",
+              fontWeight: (th) => th.type.weight.medium,
+            },
+          },
         }}>
-          {views.map((v) => <BottomNavigationAction key={v} value={v} label={viewLabel(role, v)} icon={ICONS[v]} />)}
+          {views.map((v) => (
+            <BottomNavigationAction key={v} value={v} label={mobileNavLabel(role, v)} icon={ICONS[v]} disableRipple />
+          ))}
         </BottomNavigation>}
 
         {/* Маскот — на всех экранах, 96 px (08-DESIGN): клик открывает чат, бейдж — сколько ждёт внимания,
@@ -438,8 +506,15 @@ function App() {
           data-edge={place.edge}
           style={placement.drag ? { left: placement.drag.x - mascotSize * 0.6, top: placement.drag.y - mascotSize * 0.6, right: "auto", bottom: "auto", transition: "none", cursor: "grabbing" } : undefined}
           sx={{
-          position: "fixed", [place.edge]: { xs: 8, md: 24 }, bottom: place.bottom, zIndex: 12, p: 0, border: "none", bgcolor: "transparent",
-          overflow: "visible", lineHeight: 0, touchAction: "none", cursor: "grab",
+          position: "fixed",
+          // Числа в sx — это spacing×8, поэтому отступы маскота только в px.
+          [place.edge]: { xs: "8px", md: "24px" },
+          bottom: `${place.bottom}px`,
+          zIndex: 12, p: 0, border: "none", bgcolor: "transparent",
+          overflow: "visible", lineHeight: 0,
+          // pan-y — страница скроллится; none только во время драга маскота.
+          touchAction: placement.drag ? "none" : "pan-y",
+          cursor: "grab",
           transition: "transform .2s ease, left .25s ease, right .25s ease, bottom .25s ease", "&:hover, &:focus-visible": { transform: "translateY(-3px)" },
           "&:hover .mascot-label, &:focus-visible .mascot-label": { opacity: 1, transform: "translateY(-50%)" },
         }}>
@@ -457,6 +532,7 @@ function App() {
                 bgcolor: "error.main", color: "#000", fontSize: 12, fontWeight: 700,
                 border: `2px solid ${t.bg}`, display: "inline-flex", alignItems: "center", justifyContent: "center",
                 boxSizing: "border-box",
+                backfaceVisibility: "hidden",
               }}>{urgent}</Box>
             ) : undefined}
           />}
@@ -484,70 +560,255 @@ function App() {
           <MenuItem onClick={() => { placement.closeMenu(); setSettingsOpen(true); }}>Настройки</MenuItem>
         </Menu>
 
-        <Popover open={Boolean(notesAnchor)} anchorEl={notesAnchor} onClose={() => setNotesAnchor(null)} anchorOrigin={{ vertical: "bottom", horizontal: "right" }} transformOrigin={{ vertical: "top", horizontal: "right" }}
-          slotProps={{ paper: { sx: { width: 360, maxWidth: "calc(100vw - 24px)", maxHeight: 480 } } }}>
-          {/* Отступы Akita: снаружи 8, заголовок и строки — 16 внутри */}
-          <Box sx={{ py: 1 }}>
-            <Typography variant="h3" component="h2" sx={{ px: 2, pt: 1, pb: 1.5 }}>Уведомления</Typography>
-            {notes.length ? notes.map((n) => <Row key={n.id} title={n.text} sub={n.meta} onClick={() => { setNotesAnchor(null); nav(n.go); }}
-              end={n.urgent ? <StatusTag status="Overdue" label="нужно действие" /> : undefined} sx={{ px: 2 }} />)
-              : <Box sx={{ px: 2 }}><Empty text="Всё спокойно — новых событий нет." variant={2} /></Box>}
+        <Popover
+          open={Boolean(notesAnchor)}
+          anchorEl={notesAnchor}
+          onClose={() => setNotesAnchor(null)}
+          anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+          transformOrigin={{ vertical: "top", horizontal: "right" }}
+          marginThreshold={mobile ? 8 : 16}
+          slotProps={{ paper: { sx: {
+            width: mobile ? "min(300px, calc(100vw - 16px))" : 360,
+            maxHeight: mobile ? "min(320px, 50dvh)" : 480,
+            borderRadius: 0,
+            border: `${theme.stroke.thick}px solid ${t.line}`,
+            boxShadow: "none",
+            overflow: "hidden",
+            display: "flex",
+            flexDirection: "column",
+          } } }}
+        >
+          <Box sx={{ py: `${theme.space[2]}px`, overflowY: "auto", flex: 1, minHeight: 0 }}>
+            <Typography
+              variant="h3"
+              component="h2"
+              sx={{
+                px: `${theme.space[4]}px`,
+                pt: `${theme.space[1]}px`,
+                pb: `${theme.space[2]}px`,
+                fontWeight: theme.type.weight.semibold,
+                fontSize: mobile ? theme.type.size.base : undefined,
+              }}
+            >
+              Уведомления
+            </Typography>
+            {notes.length ? notes.map((n) => (
+              <Row
+                key={n.id}
+                align="flex-start"
+                stackEndOnMobile
+                title={n.text}
+                sub={n.meta}
+                onClick={() => { setNotesAnchor(null); nav(n.go); }}
+                end={n.urgent ? <StatusTag status="Overdue" label="нужно действие" /> : undefined}
+                sx={n.urgent ? { bgcolor: t.badSoft, "&:hover": { bgcolor: t.badSoft } } : undefined}
+              />
+            )) : (
+              <Box sx={{ px: `${theme.space[4]}px` }}>
+                <Empty text="Всё спокойно — новых событий нет." variant={2} />
+              </Box>
+            )}
           </Box>
         </Popover>
 
-        <Menu open={Boolean(accountAnchor)} anchorEl={accountAnchor} onClose={() => setAccountAnchor(null)}
-          anchorOrigin={{ vertical: "bottom", horizontal: "right" }} transformOrigin={{ vertical: "top", horizontal: "right" }}
-          slotProps={{ paper: { sx: { minWidth: 320, maxWidth: "calc(100vw - 24px)" } } }}>
-          {me && <MenuItem onClick={() => { setAccountAnchor(null); setProfileOf(""); }}>
-            <AccountCircleOutlined sx={{ mr: 1.5, color: t.muted }} />
-            <ListItemText
-              primary="Мой профиль"
-              secondary="Фото, телефон, почта"
-              slotProps={{
-                primary: { variant: "body1", sx: { fontSize: 14, fontWeight: (th) => th.type.weight.medium } },
-                secondary: { variant: "body2" },
-              }}
-            />
-          </MenuItem>}
-          {me && placement.hidden && <MenuItem onClick={() => { setAccountAnchor(null); placement.show(); }}>
-            <ListItemText primary="Показать Напарника" secondary="Он скрыт на час" slotProps={{ primary: { variant: "body1", sx: { fontSize: 14 } } }} />
-          </MenuItem>}
-          {me && <MenuItem onClick={() => { setAccountAnchor(null); setSettingsOpen(true); }}>
-            <SettingsOutlined sx={{ mr: 1.5, color: t.muted }} />
-            <ListItemText
-              primary="Настройки"
-              secondary={role === "intern" ? "Подсказки, бадди, напоминания" : "Напоминания, «не беспокоить»"}
-              slotProps={{
-                primary: { variant: "body1", sx: { fontSize: 14, fontWeight: (th) => th.type.weight.medium } },
-                secondary: { variant: "body2" },
-              }}
-            />
-          </MenuItem>}
-          {me && <MenuItem onClick={() => { setAccountAnchor(null); setTgOpen(true); }}>
-            <SendOutlined sx={{ mr: 1.5, color: t.muted }} />
-            <ListItemText
-              primary="Уведомления в Telegram"
-              secondary="Подключить или отключить бота"
-              slotProps={{
-                primary: { variant: "body1", sx: { fontSize: 14, fontWeight: (th) => th.type.weight.medium } },
-                secondary: { variant: "body2" },
-              }}
-            />
-          </MenuItem>}
-          {me && <Divider />}
-          <Typography variant="caption" color="text.secondary" sx={{ px: 2, pt: 1.5, pb: 1, display: "block" }}>Тестовые учётки · войти как</Typography>
-          {others.map((u) => <MenuItem key={u.login} onClick={() => switchUser(u.login)}>
-            <Avatar sx={{ width: 28, height: 28, fontSize: 12, bgcolor: t.surface, color: t.text }}>{initials(u.name)}</Avatar>
-            <ListItemText
-              primary={u.name}
-              secondary={`${ROLE_RU[primaryRole(u.roles)]} · ${u.position}`}
-              slotProps={{
-                primary: { variant: "body1", sx: { fontSize: 14, fontWeight: (th) => th.type.weight.medium } },
-                secondary: { variant: "body2" },
-              }}
-            />
-          </MenuItem>)}
-        </Menu>
+        {(() => {
+          const accountOpen = Boolean(accountAnchor);
+          const closeAccount = () => setAccountAnchor(null);
+          const iconSx = { color: mode === "light" ? "#8B8C8B" : "rgba(243,243,243,0.55)", fontSize: 22 };
+          const primarySx = { fontSize: 15, fontWeight: theme.type.weight.medium };
+          const menuItemSx = { py: 1.25, px: 2, minHeight: 48, gap: 1.5, "&:hover": { bgcolor: t.surfaceHover } };
+
+          // Десктоп: компактное меню у аватара.
+          const desktopItems = <>
+            {me && <MenuItem sx={menuItemSx} onClick={() => { closeAccount(); setProfileOf(""); }}>
+              <AccountCircleOutlined sx={{ ...iconSx, mr: 0.5 }} />
+              <ListItemText primary="Мой профиль" secondary="Фото, телефон, почта"
+                slotProps={{ primary: { variant: "body1", sx: primarySx }, secondary: { variant: "body2" } }} />
+            </MenuItem>}
+            {me && placement.hidden && <MenuItem sx={menuItemSx} onClick={() => { closeAccount(); placement.show(); }}>
+              <ListItemText primary="Показать Напарника" secondary="Он скрыт на час"
+                slotProps={{ primary: { variant: "body1", sx: { fontSize: 14 } } }} />
+            </MenuItem>}
+            {me && <MenuItem sx={menuItemSx} onClick={() => { closeAccount(); setSettingsOpen(true); }}>
+              <SettingsOutlined sx={{ ...iconSx, mr: 0.5 }} />
+              <ListItemText
+                primary="Настройки"
+                secondary={role === "intern" ? "Подсказки, бадди, напоминания" : "Напоминания, «не беспокоить»"}
+                slotProps={{ primary: { variant: "body1", sx: primarySx }, secondary: { variant: "body2" } }}
+              />
+            </MenuItem>}
+            {me && <MenuItem sx={menuItemSx} onClick={() => { closeAccount(); setTgOpen(true); }}>
+              <SendOutlined sx={{ ...iconSx, mr: 0.5 }} />
+              <ListItemText primary="Уведомления в Telegram" secondary="Подключить или отключить бота"
+                slotProps={{ primary: { variant: "body1", sx: primarySx }, secondary: { variant: "body2" } }} />
+            </MenuItem>}
+            {me && <Divider />}
+            <Typography variant="caption" color="text.secondary" sx={{ px: 2, pt: 1.5, pb: 1, display: "block" }}>Тестовые учётки</Typography>
+            {others.map((u) => (
+              <MenuItem key={u.login} sx={menuItemSx} onClick={() => switchUser(u.login)}>
+                <Avatar sx={{ width: 28, height: 28, fontSize: 12, bgcolor: t.surface, color: t.text }}>{initials(u.name)}</Avatar>
+                <ListItemText primary={u.name} secondary={`${ROLE_RU[primaryRole(u.roles)]} · ${u.position}`}
+                  slotProps={{ primary: { variant: "body1", sx: primarySx }, secondary: { variant: "body2" } }} />
+              </MenuItem>
+            ))}
+          </>;
+
+          // Мобилка: полноэкранный экран аккаунта — как профиль/настройки, не «плавающий» диалог.
+          if (mobile) {
+            const action = (
+              label: string,
+              secondary: string,
+              icon: ReactElement,
+              onClick: () => void,
+            ) => (
+              <Box
+                key={label}
+                component="button"
+                type="button"
+                onClick={onClick}
+                sx={{
+                  all: "unset",
+                  boxSizing: "border-box",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1.5,
+                  width: "100%",
+                  minHeight: 56,
+                  px: 2,
+                  py: 1.5,
+                  bgcolor: t.surface,
+                  cursor: "pointer",
+                  WebkitTapHighlightColor: "transparent",
+                  "&:active": { bgcolor: t.surfaceHover },
+                }}
+              >
+                <Box sx={{ display: "flex", color: mode === "light" ? "#8B8C8B" : "rgba(243,243,243,0.55)" }}>{icon}</Box>
+                <Box minWidth={0} flex={1}>
+                  <Typography fontWeight={theme.type.weight.medium} fontSize={15}>{label}</Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>{secondary}</Typography>
+                </Box>
+              </Box>
+            );
+
+            return (
+              <Dialog
+                open={accountOpen}
+                onClose={closeAccount}
+                fullScreen
+                aria-labelledby="account-title"
+                slotProps={{ paper: { sx: { bgcolor: t.bg, boxShadow: "none" } } }}
+              >
+                <Stack
+                  direction="row"
+                  justifyContent="space-between"
+                  alignItems="center"
+                  sx={{
+                    px: 2.5, pt: 2.5, pb: 1.5, flex: "none",
+                    borderBottom: `1px solid ${t.line}`,
+                    position: "sticky", top: 0, zIndex: 1, bgcolor: t.bg,
+                  }}
+                >
+                  <Typography
+                    id="account-title"
+                    component="h2"
+                    fontWeight={theme.type.weight.semibold}
+                    fontSize={theme.type.size.h2}
+                    lineHeight={theme.type.line.snug}
+                  >
+                    Аккаунт
+                  </Typography>
+                  <DialogClose onClose={closeAccount} />
+                </Stack>
+
+                <Box sx={{
+                  flex: 1, overflowY: "auto",
+                  px: 2, py: 2.5,
+                  pb: `max(24px, env(safe-area-inset-bottom))`,
+                  display: "flex", flexDirection: "column", gap: 3,
+                }}>
+                  {me && (
+                    <Stack direction="row" alignItems="center" gap={2} sx={{ px: 0.5 }}>
+                      <ProfileAvatar login={login} photoUrl={myPhoto.login === login ? myPhoto.url : null} initials={initials(me.name)} size={56} />
+                      <Box minWidth={0}>
+                        <Typography fontWeight={theme.type.weight.semibold} fontSize={theme.type.size.h2} sx={{ textWrap: "balance" }}>
+                          {me.name}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                          {role && ROLE_RU[role]} · демо
+                        </Typography>
+                      </Box>
+                    </Stack>
+                  )}
+
+                  <Stack gap={1}>
+                    {me && action("Мой профиль", "Фото, телефон, почта", <AccountCircleOutlined sx={{ fontSize: 22 }} />, () => { closeAccount(); setProfileOf(""); })}
+                    {me && placement.hidden && action("Показать Напарника", "Он скрыт на час", <VisibilityOutlined sx={{ fontSize: 22 }} />, () => { closeAccount(); placement.show(); })}
+                    {me && action(
+                      "Настройки",
+                      role === "intern" ? "Подсказки, бадди, напоминания" : "Напоминания, «не беспокоить»",
+                      <SettingsOutlined sx={{ fontSize: 22 }} />,
+                      () => { closeAccount(); setSettingsOpen(true); },
+                    )}
+                    {me && action("Уведомления в Telegram", "Подключить или отключить бота", <SendOutlined sx={{ fontSize: 22 }} />, () => { closeAccount(); setTgOpen(true); })}
+                  </Stack>
+
+                  <Box>
+                    <Typography variant="body2" color="text.secondary" fontWeight={theme.type.weight.semibold} sx={{ mb: 1, px: 0.5 }}>
+                      Тестовые учётки
+                    </Typography>
+                    <Stack>
+                      {others.map((u, i) => (
+                        <Box
+                          key={u.login}
+                          component="button"
+                          type="button"
+                          onClick={() => switchUser(u.login)}
+                          sx={{
+                            all: "unset",
+                            boxSizing: "border-box",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 1.5,
+                            width: "100%",
+                            minHeight: 56,
+                            px: 2,
+                            py: 1.25,
+                            bgcolor: t.surface,
+                            cursor: "pointer",
+                            WebkitTapHighlightColor: "transparent",
+                            borderBottom: i < others.length - 1 ? `1px solid ${t.line}` : "none",
+                            "&:active": { bgcolor: t.surfaceHover },
+                          }}
+                        >
+                          <Avatar sx={{ width: 36, height: 36, fontSize: 13, bgcolor: t.bg, color: t.text, flex: "none" }}>{initials(u.name)}</Avatar>
+                          <Box minWidth={0}>
+                            <Typography fontWeight={theme.type.weight.medium} fontSize={15}>{u.name}</Typography>
+                            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
+                              {ROLE_RU[primaryRole(u.roles)]} · {u.position}
+                            </Typography>
+                          </Box>
+                        </Box>
+                      ))}
+                    </Stack>
+                  </Box>
+                </Box>
+              </Dialog>
+            );
+          }
+
+          return (
+            <Menu
+              open={accountOpen}
+              anchorEl={accountAnchor}
+              onClose={closeAccount}
+              anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+              transformOrigin={{ vertical: "top", horizontal: "right" }}
+              slotProps={{ paper: { sx: { minWidth: 320, maxWidth: "calc(100vw - 24px)" } } }}
+            >
+              {desktopItems}
+            </Menu>
+          );
+        })()}
 
         <ChatDrawer open={chatOpen} onClose={() => setChatOpen(false)} text={chatText} setText={setChatText} messages={messages} loading={chatLoading}
           onSend={(retry) => void sendChat(retry)} login={login} look={look} onAction={() => void load()} onReset={() => void newConversation()} />
@@ -560,8 +821,17 @@ function App() {
         <TelegramDialog open={tgOpen} login={login} onClose={() => setTgOpen(false)} onChange={setSnack} />
         <PlanDraftDialog open={Boolean(planDraftOf)} login={login} internId={planDraftOf} onClose={() => setPlanDraftOf("")}
           onDone={(m) => { setSnack(m); void load(); }} />
-        <Snackbar open={Boolean(snack)} autoHideDuration={3000} onClose={() => setSnack("")} message={snack}
-          anchorOrigin={{ vertical: "bottom", horizontal: "center" }} sx={{ bottom: { xs: 88, md: 24 } }} />
+        <Snackbar
+          open={Boolean(snack)}
+          autoHideDuration={3000}
+          onClose={() => setSnack("")}
+          message={snack}
+          anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+          sx={{
+            bottom: { xs: 88, md: 24 },
+            "& .MuiSnackbarContent-root": { width: "fit-content", minWidth: "unset", flexGrow: 0 },
+          }}
+        />
       </Box>
     </AppProviders>
   );

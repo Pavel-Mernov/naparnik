@@ -66,8 +66,11 @@ export const buildNotes = (p: {
   events: Array<{ title: string; start: string }>;
 }): Note[] => {
   const out: Note[] = [];
-  p.steps.filter((s) => s.status === "Overdue").forEach((s) =>
-    out.push({ id: `o-${s.id}`, text: `Просрочен шаг: ${s.title}`, meta: dueText(s, p.today), urgent: true, go: "day" }));
+  // Заголовок — только название шага: так переносы читаемые; срок — в meta.
+  p.steps.filter((s) => s.status === "Overdue").forEach((s) => {
+    const due = dueText(s, p.today);
+    out.push({ id: `o-${s.id}`, text: s.title, meta: due.charAt(0).toUpperCase() + due.slice(1), urgent: true, go: "day" });
+  });
   p.questions.filter((q) => q.addressee_id === p.meId && q.status === "Sent").forEach((q) =>
     out.push({ id: `in-${q.id}`, text: q.overdue ? "Тебе вопрос — срок ответа истёк" : "Тебе вопрос", meta: q.text_hidden ? "текст скрыт" : q.title || q.text || "", urgent: true, go: "questions" }));
   p.drafts.forEach((d) =>

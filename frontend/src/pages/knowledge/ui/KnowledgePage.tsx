@@ -4,7 +4,7 @@ import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, InputAd
 import { SearchRounded } from "@mui/icons-material";
 import type { KbPage } from "@/shared/api";
 import type { DataState } from "@/shared/lib";
-import { Empty, PageHead } from "@/shared/ui";
+import { DialogClose, dialogTitleSx, Empty, PageHead } from "@/shared/ui";
 import { Markdown } from "@/widgets/chat";
 
 const PageCard = ({ page, folder, folderIndex = 0, onOpen }: { page: KbPage; folder?: string; folderIndex?: number; onOpen: () => void }) => {
@@ -81,7 +81,7 @@ export const KnowledgePage = ({ data, onAsk, openId, onOpened }: {
     <PageHead context={data.me.department} title="База знаний" />
     <TextField fullWidth value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Найти в базе команды" aria-label="Поиск по базе знаний"
       slotProps={{ input: { startAdornment: <InputAdornment position="start"><SearchRounded /></InputAdornment> } }} sx={{ mb: 2 }} />
-    <Stack direction="row" flexWrap="wrap" gap={1} sx={{ mb: 3 }}>
+    <Stack direction="row" flexWrap="wrap" gap={1} sx={{ mb: { xs: 2, md: 3 } }}>
       {chip("", "Все", data.pages.length)}
       {data.folders.map((f, i) => chip(f.id, f.title, data.pages.filter((p) => p.folder === f.id).length, i))}
     </Stack>
@@ -91,7 +91,10 @@ export const KnowledgePage = ({ data, onAsk, openId, onOpened }: {
       action={<Button variant="text" onClick={() => onAsk(query)}>Спросить Напарника</Button>} />}
     <Dialog open={Boolean(open)} onClose={() => setOpen(null)} fullWidth maxWidth="md" fullScreen={mobile}>
       {open && <>
-        <DialogTitle sx={{ pb: 0.5 }}>{open.title}</DialogTitle>
+        <DialogTitle sx={{ ...dialogTitleSx, pb: 0.5 }}>
+          <Box component="span" sx={{ flex: 1, minWidth: 0, pr: 1 }}>{open.title}</Box>
+          <DialogClose onClose={() => setOpen(null)} />
+        </DialogTitle>
         <DialogContent>
           <Typography variant="body2" color="text.secondary" mb={2}>{folderTitle(open.folder)} · {open.author} · обновлено {new Date(`${open.updated_at}T12:00:00`).toLocaleDateString("ru-RU", { day: "numeric", month: "long", year: "numeric" })}</Typography>
           <Markdown text={open.body || open.excerpt} />

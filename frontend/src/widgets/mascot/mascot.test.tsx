@@ -1,5 +1,5 @@
 // Маскот (08-DESIGN §2.2–2.6, BR-90, BR-91, SC-25): таймеры дремоты и сна, пробуждение, реакции на события,
-// приветствие раз в день, кадры состояний и наклон к курсору.
+// приветствие раз в день, кадры состояний.
 import { act, render, renderHook, screen } from "@testing-library/react";
 import { ThemeProvider } from "@mui/material";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -104,12 +104,4 @@ describe("Mascot3D", () => {
     expect(awake.container.querySelector('[data-blanket="false"]')).not.toBeNull();
   });
 
-  it("наклоняется к курсору в перспективе", () => {
-    const { container } = draw("idle");
-    const root = container.querySelector<HTMLElement>('[data-mood="idle"]')!;
-    root.getBoundingClientRect = () => ({ left: 500, top: 500, width: 100, height: 100, right: 600, bottom: 600, x: 500, y: 500, toJSON: () => ({}) });
-    act(() => { window.dispatchEvent(new PointerEvent("pointermove", { clientX: 100, clientY: 100 })); vi.advanceTimersByTime(50); });
-    expect(root.style.getPropertyValue("--ry")).toMatch(/^-\d/);
-    expect(root.style.getPropertyValue("--rx")).toMatch(/^\d/);
-  });
 });

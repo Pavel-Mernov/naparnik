@@ -64,7 +64,7 @@ describe("уведомления — из данных, срочное перв�
   it("стажёр", () => {
     const notes = buildNotes({ meId: "u-s", today: "2026-11-11", steps: [step({ status: "Overdue", due_date: "2026-11-10", title: "Redash" })],
       questions: [q({ status: "Answered", title: "Конверсия" })], requests: [r({ status: "approved" })], drafts: [], events: [{ title: "1:1", start: "15:00" }] });
-    expect(notes[0]).toMatchObject({ text: "Просрочен шаг: Redash", urgent: true });
+    expect(notes[0]).toMatchObject({ text: "Redash", meta: "Срок был вчера", urgent: true });
     expect(notes.map((n) => n.text)).toContain("Отгул · 16 ноября: согласовано");
     expect(notes.at(-1)?.text).toBe("15:00 · 1:1");
   });

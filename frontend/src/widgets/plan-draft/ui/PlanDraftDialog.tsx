@@ -3,12 +3,11 @@
 // Права решает бэкенд (can_edit, can_approve); экран только показывает доступные действия.
 import { useEffect, useMemo, useState } from "react";
 import {
-  Alert, Box, Button, Dialog, DialogActions, DialogContent, IconButton, Skeleton, Stack, TextField, Typography, useMediaQuery, useTheme,
+  Alert, Box, Button, Dialog, DialogActions, DialogContent, Skeleton, Stack, TextField, Typography, useMediaQuery, useTheme,
 } from "@mui/material";
-import { CloseOutlined } from "@mui/icons-material";
 import { approvePlan, editPlanDraft, getPlanDraft, type PlanDraft, type PlanDraftEdit } from "@/shared/api";
 import { shortDateTime } from "@/shared/lib";
-import { StatusTag } from "@/shared/ui";
+import { DialogClose, StatusTag } from "@/shared/ui";
 
 const OWNER: Record<string, string> = { intern: "стажёр", buddy: "бадди", lead: "руководитель" };
 
@@ -30,7 +29,7 @@ export type PlanDraftDialogProps = {
 
 export const PlanDraftDialog = ({ open, login, internId, onClose, onDone }: PlanDraftDialogProps) => {
   const theme = useTheme();
-  const { t } = theme;
+  const { t, type } = theme;
   const mobile = useMediaQuery(theme.breakpoints.down("sm"));
   const [draft, setDraft] = useState<PlanDraft | null>(null);
   const [edits, setEdits] = useState<Record<string, PlanDraftEdit>>({});
@@ -110,14 +109,22 @@ export const PlanDraftDialog = ({ open, login, internId, onClose, onDone }: Plan
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="md" fullScreen={mobile} aria-labelledby="plan-draft-title">
-      <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ px: 3, pt: 2 }}>
-        <Typography variant="caption" color="text.secondary">План адаптации</Typography>
-        <IconButton aria-label="Закрыть" onClick={onClose} edge="end"><CloseOutlined /></IconButton>
+      <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ pl: 3, pr: 2, pt: 2.5, pb: 1 }}>
+        <Typography
+          id="plan-draft-title"
+          component="h2"
+          fontWeight={type.weight.semibold}
+          fontSize={type.size.h2}
+          lineHeight={type.line.snug}
+        >
+          План адаптации
+        </Typography>
+        <DialogClose onClose={onClose} />
       </Stack>
       <DialogContent sx={{ pt: 1 }}>
         {error && <Alert severity="error" sx={{ mb: 2, borderRadius: 0 }}>{error}</Alert>}
         {!draft ? (!error && <Box aria-label="Загрузка плана"><Skeleton width="50%" height={36} /><Skeleton width="70%" /><Skeleton height={120} /></Box>) : <>
-          <Typography id="plan-draft-title" variant="h2" component="h2">{draft.intern}</Typography>
+          <Typography variant="h2" component="h2" sx={{ textWrap: "balance" }}>{draft.intern}</Typography>
           <Stack direction="row" gap={1} alignItems="center" flexWrap="wrap" sx={{ mt: 1, mb: 2.5 }}>
             {state?.tag}
             <Typography variant="body2" color="text.secondary">{state?.text}</Typography>

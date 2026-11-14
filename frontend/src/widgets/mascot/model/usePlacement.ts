@@ -26,15 +26,32 @@ export const useMascotPlacement = (login: string, size: number, minBottom: numbe
   const [place, setPlace] = useState<Placement>(() => read(login, fallback));
   const [drag, setDrag] = useState<{ x: number; y: number } | null>(null);
   const [menuAt, setMenuAt] = useState<{ x: number; y: number } | null>(null);
-  const gesture = useRef<{ x: number; y: number; moved: boolean; press?: ReturnType<typeof setTimeout> } | null>(null);
+  const gesture = useRef<{
+    x: number; y: number; moved: boolean; press?: ReturnType<typeof setTimeout>;
+    target?: Element; pointerId?: number;
+  } | null>(null);
   const suppressClick = useRef(false);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => setPlace(read(login, fallback)), [login]);
   const save = useCallback((next: Placement) => {
     setPlace(next);
     try { localStorage.setItem(key(login), JSON.stringify(next)); } catch { /* приватный режим — до перезагрузки */ }
   }, [login]);
+
+  // При смене учётки / размера экрана / нижней навигации — перечитать и зажать bottom в px.
+  useEffect(() => {
+    const apply = () => {
+      const next = read(login, { edge: "right", bottom: minBottom, minimized: false, hiddenUntil: 0 });
+      const bottom = clampBottom(next.bottom, size, minBottom);
+      const fixed = bottom === next.bottom ? next : { ...next, bottom };
+      setPlace(fixed);
+      if (bottom !== next.bottom) {
+        try { localStorage.setItem(key(login), JSON.stringify(fixed)); } catch { /* приватный режим */ }
+      }
+    };
+    apply();
+    window.addEventListener("resize", apply);
+    return () => window.removeEventListener("resize", apply);
+  }, [login, size, minBottom]);
 
   // «Скрыть на час» — по истечении часа маскот возвращается сам.
   const hidden = place.hiddenUntil > Date.now();
@@ -47,15 +64,18 @@ export const useMascotPlacement = (login: string, size: number, minBottom: numbe
   const onPointerDown = (e: React.PointerEvent) => {
     if (e.button !== 0) return;
     const press = e.pointerType === "touch" ? setTimeout(() => { gesture.current = null; setMenuAt({ x: e.clientX, y: e.clientY }); suppressClick.current = true; }, LONG_PRESS_MS) : undefined;
-    gesture.current = { x: e.clientX, y: e.clientY, moved: false, press };
-    (e.currentTarget as Element).setPointerCapture?.(e.pointerId);
+    // Не захватываем pointer сразу — иначе на мобилке ломается скролл страницы с маскота.
+    gesture.current = { x: e.clientX, y: e.clientY, moved: false, press, target: e.currentTarget as Element, pointerId: e.pointerId };
   };
   const onPointerMove = (e: React.PointerEvent) => {
     const g = gesture.current;
     if (!g) return;
     if (!g.moved && Math.hypot(e.clientX - g.x, e.clientY - g.y) < DRAG_PX) return;
-    g.moved = true;
-    clearTimeout(g.press);
+    if (!g.moved) {
+      g.moved = true;
+      clearTimeout(g.press);
+      if (g.target && g.pointerId != null) g.target.setPointerCapture(g.pointerId);
+    }
     setDrag({ x: e.clientX, y: e.clientY });
   };
   const onPointerUp = (e: React.PointerEvent) => {
@@ -63,6 +83,7 @@ export const useMascotPlacement = (login: string, size: number, minBottom: numbe
     gesture.current = null;
     if (!g) return;
     clearTimeout(g.press);
+    if (g.moved && g.target && g.pointerId != null) g.target.releasePointerCapture(g.pointerId);
     if (!g.moved) return;
     suppressClick.current = true; // это было перетаскивание, а не клик
     setDrag(null);
@@ -77,8 +98,17 @@ export const useMascotPlacement = (login: string, size: number, minBottom: numbe
 
   return {
     place, hidden, drag, menuAt,
-    handlers: { onPointerDown, onPointerMove, onPointerUp, onPointerCancel: () => { clearTimeout(gesture.current?.press); gesture.current = null; setDrag(null); },
-      onContextMenu: (e: React.MouseEvent) => { e.preventDefault(); setMenuAt({ x: e.clientX, y: e.clientY }); } },
+    handlers: {
+      onPointerDown, onPointerMove, onPointerUp,
+      onPointerCancel: () => {
+        const g = gesture.current;
+        if (g?.moved && g.target && g.pointerId != null) g.target.releasePointerCapture?.(g.pointerId);
+        clearTimeout(g?.press);
+        gesture.current = null;
+        setDrag(null);
+      },
+      onContextMenu: (e: React.MouseEvent) => { e.preventDefault(); setMenuAt({ x: e.clientX, y: e.clientY }); },
+    },
     consumeClick,
     closeMenu: () => setMenuAt(null),
     minimize: (on: boolean) => save({ ...place, minimized: on }),

@@ -1,15 +1,35 @@
 // Страница руководителя (FSD: pages/team).
-import { Box, Button, LinearProgress, Link, Stack, Typography, useTheme } from "@mui/material";
+import { Box, Button, Link, Stack, Typography, useTheme } from "@mui/material";
 import type { TeamOverview } from "@/shared/api";
+import { brand } from "@/shared/theme";
 import { plural, requestTitle } from "@/shared/lib";
 import { Block, Empty, PageHead, Row, StatusTag } from "@/shared/ui";
 
-const Metric = ({ value, label, alert }: { value: number; label: string; alert?: boolean }) => {
-  const { t } = useTheme();
+const Metric = ({ value, label, soft, onClick }: {
+  value: number; label: string; soft: "surface" | "badSoft" | "waitSoft" | "okSoft" | "todaySoft"; onClick?: () => void;
+}) => {
+  const { t, type, space } = useTheme();
+  const bg = soft === "surface" ? t.surface : (soft === "badSoft" && value === 0 ? t.surface : t[soft]);
   return (
-    <Box sx={{ bgcolor: alert && value > 0 ? t.badSoft : t.surface, p: 2 }}>
-      <Typography sx={{ fontSize: 36, fontWeight: (theme) => theme.type.weight.regular, lineHeight: 1.1 }}>{value}</Typography>
-      <Typography variant="body2" color="text.secondary">{label}</Typography>
+    <Box
+      component={onClick ? "button" : "div"}
+      type={onClick ? "button" : undefined}
+      onClick={onClick}
+      sx={{
+        font: "inherit",
+        textAlign: "left",
+        border: "none",
+        cursor: onClick ? "pointer" : "default",
+        bgcolor: bg,
+        p: `${space[4]}px`,
+        minHeight: { xs: 96, md: "auto" },
+        color: t.text,
+        "&:hover": onClick ? { outline: `2px solid ${t.text}` } : undefined,
+        "&:focus-visible": onClick ? { outline: `2px solid ${t.link}` } : undefined,
+      }}
+    >
+      <Typography sx={{ fontSize: { xs: 28, md: 36 }, fontWeight: type.weight.regular, lineHeight: 1.1 }}>{value}</Typography>
+      <Typography variant="body2" color="text.secondary" sx={{ mt: `${space[1]}px` }}>{label}</Typography>
     </Box>
   );
 };
@@ -17,43 +37,105 @@ const Metric = ({ value, label, alert }: { value: number; label: string; alert?:
 /** onProfile — открыть карточку стажёра (SCR-I5a); без него имя — просто текст. */
 /** onPlanDraft — открыть черновик плана на утверждение (SC-20). */
 export const TeamPage = ({ overview, onRequests, onProfile, onPlanDraft }: { overview?: TeamOverview; onRequests: () => void; onProfile?: (id: string) => void; onPlanDraft?: (id: string) => void }) => {
+  const { t, space, type, size } = useTheme();
   if (!overview) return <Empty text="Обзор команды пока недоступен." />;
   const { totals } = overview;
   const behind = overview.interns.filter((i) => i.overdue_steps > 0);
   const unapproved = (s: string) => s === "draft" || s === "auto_activated";
   const pending = overview.requests.filter((r) => r.status === "pending");
   const title = behind.length ? `${behind.length} ${plural(behind.length, "стажёр отстаёт", "стажёра отстают", "стажёров отстают")} от плана` : "Все стажёры идут по плану";
+  const actionBtn = {
+    minHeight: { xs: size.control, sm: size.controlSm },
+    px: 1.5,
+    bgcolor: "transparent",
+    "&:hover": { bgcolor: t.surfaceHover },
+  };
   return <>
     <PageHead context={overview.department} title={title}
       action={pending.length > 0 && <Button variant="contained" onClick={onRequests}>Согласовать заявки: {pending.length}</Button>} />
-    <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr 1fr", md: "repeat(4, 1fr)" }, gap: 1.5, mb: 5 }}>
-      <Metric value={totals.interns} label={plural(totals.interns, "стажёр", "стажёра", "стажёров")} />
-      <Metric value={totals.overdue_steps} label="просроченных шагов" alert />
-      <Metric value={totals.open_questions} label="вопросов без ответа" />
-      <Metric value={totals.pending_requests} label="заявок ждут решения" alert />
+    <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr 1fr", md: "repeat(4, 1fr)" }, gap: { xs: 1.5, md: 2 }, mb: { xs: 2, md: 5 } }}>
+      <Metric value={totals.interns} label={plural(totals.interns, "стажёр", "стажёра", "стажёров")} soft="todaySoft" />
+      <Metric value={totals.overdue_steps} label="просроченных шагов" soft="badSoft" />
+      <Metric value={totals.open_questions} label="вопросов без ответа" soft="waitSoft" />
+      <Metric value={totals.pending_requests} label="заявок ждут решения" soft="badSoft" onClick={pending.length > 0 ? onRequests : undefined} />
     </Box>
     <Block title="Стажёры">
-      {overview.interns.length ? overview.interns.map((i) => (
-        <Box key={i.id} sx={{ py: 2, borderBottom: 1, borderColor: "divider" }}>
-          <Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" gap={1}>
-            <Box>
-              <Typography fontWeight={600}>{onProfile ? <Link component="button" onClick={() => onProfile(i.id)} color="inherit" underline="hover" sx={{ font: "inherit", fontWeight: 600, textAlign: "left" }}>{i.name}</Link> : i.name}</Typography>
-              <Typography variant="body2" color="text.secondary">{i.week}-я неделя · бадди {i.buddy} · {i.stage || (i.plan_status === "draft" ? "план готовится" : "этапы пройдены")}</Typography>
-            </Box>
-            <Stack direction="row" gap={1} alignItems="center">
-              {i.overdue_steps > 0 && <StatusTag status="Overdue" label={`Просрочено: ${i.overdue_steps}`} />}
-              {unapproved(i.plan_status) && <StatusTag status={i.plan_status === "draft" ? "Draft" : "pending"} label={i.plan_status === "draft" ? "План на согласовании" : "План не утверждён"} />}
-              {unapproved(i.plan_status) && onPlanDraft && <Button variant="text" size="small" onClick={() => onPlanDraft(i.id)}>Утвердить план</Button>}
-            </Stack>
-          </Stack>
-          <Stack direction="row" alignItems="center" gap={1.5} mt={1.5}>
-            <LinearProgress variant="determinate" value={i.progress_pct} aria-label={`Прогресс ${i.name}`} sx={{ flex: 1 }} />
-            <Typography variant="body2" sx={{ minWidth: 40, textAlign: "right" }}>{i.progress_pct}%</Typography>
-          </Stack>
-        </Box>)) : <Empty text="В отделе пока нет стажёров." />}
+      {overview.interns.length ? overview.interns.map((i) => {
+        const showDraft = unapproved(i.plan_status);
+        const end = (i.overdue_steps > 0 || showDraft) ? (
+          <>
+            {i.overdue_steps > 0 && <StatusTag status="Overdue" label={`Просрочено: ${i.overdue_steps}`} />}
+            {showDraft && (
+              <StatusTag
+                status={i.plan_status === "draft" ? "pending" : "Draft"}
+                label={i.plan_status === "draft" ? "План на согласовании" : "План не утверждён"}
+              />
+            )}
+            {showDraft && onPlanDraft && (
+              <Button variant="text" size="small" onClick={() => onPlanDraft(i.id)} sx={actionBtn}>
+                Утвердить план
+              </Button>
+            )}
+          </>
+        ) : <StatusTag status="Done" label="По плану" />;
+        return (
+          <Row
+            key={i.id}
+            align="flex-start"
+            stackEndOnMobile
+            title={
+              <Box>
+                <Typography fontWeight={type.weight.semibold} sx={{ overflowWrap: "anywhere" }}>
+                  {onProfile ? (
+                    <Link
+                      component="button"
+                      onClick={() => onProfile(i.id)}
+                      color="inherit"
+                      underline="hover"
+                      sx={{ font: "inherit", fontWeight: type.weight.semibold, textAlign: "left" }}
+                    >
+                      {i.name}
+                    </Link>
+                  ) : i.name}
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mt: `${space[1]}px` }}>
+                  {i.week}-я неделя · бадди {i.buddy} · {i.stage || (i.plan_status === "draft" ? "план готовится" : "этапы пройдены")}
+                </Typography>
+                <Stack direction="row" alignItems="center" gap={`${space[3]}px`} mt={`${space[3]}px`}>
+                  <Box sx={{ flex: 1, height: 8, bgcolor: t.bg, minWidth: 0 }} aria-label={`Прогресс ${i.name}`}>
+                    <Box
+                      sx={{
+                        height: "100%",
+                        width: `${i.progress_pct}%`,
+                        bgcolor: i.overdue_steps > 0 ? brand.red : brand.green,
+                        minWidth: i.progress_pct > 0 ? 4 : 0,
+                      }}
+                    />
+                  </Box>
+                  <Typography variant="body2" sx={{ minWidth: 40, textAlign: "right", flex: "none" }}>{i.progress_pct}%</Typography>
+                </Stack>
+              </Box>
+            }
+            end={end}
+          />
+        );
+      }) : <Empty text="В отделе пока нет стажёров." />}
     </Block>
-    {pending.length > 0 && <Box mt={5}><Block title="Ждут решения">
-      {pending.map((r) => <Row key={r.id} title={`${r.employee_name}: ${requestTitle({ ...r, approver_id: "", created_at: "", source: "" })}`} sub={r.id} onClick={onRequests} end={<StatusTag status="pending" />} />)}
-    </Block></Box>}
+    {pending.length > 0 && (
+      <Box mt={{ xs: 2, md: 5 }}>
+        <Block title="Ждут решения">
+          {pending.map((r) => (
+            <Row
+              key={r.id}
+              title={`${r.employee_name}: ${requestTitle({ ...r, approver_id: "", created_at: "", source: "" })}`}
+              sub={r.id}
+              onClick={onRequests}
+              end={<StatusTag status="pending" />}
+              align="flex-start"
+            />
+          ))}
+        </Block>
+      </Box>
+    )}
   </>;
 };

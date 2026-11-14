@@ -4,6 +4,7 @@
 import { useRef, useState } from "react";
 import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, MenuItem, TextField, Typography, useTheme } from "@mui/material";
 import type { User } from "@/shared/api";
+import { DialogClose, dialogTitleSx } from "@/shared/ui";
 
 const Person = ({ name, hint }: { name: string; hint?: string }) => (
   <Box sx={{ minWidth: 0, py: 0.25 }}>
@@ -28,7 +29,10 @@ export const PersonDialog = ({ open, title, text, people, allowAuto, confirm, on
   const label = (id: string) => (id === "auto" ? "Пусть Напарник подберёт" : people.find((u) => u.id === id)?.name ?? "");
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="xs">
-      <DialogTitle>{title}</DialogTitle>
+      <DialogTitle sx={dialogTitleSx}>
+        <Box component="span" sx={{ flex: 1, minWidth: 0, pr: 1 }}>{title}</Box>
+        <DialogClose onClose={onClose} />
+      </DialogTitle>
       <DialogContent>
         <Typography color="text.secondary" mb={2}>{text}</Typography>
         <Typography component="label" id="person-label" htmlFor="person-select" variant="body2" fontWeight={600} sx={{ display: "block", mb: 0.75 }}>Кому</Typography>

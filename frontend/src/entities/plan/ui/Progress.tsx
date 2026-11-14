@@ -37,13 +37,18 @@ export const Progress = ({ plan, onOpen }: { plan?: PlanData; onOpen?: () => voi
   const overdueCount = plan?.steps.filter((s) => s.status === "Overdue").length ?? 0;
   return (
     <Block title="Путь адаптации" aside={onOpen && <Button variant="text" size="small" onClick={onOpen}
-      sx={{ minHeight: 36, bgcolor: "transparent", "&:hover": { bgcolor: t.surfaceHover } }}>Весь план</Button>}>
+      sx={{ minHeight: { xs: 44, sm: 36 }, bgcolor: "transparent", "&:hover": { bgcolor: t.surfaceHover } }}>Весь план</Button>}>
       {!plan ? <Empty text="План ещё готовится — бадди и руководитель его утвердят." variant={2} /> : (
-        <Stack gap={2.5}>
+        <Stack gap={{ xs: 2, md: 2.5 }}>
           <Stack direction="row" alignItems="flex-end" justifyContent="space-between" gap={2} flexWrap="wrap">
-            <Stack direction="row" alignItems="baseline" gap={2}>
-              <Typography sx={{ fontSize: (theme) => theme.type.size.displayLg, fontWeight: (theme) => theme.type.weight.regular, letterSpacing: (theme) => theme.type.tracking.display, lineHeight: 0.95 }}>
-                {plan.progress_pct}<Box component="span" sx={{ fontSize: (theme) => theme.type.size.displayMd, fontWeight: (theme) => theme.type.weight.regular }}>%</Box>
+            <Stack direction="row" alignItems="baseline" gap={{ xs: 1.5, md: 2 }} flexWrap="wrap">
+              <Typography sx={(theme) => ({
+                fontSize: { xs: theme.type.size.display, md: theme.type.size.displayLg },
+                fontWeight: theme.type.weight.regular,
+                letterSpacing: theme.type.tracking.display,
+                lineHeight: 0.95,
+              })}>
+                {plan.progress_pct}<Box component="span" sx={(theme) => ({ fontSize: { xs: theme.type.size.h2, md: theme.type.size.displayMd }, fontWeight: theme.type.weight.regular })}>%</Box>
               </Typography>
               <Typography color="text.secondary" sx={{ pb: 0.5, fontWeight: (theme) => theme.type.weight.regular }}>{done} из {total} шагов</Typography>
             </Stack>

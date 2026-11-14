@@ -1,5 +1,5 @@
-// Живой маскот (08-DESIGN §2). Рендер разрезан на слои (scripts/mascot_layers.py): персонаж без круга, отдельная
-// поднятая лапа; круг-подложка рисуется стилями и стоит на месте — поэтому персонаж может лечь внутри него.
+// Живой маскот (08-DESIGN §2). Рендер разрезан на слои (scripts/mascot_layers.py): персонаж без фона, отдельная
+// поднятая лапа; одеяло/подушка маскируются эллипсом — поэтому персонаж может лечь «внутри» кадра.
 //   idle — дышит, моргает, лапа чуть покачивается;  greeting — машет «привет»;
 //   has_answer / needs_confirm / reminder — машет письмом и дважды моргает, пока событие не открыто;
 //   thinking — постукивает лапой, облачко «…»;  error — разводит лапой и качает головой;
@@ -7,9 +7,8 @@
 //   sleeping — ложится на бок на подушку, одеяло наползает сверху, глаза закрыты, храпит: грудь ходит
 //     вдох-выдох, на выдохе от головы вылетают «z z Z»;
 //   waking — одеяло сползает, садится и потягивается.
-// Вся фигура наклоняется в перспективе к курсору. prefers-reduced-motion → без движения, но поза видна:
-// лежит под одеялом, веки, письмо.
-import { useEffect, useRef, type ReactNode } from "react";
+// prefers-reduced-motion → без движения, но поза видна: лежит под одеялом, веки, письмо.
+import { type ReactNode } from "react";
 import { Box, keyframes } from "@mui/material";
 import figureImg from "@/shared/assets/mascot/figure.png";
 import pawImg from "@/shared/assets/mascot/paw.png";
@@ -18,12 +17,9 @@ import eyesHalfImg from "@/shared/assets/mascot/eyes-half.png";
 import type { MascotMood } from "../model/types";
 
 const ASPECT = 480 / 526;
-const MAX_TILT = 14; // градусов
-const REACH = 420; // на каком расстоянии от маскота курсор даёт полный наклон, px
 // Геометрия исходника 526×480 (scripts/mascot_layers.py): лапа и её запястье, круг-подложка.
 const PAW = { left: 2 / 526, top: 207 / 480, width: 126 / 526, height: 120 / 480, pivot: "55% 95%" };
-const CIRCLE = { left: "11.75%", top: "10.48%", width: "82.39%", height: "90.29%" };
-const IN_CIRCLE = "ellipse(41.2% 45.15% at 52.95% 55.63%)"; // тот же круг как маска для одеяла и подушки
+const IN_CIRCLE = "ellipse(41.2% 45.15% at 52.95% 55.63%)"; // маска одеяла и подушки (бывший круг-подложка)
 // Поза «лёг спать»: центр фигуры смещается к подушке, фигура поворачивается на бок и чуть уменьшается.
 const LYING = "translate(-1%, 11.5%) rotate(-66deg) scale(.8)";
 
@@ -36,6 +32,11 @@ const wake = keyframes`0%{transform:scale(1,1)}35%{transform:scale(.94,1.1) tran
 const think = keyframes`0%,100%{transform:rotate(-2deg) translateY(-2%)}50%{transform:rotate(-4deg) translateY(-4%)}`;
 const hop = keyframes`0%,100%{transform:translateY(0)}12%{transform:translateY(-10%) scale(1.03,.98)}24%{transform:translateY(0) scale(1.04,.95)}32%,100%{transform:translateY(0) scale(1)}`;
 const shake = keyframes`0%,100%{transform:translateX(0) rotate(0)}20%{transform:translateX(-5%) rotate(-5deg)}40%{transform:translateX(5%) rotate(5deg)}60%{transform:translateX(-3%) rotate(-3deg)}80%{transform:translateX(3%) rotate(3deg)}`;
+// Бейдж: только вверх-вниз, целые px + translate3d — без субпиксельного дрожания текста.
+const badgeBob = keyframes`
+  0%,100%{transform:translate3d(0,0,0)}
+  50%{transform:translate3d(0,-4px,0)}
+`;
 
 // ---------- лапа (вращение вокруг запястья) ----------
 const pawIdle = keyframes`0%,100%{transform:rotate(0)}50%{transform:rotate(-3deg)}`;
@@ -70,6 +71,8 @@ const BODY: Partial<Record<MascotMood, string>> = {
   reminder: `${hop} 5s ease-out infinite`,
   error: `${shake} .7s ease-in-out 1`,
 };
+/** Одна плавная качка для всех настроений — резкие hop/nod давали дрожь цифры. */
+const BADGE_BOB = `${badgeBob} 5s cubic-bezier(0.45, 0, 0.55, 1) infinite`;
 const PAW_MOTION: Partial<Record<MascotMood, string>> = {
   idle: `${pawIdle} 5s ease-in-out infinite`,
   greeting: `${pawHello} 1.6s ease-in-out 1`,
@@ -98,60 +101,27 @@ const Letter = ({ alert }: { alert: boolean }) => (
   </Box>
 );
 
-export const Mascot3D = ({ size, mood = "idle", interactive = true, badge }: {
-  size: number; mood?: MascotMood; interactive?: boolean; badge?: ReactNode;
+export const Mascot3D = ({ size, mood = "idle", badge }: {
+  size: number; mood?: MascotMood; badge?: ReactNode;
 }) => {
-  const root = useRef<HTMLDivElement>(null);
   const w = size * 1.2;
   const h = w * ASPECT;
-
-  // Наклон к курсору: CSS-переменные через requestAnimationFrame, без перерисовки React.
-  useEffect(() => {
-    const el = root.current;
-    if (!el || !interactive || window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
-    let frame = 0;
-    const onMove = (e: PointerEvent) => {
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(() => {
-        const r = el.getBoundingClientRect();
-        const dx = Math.max(-1, Math.min(1, (e.clientX - (r.left + r.width / 2)) / REACH));
-        const dy = Math.max(-1, Math.min(1, (e.clientY - (r.top + r.height / 2)) / REACH));
-        el.style.setProperty("--ry", `${(dx * MAX_TILT).toFixed(2)}deg`);
-        el.style.setProperty("--rx", `${(-dy * MAX_TILT).toFixed(2)}deg`);
-        el.style.setProperty("--gx", `${50 + dx * 30}%`);
-        el.style.setProperty("--gy", `${40 + dy * 30}%`);
-      });
-    };
-    const reset = () => { el.style.setProperty("--rx", "0deg"); el.style.setProperty("--ry", "0deg"); };
-    window.addEventListener("pointermove", onMove, { passive: true });
-    document.addEventListener("pointerleave", reset);
-    return () => { cancelAnimationFrame(frame); window.removeEventListener("pointermove", onMove); document.removeEventListener("pointerleave", reset); };
-  }, [interactive]);
 
   const asleep = mood === "sleeping";
   const eyes = EYES[mood] ?? "open";
   const letter = LETTER.includes(mood);
   const blinkAnim = letter ? `${blinkTwice} 2.6s ease-in-out infinite` : `${blink} 6s ease-in-out infinite`;
   const stripe = Math.max(3, Math.round(size * 0.07));
+  // На мелком размере (мобилка) filter даёт «мыло» — на десктопе оставляем тень.
+  const compact = size < 90;
   return (
-    <Box ref={root} data-mood={mood} aria-hidden={!badge}
+    <Box data-mood={mood} aria-hidden={!badge}
       sx={{
-        position: "relative", width: w, height: h, flex: "none", perspective: `${Math.round(w * 4)}px`,
-        "--rx": "0deg", "--ry": "0deg", "--gx": "50%", "--gy": "40%",
+        position: "relative", width: w, height: h, flex: "none",
         "@media (prefers-reduced-motion: reduce)": { "& *": { animation: "none !important", transition: "none !important" } },
       }}>
-      {/* Наклон в перспективе к курсору */}
-      <Box sx={{
-        position: "relative", width: "100%", height: "100%", transformStyle: "preserve-3d",
-        transform: "rotateX(var(--rx)) rotateY(var(--ry))", transition: "transform .35s cubic-bezier(.2,.8,.3,1)",
-        "&:active": { transform: "rotateX(var(--rx)) rotateY(var(--ry)) scale(.95)" },
-      }}>
-        {/* Круг-подложка: стоит на месте, когда персонаж ложится */}
-        <Box aria-hidden sx={{
-          position: "absolute", ...CIRCLE, borderRadius: "50%", transform: "translateZ(0)",
-          background: "linear-gradient(180deg, #a3d0fa 0%, #b0d7f9 45%, #b2d9fa 100%)", boxShadow: "0 10px 22px rgba(0, 80, 180, .22)",
-        }} />
-        {/* Подушка: появляется под головой, когда ложится */}
+      <Box sx={{ position: "relative", width: "100%", height: "100%" }}>
+        {/* Подушка: появляется под головой, когда ложится (маска — бывший круг-подложка) */}
         <Box aria-hidden data-pillow={asleep} sx={{ position: "absolute", inset: 0, clipPath: IN_CIRCLE, pointerEvents: "none" }}>
           <Box sx={{
             position: "absolute", left: "4%", top: "54%", width: "44%", height: "24%", borderRadius: "48% 52% 46% 54% / 55% 55% 45% 45%",
@@ -165,38 +135,49 @@ export const Mascot3D = ({ size, mood = "idle", interactive = true, badge }: {
         </Box>
         {/* Персонаж: ложится на бок и встаёт — одним плавным движением */}
         <Box sx={{
-          position: "absolute", inset: 0, transformOrigin: "50% 50%", transform: `translateZ(20px) ${asleep ? LYING : ""}`,
+          position: "absolute", inset: 0, transformOrigin: "50% 50%",
+          transform: asleep ? LYING : undefined,
           transition: asleep ? "transform 1.5s cubic-bezier(.55,.05,.35,1.15)" : "transform .8s cubic-bezier(.3,1.3,.5,1)",
         }}>
-          <Box sx={{ position: "relative", width: "100%", height: "100%", transformOrigin: "50% 75%", animation: BODY[mood],
-            filter: asleep ? "saturate(.9) brightness(.97)" : "drop-shadow(0 6px 10px rgba(0, 60, 160, .25))" }}>
-            <Box component="img" src={figureImg} alt="" draggable={false}
-              sx={{ width: "100%", height: "100%", display: "block", objectFit: "contain", maxWidth: "none", userSelect: "none" }} />
-            {/* Глаза: мех брови опускается на глаз; моргает, тяжелеют в дремоте, закрыты во сне */}
-            <Box component="img" src={eyesHalfImg} alt="" aria-hidden data-eyes-half={eyes === "half"} draggable={false} sx={{
-              position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none",
-              opacity: eyes === "half" ? 1 : 0, transition: "opacity .7s ease-in-out",
-            }} />
-            <Box component="img" src={eyesClosedImg} alt="" aria-hidden data-eyes={eyes} draggable={false} sx={{
-              position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none",
-              opacity: eyes === "closed" ? 1 : 0, transition: "opacity .7s ease-in-out",
-              animation: eyes === "open" ? blinkAnim : undefined,
-            }} />
-            {/* Лапа: отдельный слой, вращается вокруг запястья */}
-            <Box data-paw={mood} sx={{
-              position: "absolute", left: `${PAW.left * 100}%`, top: `${PAW.top * 100}%`, width: `${PAW.width * 100}%`, height: `${PAW.height * 100}%`,
-              transformOrigin: PAW.pivot, transform: PAW_POSE[mood] ?? "none", transition: "transform .9s ease-in-out, opacity .5s ease .9s",
-              opacity: asleep ? 0 : 1,
+          <Box sx={{ position: "relative", width: "100%", height: "100%", transformOrigin: "50% 75%", animation: BODY[mood] }}>
+            <Box sx={{
+              position: "relative", width: "100%", height: "100%",
+              filter: asleep
+                ? (compact ? "none" : "saturate(.9) brightness(.97)")
+                : (compact ? "none" : "drop-shadow(0 6px 10px rgba(0, 60, 160, .25))"),
             }}>
-              <Box sx={{ position: "relative", width: "100%", height: "100%", transformOrigin: PAW.pivot, animation: PAW_MOTION[mood] }}>
-                <Box component="img" src={pawImg} alt="" draggable={false} sx={{ width: "100%", height: "100%", display: "block", userSelect: "none" }} />
-                {letter && <Letter alert={mood === "reminder"} />}
+              <Box component="img" src={figureImg} alt="" draggable={false}
+                sx={{ width: "100%", height: "100%", display: "block", objectFit: "contain", maxWidth: "none", userSelect: "none" }} />
+              {/* Глаза: мех брови опускается на глаз; моргает, тяжелеют в дремоте, закрыты во сне */}
+              <Box component="img" src={eyesHalfImg} alt="" aria-hidden data-eyes-half={eyes === "half"} draggable={false} sx={{
+                position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none",
+                opacity: eyes === "half" ? 1 : 0, transition: "opacity .7s ease-in-out",
+              }} />
+              <Box component="img" src={eyesClosedImg} alt="" aria-hidden data-eyes={eyes} draggable={false} sx={{
+                position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none",
+                opacity: eyes === "closed" ? 1 : 0, transition: "opacity .7s ease-in-out",
+                animation: eyes === "open" ? blinkAnim : undefined,
+              }} />
+              {/* Лапа: во сне прячется под одеялом с задержкой; при пробуждении сразу появляется — иначе рука «пропадает» на весь waking */}
+              <Box data-paw={mood} sx={{
+                position: "absolute", left: `${PAW.left * 100}%`, top: `${PAW.top * 100}%`, width: `${PAW.width * 100}%`, height: `${PAW.height * 100}%`,
+                transformOrigin: PAW.pivot,
+                transform: PAW_POSE[mood] ?? "none",
+                opacity: asleep ? 0 : 1,
+                transition: asleep
+                  ? "transform .9s ease-in-out, opacity .35s ease .85s"
+                  : "transform .55s ease-out, opacity .2s ease",
+              }}>
+                <Box sx={{ position: "relative", width: "100%", height: "100%", transformOrigin: PAW.pivot, animation: PAW_MOTION[mood] }}>
+                  <Box component="img" src={pawImg} alt="" draggable={false} sx={{ width: "100%", height: "100%", display: "block", userSelect: "none" }} />
+                  {letter && <Letter alert={mood === "reminder"} />}
+                </Box>
               </Box>
             </Box>
           </Box>
         </Box>
         {/* Одеяло: наползает, когда ложится, сползает, когда встаёт; на вдохе край приподнимается */}
-        <Box aria-hidden data-blanket={asleep} sx={{ position: "absolute", inset: 0, clipPath: IN_CIRCLE, pointerEvents: "none", transform: "translateZ(30px)" }}>
+        <Box aria-hidden data-blanket={asleep} sx={{ position: "absolute", inset: 0, clipPath: IN_CIRCLE, pointerEvents: "none" }}>
           <Box sx={{
             position: "absolute", left: "27%", top: "70%", width: "90%", height: "70%", transformOrigin: "0 0",
             borderRadius: `${Math.round(size * 0.12)}px ${Math.round(size * 0.06)}px 0 0`,
@@ -207,12 +188,21 @@ export const Mascot3D = ({ size, mood = "idle", interactive = true, badge }: {
             animation: asleep ? `${blanketBreath} 4.2s ease-in-out 1.7s infinite` : undefined,
           }} />
         </Box>
-        {/* Блик: свет «падает» с той стороны, куда смотрит курсор */}
-        <Box aria-hidden sx={{
-          position: "absolute", left: CIRCLE.left, top: CIRCLE.top, width: CIRCLE.width, height: CIRCLE.height, borderRadius: "50%", pointerEvents: "none",
-          mixBlendMode: "soft-light", background: "radial-gradient(circle at var(--gx) var(--gy), rgba(255,255,255,.55), transparent 55%)", transform: "translateZ(40px)",
-        }} />
       </Box>
+      {/* Бейдж вне позы персонажа: качка на самом бейдже — иначе на мобилке transform:translateZ(0) глушил animation. */}
+      {badge && (
+        <Box sx={{
+          position: "absolute", inset: 0, pointerEvents: "none", zIndex: 2,
+          "& > *": {
+            animation: BADGE_BOB,
+            willChange: "transform",
+            backfaceVisibility: "hidden",
+            WebkitFontSmoothing: "antialiased",
+          },
+        }}>
+          {badge}
+        </Box>
+      )}
       {/* Храп: на каждом выдохе от головы вылетают «z z Z» */}
       {asleep && ["z", "z", "Z"].map((z, i) => (
         <Box key={i} component="span" aria-hidden sx={{
@@ -230,7 +220,6 @@ export const Mascot3D = ({ size, mood = "idle", interactive = true, badge }: {
           {[0, 1, 2].map((i) => <Box key={i} component="span" sx={{ animation: `${dots} 1.2s ${i * 0.2}s infinite` }}>.</Box>)}
         </Box>
       )}
-      {badge}
     </Box>
   );
 };

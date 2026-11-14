@@ -1,8 +1,50 @@
 // Базовые блоки интерфейса. Плоско, как на start.avito.ru: линии 2 px, серые плашки, без теней и скруглений.
 import type { ReactNode } from "react";
-import { Box, Stack, Typography, useTheme } from "@mui/material";
+import { Box, IconButton, Stack, Typography, useTheme } from "@mui/material";
+import { CloseOutlined } from "@mui/icons-material";
 import { brand } from "@/shared/theme";
 import { statusOf, type Tone } from "@/shared/lib";
+
+/**
+ * Крестик закрытия модалки — справа в шапке.
+ * Правый край совпадает с нижней кнопкой DialogActions (общий pr: 16px).
+ */
+export const DialogClose = ({ onClose }: { onClose: () => void }) => {
+  const { size } = useTheme();
+  return (
+    <IconButton
+      aria-label="Закрыть"
+      onClick={onClose}
+      sx={{
+        flex: "none",
+        alignSelf: "flex-start",
+        width: size.icon,
+        height: size.icon,
+        p: 0,
+        m: 0,
+        "& .MuiSvgIcon-root": { fontSize: 22, display: "block" },
+      }}
+    >
+      <CloseOutlined />
+    </IconButton>
+  );
+};
+
+/**
+ * Шапка DialogTitle + крестик.
+ * pr: 2 (16px) = DialogActions p: 2 — правый край крестика = правый край нижней кнопки.
+ * pl: 3 (24px) = штатный отступ контента.
+ */
+export const dialogTitleSx = {
+  display: "flex",
+  alignItems: "flex-start",
+  justifyContent: "space-between",
+  gap: 1,
+  pl: 3,
+  pr: 2,
+  pt: 2,
+  pb: 1.5,
+} as const;
 
 /** Плашка статуса: цвет + слово. */
 export const StatusTag = ({ status, label }: { status: string; label?: string }) => {
@@ -20,20 +62,35 @@ export const StatusTag = ({ status, label }: { status: string; label?: string })
 
 /** Заголовок экрана: строка контекста + одна фраза о главном. Без гигантских приветствий. */
 export const PageHead = ({ context, title, action }: { context?: string; title: string; action?: ReactNode }) => (
-  <Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" alignItems={{ sm: "flex-end" }} gap={2} sx={{ mb: { xs: 3, md: 4 } }}>
-    <Box>
+  <Stack
+    direction={{ xs: "column", sm: "row" }}
+    justifyContent="space-between"
+    alignItems={{ xs: "stretch", sm: "flex-end" }}
+    gap={{ xs: 1.5, sm: 2 }}
+    sx={{ mb: { xs: 2, md: 4 } }}
+  >
+    <Box minWidth={0}>
       {context && (
         <Typography
           variant="body2"
           color="text.secondary"
-          sx={{ mb: 1.5, fontWeight: 600, fontSize: 14, lineHeight: 1.4, "&::first-letter": { textTransform: "uppercase" } }}
+          sx={{ mb: { xs: 1, md: 1.5 }, fontWeight: 600, fontSize: 14, lineHeight: 1.4, "&::first-letter": { textTransform: "uppercase" } }}
         >
           {context}
         </Typography>
       )}
-      <Typography variant="h1" component="h1" sx={{ textWrap: "balance" }}>{title}</Typography>
+      <Typography variant="h1" component="h1" sx={{ textWrap: "balance", fontSize: { xs: "clamp(26px, 7vw, 36px)", md: undefined } }}>{title}</Typography>
     </Box>
-    {action && <Stack direction="row" gap={1} flexWrap="wrap">{action}</Stack>}
+    {action && (
+      <Stack
+        direction="row"
+        gap={1}
+        flexWrap="wrap"
+        sx={{ width: { xs: "100%", sm: "auto" }, "& > .MuiButton-root": { width: { xs: "100%", sm: "auto" } } }}
+      >
+        {action}
+      </Stack>
+    )}
   </Stack>
 );
 
@@ -41,9 +98,15 @@ export const PageHead = ({ context, title, action }: { context?: string; title: 
 export const Block = ({ title, aside, children, tone: _tone }: { title: string; aside?: ReactNode; children: ReactNode; tone?: "surface" }) => {
   const { t, space } = useTheme();
   return (
-    <Box component="section" sx={{ bgcolor: t.surface, p: { xs: `${space[5]}px`, md: `${space[6]}px` } }}>
-      <Stack direction="row" justifyContent="space-between" alignItems="baseline" gap={2} mb={`${space[5]}px`}>
-        <Typography variant="h2" component="h2">{title}</Typography>
+    <Box component="section" sx={{ bgcolor: t.surface, p: { xs: `${space[4]}px`, md: `${space[6]}px` } }}>
+      <Stack
+        direction={{ xs: "column", sm: "row" }}
+        justifyContent="space-between"
+        alignItems={{ xs: "flex-start", sm: "baseline" }}
+        gap={{ xs: `${space[2]}px`, sm: `${space[3]}px` }}
+        mb={{ xs: `${space[3]}px`, md: `${space[5]}px` }}
+      >
+        <Typography variant="h2" component="h2" sx={{ textWrap: "balance", fontSize: { xs: 20, md: undefined } }}>{title}</Typography>
         {aside}
       </Stack>
       {children}
@@ -52,26 +115,57 @@ export const Block = ({ title, aside, children, tone: _tone }: { title: string; 
 };
 
 /** Строка списка (list item Akita): padding 16×16 внутри зоны клика, gap 12. */
-export const Row = ({ start, title, sub, end, onClick, sx }: {
-  start?: ReactNode; title: ReactNode; sub?: ReactNode; end?: ReactNode; onClick?: () => void; sx?: object;
+export const Row = ({ start, title, sub, end, onClick, align = "center", stackEndOnMobile = false, sx }: {
+  start?: ReactNode; title: ReactNode; sub?: ReactNode; end?: ReactNode; onClick?: () => void;
+  /** flex-start — для многострочных заголовков (уведомления), чтобы тег не «висел» по центру. */
+  align?: "center" | "flex-start";
+  /** На узком экране end уходит под текст — для шагов с кнопками. */
+  stackEndOnMobile?: boolean;
+  sx?: object;
 }) => {
-  const { t } = useTheme();
+  const { t, space, stroke, type } = useTheme();
   return (
-    <Stack direction="row" alignItems="center" gap={1.5}
+    <Stack direction="row" alignItems={align} flexWrap={stackEndOnMobile ? { xs: "wrap", sm: "nowrap" } : undefined}
       onClick={onClick} role={onClick ? "button" : undefined} tabIndex={onClick ? 0 : undefined}
       onKeyDown={onClick ? (e) => { if (e.key === "Enter") onClick(); } : undefined}
       sx={{
-        py: 2, gap: 1.5, borderBottom: `1px solid ${t.line}`,
+        px: { xs: `${space[3]}px`, md: `${space[4]}px` },
+        py: `${space[4]}px`,
+        gap: `${space[3]}px`,
+        borderBottom: `${stroke.hairline}px solid ${t.line}`,
         "&:last-child": { borderBottom: "none" },
         ...(onClick ? { cursor: "pointer", "&:hover": { bgcolor: t.surfaceHover } } : {}),
         ...sx,
       }}>
       {start}
       <Box flex={1} minWidth={0}>
-        <Typography fontWeight={500} sx={{ overflowWrap: "anywhere" }}>{title}</Typography>
-        {sub && <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>{sub}</Typography>}
+        {typeof title === "string" || typeof title === "number" ? (
+          <Typography fontWeight={type.weight.medium} sx={{ overflowWrap: "break-word" }}>{title}</Typography>
+        ) : title}
+        {sub != null && sub !== false && (
+          typeof sub === "string" || typeof sub === "number" ? (
+            <Typography variant="body2" color="text.secondary" sx={{ mt: `${space[1]}px` }}>{sub}</Typography>
+          ) : (
+            <Box sx={{ mt: `${space[1]}px` }}>{sub}</Box>
+          )
+        )}
       </Box>
-      {end && <Stack direction="row" alignItems="center" gap={1} flex="none">{end}</Stack>}
+      {end && (
+        <Stack
+          direction="row"
+          alignItems="center"
+          flexWrap="wrap"
+          gap={`${space[2]}px`}
+          sx={{
+            flex: stackEndOnMobile ? { xs: "1 1 100%", sm: "none" } : "none",
+            // Под текстом, вровень с заголовком (чекбокс + gap), без «плывущего» отступа.
+            pl: stackEndOnMobile && start ? { xs: `calc(${space[7]}px + ${space[3]}px)`, sm: 0 } : 0,
+            ...(align === "flex-start" ? { pt: "2px" } : {}),
+          }}
+        >
+          {end}
+        </Stack>
+      )}
     </Stack>
   );
 };
@@ -88,11 +182,15 @@ export const Shapes = ({ variant = 0, size = 72 }: { variant?: number; size?: nu
 
 /** Пустое состояние: больше воздуха внутри плашки, иконка и текст в одной вертикали. */
 export const Empty = ({ text, action, variant }: { text: string; action?: ReactNode; variant?: number }) => (
-  <Stack direction="row" alignItems="flex-start" gap={2.5} sx={{ py: { xs: 2, md: 3 } }}>
+  <Stack direction="row" alignItems="flex-start" gap={{ xs: 2, md: 2.5 }} sx={{ py: { xs: 2, md: 3 } }}>
     <Shapes variant={variant} size={56} />
-    <Box sx={{ pt: 0.5, minWidth: 0 }}>
+    <Box sx={{ pt: 0.5, minWidth: 0, flex: 1 }}>
       <Typography sx={{ textWrap: "balance" }}>{text}</Typography>
-      {action && <Box mt={2}>{action}</Box>}
+      {action && (
+        <Box mt={2} sx={{ "& > .MuiButton-root, & > .MuiStack-root > .MuiButton-root": { width: { xs: "100%", sm: "auto" } } }}>
+          {action}
+        </Box>
+      )}
     </Box>
   </Stack>
 );
@@ -152,24 +250,35 @@ const SkelHead = ({ titleW = 280 }: { titleW?: number }) => (
   </Box>
 );
 
-/** Скелетон «Мой день»: шапка + две колонки как у DayPage. */
+/** Скелетон «Мой день»: шапка + сетка как у DayPage (на мобилке путь адаптации ниже сайдбара). */
 export const DaySkeleton = () => (
   <Box aria-busy aria-label="Загрузка" role="status">
     <SkelHead titleW={360} />
-    <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "minmax(0, 1.6fr) minmax(280px, 1fr)" }, gap: { xs: 4, md: 5 } }}>
-      <Stack gap={5}>
+    <Box sx={{
+      display: "grid",
+      gridTemplateColumns: { xs: "1fr", md: "minmax(0, 1.6fr) minmax(280px, 1fr)" },
+      gridTemplateAreas: {
+        xs: `"today" "side" "progress"`,
+        md: `"today side" "progress side"`,
+      },
+      gap: { xs: 2, md: 5 },
+      alignItems: "start",
+    }}>
+      <Box sx={{ gridArea: "today" }}>
         <SkelPlate titleW={100}>
           <SkelRow inPlate />
           <SkelRow inPlate />
         </SkelPlate>
+      </Box>
+      <Box sx={{ gridArea: "progress" }}>
         <SkelPlate titleW={160}>
           <Bone w={96} h={48} inPlate />
           <Box mt={2}><Bone w="100%" h={8} inPlate /></Box>
           <Box mt={1}><SkelRow inPlate /><SkelRow inPlate /><SkelRow inPlate /></Box>
           <Box mt={2}><Bone w={120} h={24} inPlate /><Box mt={1}><Bone w="55%" h={16} inPlate /></Box></Box>
         </SkelPlate>
-      </Stack>
-      <Stack gap={5}>
+      </Box>
+      <Stack gap={{ xs: 2, md: 5 }} sx={{ gridArea: "side" }}>
         <SkelPlate titleW={110}>
           <Stack direction="row" alignItems="flex-end" gap={2}>
             <Bone w={72} h={32} inPlate />
@@ -188,7 +297,7 @@ export const DaySkeleton = () => (
 export const ListSkeleton = ({ plates = 2, rows = 3 }: { plates?: number; rows?: number }) => (
   <Box aria-busy aria-label="Загрузка" role="status">
     <SkelHead />
-    <Stack gap={5}>
+    <Stack gap={{ xs: 2, md: 5 }}>
       {Array.from({ length: plates }, (_, i) => (
         <SkelPlate key={i} titleW={120 + i * 20}>
           {Array.from({ length: rows }, (_, j) => <SkelRow key={j} inPlate />)}

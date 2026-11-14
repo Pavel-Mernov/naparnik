@@ -9,7 +9,7 @@ export const PlanPage = ({ plan, title, context, today, onMarkDone, picker, onTe
   plan?: PlanData; title: string; context: string; today: string; onMarkDone?: (s: PlanStep) => void; picker?: ReactNode; onTeam?: () => void;
 }) => <>
   <PageHead context={context} title={title} action={picker} />
-  {!plan ? <Empty text="План ещё не утверждён." variant={2} /> : <Stack gap={5}>
+  {!plan ? <Empty text="План ещё не утверждён." variant={2} /> : <Stack gap={{ xs: 2, md: 5 }}>
     <Progress plan={plan} />
     {plan.stages.map((stage) => {
       const steps = plan.steps.filter((s) => s.stage === stage.id && s.owner === "intern");

@@ -3,12 +3,11 @@
 // Стиль — токены Akita: space 4-pt, type, stroke, surface/line/muted/link; без теней и скруглений (кроме фото).
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
-  Alert, Avatar, Box, Button, Dialog, DialogActions, DialogContent, IconButton, InputAdornment, Link, Skeleton, Stack, TextField, Typography,
+  Alert, Avatar, Box, Button, Dialog, DialogActions, DialogContent, InputAdornment, Link, Skeleton, Stack, TextField, Typography,
   useMediaQuery, useTheme,
 } from "@mui/material";
-import { CloseOutlined } from "@mui/icons-material";
 import { deletePhoto, fetchPhoto, getProfile, MAX_PHOTO_BYTES, updatePhone, uploadPhoto, type Profile } from "@/shared/api";
-import { StatusTag } from "@/shared/ui";
+import { DialogClose, StatusTag } from "@/shared/ui";
 import {
   formatLocal, isPhoneValid, normalizePhone, phoneDigits, phoneErrorMessage,
   PHONE_ERROR, PHONE_HINT, PHONE_SUCCESS,
@@ -167,22 +166,52 @@ export const ProfileDialog = ({ open, login, userId, onClose, onChanged }: Profi
   const intern = profile?.status === "Стажёр";
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm" fullScreen={mobile} aria-labelledby="profile-title">
+    <Dialog
+      open={open}
+      onClose={onClose}
+      fullWidth
+      maxWidth="sm"
+      fullScreen={mobile}
+      aria-labelledby="profile-title"
+      slotProps={{
+        paper: {
+          sx: {
+            borderRadius: 0,
+            border: mobile ? "none" : `${stroke.thick}px solid ${t.line}`,
+            boxShadow: "none",
+            display: "flex",
+            flexDirection: "column",
+            ...(!mobile && { height: size.dialog, maxHeight: size.dialog }),
+          },
+        },
+      }}
+    >
       <Stack
         direction="row"
         justifyContent="space-between"
         alignItems="center"
-        sx={{ px: `${space[6]}px`, pt: `${space[5]}px`, pb: `${space[2]}px` }}
+        sx={{ pl: `${space[6]}px`, pr: `${space[4]}px`, pt: `${space[5]}px`, pb: `${space[2]}px`, flex: "none" }}
       >
         <Typography
-          color="text.secondary"
-          sx={{ fontWeight: type.weight.semibold, fontSize: type.size.md, lineHeight: type.line.normal }}
+          id="profile-title"
+          fontWeight={type.weight.semibold}
+          fontSize={type.size.h2}
+          lineHeight={type.line.snug}
         >
           {profile?.can_edit ? "Мой профиль" : "Профиль сотрудника"}
         </Typography>
-        <IconButton aria-label="Закрыть" onClick={onClose} edge="end"><CloseOutlined /></IconButton>
+        <DialogClose onClose={onClose} />
       </Stack>
-      <DialogContent sx={{ px: `${space[6]}px`, pt: `${space[2]}px`, pb: `${space[6]}px` }}>
+      <DialogContent sx={{
+        px: `${space[6]}px`,
+        pt: `${space[2]}px`,
+        pb: `${space[6]}px`,
+        flex: "1 1 auto",
+        minHeight: 0,
+        scrollbarWidth: "none",
+        msOverflowStyle: "none",
+        "&::-webkit-scrollbar": { display: "none" },
+      }}>
         {error && <Alert severity="error" sx={{ mb: `${space[4]}px`, borderRadius: 0 }}>{error}</Alert>}
         {!profile ? (!error && <Stack direction="row" gap={`${space[5]}px`} alignItems="center" aria-label="Загрузка профиля">
           <Skeleton variant="circular" width={96} height={96} />
@@ -202,7 +231,7 @@ export const ProfileDialog = ({ open, login, userId, onClose, onChanged }: Profi
               {profile.initials}
             </Avatar>
             <Box minWidth={0}>
-              <Typography id="profile-title" variant="h2" component="h2" sx={{ textWrap: "balance" }}>{profile.name}</Typography>
+              <Typography variant="h2" component="h2" sx={{ textWrap: "balance" }}>{profile.name}</Typography>
               <Stack direction="row" gap={`${space[2]}px`} alignItems="center" flexWrap="wrap" sx={{ mt: `${space[2]}px` }}>
                 <StatusTag status={intern ? "Today" : "neutral"} label={profile.status} />
                 <Typography variant="body2" color="text.secondary">{profile.position}</Typography>

@@ -69,6 +69,8 @@ export const size = {
   drawer: 440,
   mascot: 96,
   mascotSm: 72,
+  /** Общая высота модалок «Профиль» и «Настройки» на десктопе. */
+  dialog: "min(720px, calc(100% - 64px))",
 } as const;
 
 // ---------- Stroke / radius ----------
@@ -203,11 +205,32 @@ export const makeTheme = (mode: Mode): Theme => {
       MuiCssBaseline: {
         styleOverrides: {
           ":root": vars,
+          // Главный экран: классическая полоса справа (не overlay, не скрытая).
+          html: {
+            height: "100%",
+            overflowY: "scroll",
+            scrollbarGutter: "stable",
+            scrollbarWidth: "thin",
+            scrollbarColor: `${t.muted} ${t.surface}`,
+          },
           body: {
+            minHeight: "100%",
+            margin: 0,
+            overflowX: "hidden",
+            overflowY: "visible",
             backgroundColor: t.bg,
             color: t.text,
             fontFamily: type.family,
             ...Object.fromEntries(Object.entries(vars).map(([k, v]) => [k, v])),
+          },
+          "html::-webkit-scrollbar": { width: 12 },
+          "html::-webkit-scrollbar-track": { background: t.surface },
+          "html::-webkit-scrollbar-thumb": {
+            background: mode === "light" ? "#C4C4C4" : "#5A5A5A",
+            border: `2px solid ${t.surface}`,
+          },
+          "html::-webkit-scrollbar-thumb:hover": {
+            background: mode === "light" ? "#A8A8A8" : "#6E6E6E",
           },
           "a, button, [role=button], label[for], input[type=checkbox]": { cursor: "pointer" },
           ":focus-visible": { outline: `${stroke.thick}px solid ${t.link}`, outlineOffset: 2 },
@@ -244,6 +267,17 @@ export const makeTheme = (mode: Mode): Theme => {
           paper: { borderRadius: radius, border: `${stroke.thick}px solid ${t.line}`, boxShadow: "none" },
         },
       },
+      // Шапка и футер: одинаковый правый inset 16px — крестик и нижняя кнопка на одной вертикали.
+      MuiDialogTitle: {
+        styleOverrides: {
+          root: { padding: `${space[4]}px ${space[4]}px ${space[3]}px ${space[6]}px` },
+        },
+      },
+      MuiDialogActions: {
+        styleOverrides: {
+          root: { padding: space[4], gap: space[2] },
+        },
+      },
       MuiOutlinedInput: {
         styleOverrides: {
           root: {
@@ -267,7 +301,29 @@ export const makeTheme = (mode: Mode): Theme => {
       },
       MuiSnackbarContent: {
         styleOverrides: {
-          root: { borderRadius: radius, backgroundColor: t.inverse, color: t.onInverse, fontFamily: type.family },
+          // По ширине текста: MUI по умолчанию flexGrow:1 и minWidth:288 — короткие тосты с дырой справа.
+          root: ({ theme: th }) => ({
+            borderRadius: radius,
+            backgroundColor: t.inverse,
+            color: t.onInverse,
+            fontFamily: type.family,
+            fontSize: type.size.md,
+            fontWeight: type.weight.regular,
+            lineHeight: type.line.normal,
+            flexGrow: 0,
+            flexShrink: 1,
+            minWidth: "unset",
+            width: "fit-content",
+            maxWidth: "min(420px, calc(100vw - 32px))",
+            boxShadow: "none",
+            padding: `${space[3]}px ${space[4]}px`,
+            flexWrap: "nowrap",
+            [th.breakpoints.up("sm")]: {
+              flexGrow: 0,
+              minWidth: "unset",
+            },
+          }),
+          message: { padding: 0, flex: "none" },
         },
       },
       MuiTooltip: {

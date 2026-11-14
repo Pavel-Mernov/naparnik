@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, Stack, TextField, Typography, useMediaQuery, useTheme } from "@mui/material";
 import { api, type TeamCard } from "@/shared/api";
-import { AiTag, Empty, ListSkeleton, StatusTag } from "@/shared/ui";
+import { AiTag, DialogClose, dialogTitleSx, Empty, ListSkeleton, StatusTag } from "@/shared/ui";
 import { ProfileAvatar } from "@/widgets/profile";
 
 const Card = ({ person, login, onOpenPage, onProfile }: {
@@ -76,7 +76,10 @@ export const TeamMapDialog = ({ open, login, onClose, onOpenPage, onProfile }: {
   }, [open, login]);
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="md" fullScreen={mobile}>
-      <DialogTitle sx={{ pb: 0.5 }}>Карта команды</DialogTitle>
+      <DialogTitle sx={{ ...dialogTitleSx, pb: 0.5 }}>
+        <Box component="span" sx={{ flex: 1, minWidth: 0, pr: 1 }}>Карта команды</Box>
+        <DialogClose onClose={onClose} />
+      </DialogTitle>
       <DialogContent>
         <Typography variant="body2" color="text.secondary" mb={2}>Кто за что отвечает и с какими вопросами к кому идти. «Написать» — черновик знакомства, который ты отправишь сам.</Typography>
         {error ? <Typography color="error.main" role="alert">{error}</Typography>

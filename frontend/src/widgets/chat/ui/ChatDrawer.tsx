@@ -188,7 +188,7 @@ const ChatMascot = ({ loading, failed }: { loading: boolean; failed: boolean }) 
   return <Mascot3D size={48} mood={mood} />;
 };
 
-/** На компьютере — панель справа, на телефоне — шторка снизу (как в дизайн-системе Авито). */
+/** На компьютере — панель справа, на телефоне — на весь экран. */
 export const ChatDrawer = ({ open, onClose, text, setText, messages, loading, onSend, login, look, onAction, onReset }: {
   open: boolean; onClose: () => void; text: string; setText: (text: string) => void; messages: ChatMessage[]; loading: boolean;
   onSend: (text?: string) => void; login: string; look: Lookup; onAction: () => void;
@@ -202,9 +202,19 @@ export const ChatDrawer = ({ open, onClose, text, setText, messages, loading, on
   useEffect(() => { end.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, loading, open]);
   return (
     <Drawer anchor={mobile ? "bottom" : "right"} open={open} onClose={onClose}
-      slotProps={{ paper: { sx: mobile ? { height: "88dvh", borderTop: `1px solid ${t.line}` } : { width: 440, borderLeft: `1px solid ${t.line}` } } }}>
+      slotProps={{
+        paper: {
+          sx: mobile
+            ? {
+                width: "100%", height: "100%", maxHeight: "100dvh",
+                borderRadius: 0, border: 0,
+                pt: "env(safe-area-inset-top)",
+                pb: "env(safe-area-inset-bottom)",
+              }
+            : { width: 440, borderLeft: `1px solid ${t.line}` },
+        },
+      }}>
       <Stack height="100%" sx={{ bgcolor: t.bg }}>
-        {mobile && <Box aria-hidden sx={{ width: 40, height: 4, bgcolor: t.line, mx: "auto", mt: 1 }} />}
         <Stack direction="row" alignItems="center" gap={1.5} sx={{ px: 2, py: 1.5, borderBottom: `1px solid ${t.line}` }}>
           <ChatMascot loading={loading} failed={Boolean(messages.length && messages[messages.length - 1].retryText && !messages[messages.length - 1].reply)} />
           <Box flex={1} minWidth={0}>

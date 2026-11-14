@@ -5,7 +5,7 @@ import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, MenuIte
 import { api, unwrap, type RequestItem, type Warning } from "@/shared/api";
 import { requestTitle, shortDateTime } from "@/shared/lib";
 import type { DataState } from "@/shared/lib";
-import { AiTag, Block, Empty, PageHead, Row, StatusTag } from "@/shared/ui";
+import { AiTag, Block, DialogClose, dialogTitleSx, Empty, PageHead, Row, StatusTag } from "@/shared/ui";
 
 type Kind = "absence" | "access";
 
@@ -51,7 +51,10 @@ const SelfServiceDialog = ({ open, data, login, onClose, onSent }: { open: boole
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm" fullScreen={mobile}>
-      <DialogTitle>Оформить самому</DialogTitle>
+      <DialogTitle sx={dialogTitleSx}>
+        <Box component="span" sx={{ flex: 1, minWidth: 0 }}>Оформить самому</Box>
+        <DialogClose onClose={onClose} />
+      </DialogTitle>
       <DialogContent>
         <Stack direction="row" mb={2.5}>{tab("absence", "Отсутствие")}{tab("access", "Доступ")}</Stack>
         {kind === "absence" ? <Stack gap={2}>
@@ -86,7 +89,10 @@ const RejectDialog = ({ request, data, onClose, onReject }: { request: RequestIt
   const codes = request?.kind === "access" ? data.services?.access.reason_codes : data.services?.absence.reason_codes;
   return (
     <Dialog open={Boolean(request)} onClose={onClose} fullWidth maxWidth="sm">
-      <DialogTitle>Отклонить: {request && requestTitle(request)}</DialogTitle>
+      <DialogTitle sx={dialogTitleSx}>
+        <Box component="span" sx={{ flex: 1, minWidth: 0 }}>Отклонить: {request && requestTitle(request)}</Box>
+        <DialogClose onClose={onClose} />
+      </DialogTitle>
       <DialogContent><Stack gap={2} pt={1}>
         <TextField select label="Причина" value={reason} onChange={(e) => setReason(e.target.value)}>{codes?.map((c) => <MenuItem key={c.code} value={c.code}>{c.text}</MenuItem>)}</TextField>
         <TextField label="Комментарий стажёру" value={comment} onChange={(e) => setComment(e.target.value)} multiline minRows={2} helperText={reason === "OTHER" ? "Для «Другое» комментарий обязателен" : "Необязательно"} />
@@ -116,7 +122,10 @@ const RequestDialog = ({ request, data, onClose, onMarkStep }: { request: Reques
   const canMark = onMarkStep && request.status === "granted" && step && step.status !== "Done";
   return (
     <Dialog open onClose={onClose} fullWidth maxWidth="sm">
-      <DialogTitle sx={{ pb: 0.5 }}>{requestTitle(request)}</DialogTitle>
+      <DialogTitle sx={{ ...dialogTitleSx, pb: 0.5 }}>
+        <Box component="span" sx={{ flex: 1, minWidth: 0, pr: 1 }}>{requestTitle(request)}</Box>
+        <DialogClose onClose={onClose} />
+      </DialogTitle>
       <DialogContent>
         <Box mb={2}><StatusTag status={request.status} /></Box>
         <Box component="dl" sx={{ display: "grid", gridTemplateColumns: "auto 1fr", gap: "6px 16px", m: 0, mb: 3 }}>
@@ -168,7 +177,7 @@ export const RequestsPage = ({ data, login, isLead, busy, onAgent, onDecide, onS
     <PageHead context={isLead ? (pending.length ? `Ждут твоего решения: ${pending.length}` : "Новых заявок нет") : "Отгулы и доступы через сервисы отдела"}
       title={isLead ? "Согласование" : "Заявки"}
       action={!isLead && hasAny ? actions : undefined} />
-    <Stack gap={5}>
+    <Stack gap={{ xs: 2, md: 5 }}>
       <Block title="На согласовании" aside={pending.length > 0 ? <Typography color="text.secondary">{pending.length}</Typography> : undefined}>
         {pending.length ? pending.map(row) : (
           <Empty
