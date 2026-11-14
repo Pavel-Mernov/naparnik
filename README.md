@@ -5,7 +5,9 @@
   <img src="docs/readme/svg/hero-light.svg" width="100%" alt="Напарник — AI-buddy для стажёров Авито. Ведёт стажёра по стажировке и превращает каждый его вопрос в знание команды.">
 </picture>
 
-**Напарник помогает стажёру освоиться в команде:** показывает план на день, отвечает по базе знаний, находит эксперта и готовит заявки. Бадди получает сформулированные вопросы, эксперт сохраняет ответ для следующих новичков, руководитель видит прогресс.
+**Напарник — ИИ-помощник для адаптации стажёров.** Он показывает, что сделать сегодня, отвечает по знаниям команды и помогает обратиться к нужному человеку. Если требуется отгул или доступ — готовит заявку, которую подтверждает пользователь.
+
+Стажёру проще освоиться. Бадди — наставник стажёра — получает сформулированные вопросы. Эксперт сохраняет ответ для следующих новичков, а руководитель видит прогресс адаптации.
 
 <p align="center">
   <a href="https://disk.yandex.ru/d/xxAoKDQs5wWt0g"><b>Смотреть видеодемонстрацию ↗</b></a> ·
@@ -32,7 +34,12 @@
 | 08 · [Технологии и качество](#quality) | Тесты, сохранённые отчёты, ограничения |
 | 09 · [Документация](#docs) | Исследование, требования, спецификации |
 
-### Почему появился Напарник
+<a id="почему-появился-напарник"></a>
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/readme/svg/problem-dark.svg">
+  <img src="docs/readme/svg/problem-light.svg" width="100%" alt="Первая задача. А вопросов — ещё больше.">
+</picture>
 
 В интервью четырём стажёрам было неловко задавать базовые вопросы, а бадди рассказывали о повторяющихся объяснениях и потерянном контексте. [CJM](docs/02-concept/CJM.md) выделяет особенно трудный момент: первая–вторая неделя, когда уже есть задачи, но ещё непонятны инструменты, термины и люди.
 
@@ -49,10 +56,10 @@
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/readme/svg/interface-dark.svg">
-  <img src="docs/readme/svg/interface-light.svg" width="100%" alt="01 · Интерфейс">
+  <img src="docs/readme/svg/interface-light.svg" width="100%" alt="01 · Вот как выглядит день с Напарником">
 </picture>
 
-Скриншоты ниже сняты в работающем прототипе на демонстрационных данных, без внешнего ключа модели. Изображение открывается в полном размере по клику.
+Начните с «Моего дня»: здесь стажёр видит ближайшие шаги и встречи. Дальше — план, чат и экраны команды. Все скриншоты сняты в работающем прототипе на демонстрационных данных, без внешнего ключа модели; по клику они открываются в полном размере.
 
 [![Мой день: шаги на сегодня, ближайшая встреча и прогресс адаптации](docs/readme/screenshots/my-day.webp)](docs/readme/screenshots/my-day.webp)
 
@@ -73,7 +80,12 @@
 | [![Экран бадди: мои стажёры](docs/readme/screenshots/buddy.webp)](docs/readme/screenshots/buddy.webp) | [![Команда: прогресс стажёров и метрики](docs/readme/screenshots/lead.webp)](docs/readme/screenshots/lead.webp) |
 | Планы подопечных и вопросы, которым нужна помощь. | Обзор адаптации и нагрузки без текстов личных вопросов. |
 
-### Напарник всегда рядом
+<a id="напарник-всегда-рядом"></a>
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/readme/svg/mascot-dark.svg">
+  <img src="docs/readme/svg/mascot-light.svg" width="100%" alt="Напарник всегда рядом">
+</picture>
 
 Маскот открывает чат из любого раздела и показывает, что происходит. Ниже — настоящие состояния виджета в приложении.
 
@@ -101,8 +113,10 @@
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/readme/svg/features-dark.svg">
-  <img src="docs/readme/svg/features-light.svg" width="100%" alt="02 · Возможности">
+  <img src="docs/readme/svg/features-light.svg" width="100%" alt="02 · Меньше поисков. Больше ясности.">
 </picture>
+
+Напарник помогает в трёх ситуациях: понять следующий шаг, найти ответ и выполнить действие. Вот что уже работает в прототипе.
 
 | Задача | Что реализовано |
 |---|---|
@@ -119,7 +133,7 @@
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/readme/svg/how-dark.svg">
-  <img src="docs/readme/svg/how-light.svg" width="100%" alt="03 · Петля знаний — людям вопрос задают один раз">
+  <img src="docs/readme/svg/how-light.svg" width="100%" alt="03 · Один ответ — знание для команды">
 </picture>
 
 <picture>
@@ -137,8 +151,10 @@ React отправляет запрос в Go API. Агент получает �
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/readme/svg/roles-dark.svg">
-  <img src="docs/readme/svg/roles-light.svg" width="100%" alt="04 · Четыре роли">
+  <img src="docs/readme/svg/roles-light.svg" width="100%" alt="04 · У каждого своя роль. Напарник помогает всем.">
 </picture>
+
+Стажёр — основной пользователь. Остальные участники подключаются там, где нужны их знания, помощь или решение.
 
 | Роль | Проблема | Что даёт Напарник | Ожидаемая польза |
 |---|---|---|---|
@@ -166,10 +182,10 @@ React отправляет запрос в Go API. Агент получает �
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/readme/svg/start-dark.svg">
-  <img src="docs/readme/svg/start-light.svg" width="100%" alt="06 · Быстрый запуск">
+  <img src="docs/readme/svg/start-light.svg" width="100%" alt="06 · Попробуйте на своей машине">
 </picture>
 
-### Docker — рекомендуемый способ
+### Первый запуск — через Docker
 
 Нужны Docker Engine/Desktop и **Docker Compose v2 с поддержкой `env_file.required` (2.24+)**. PostgreSQL 16 и Redis 7 поднимутся автоматически. Внешний ключ модели для демо не нужен.
 
@@ -198,7 +214,7 @@ docker compose up -d             # запустить снова
 
 **Полный сброс демонстрации:** `docker compose down -v`, затем `docker compose up -d`. Команда с `-v` удаляет PostgreSQL и Redis, включая заявки, статьи, историю и привязки Telegram. Изменённые фикстуры применяются к новой базе, а не поверх сохранённой.
 
-### Локально без Docker
+### Для разработки — локальный запуск
 
 Нужны **Go 1.27.3** (версия в `backend/go.mod`) и **Node.js 22.12+ / npm** (Docker и CI используют Node 22). Два терминала из корня проекта:
 
@@ -218,7 +234,7 @@ npm run dev
 Без PostgreSQL и Redis локальное демо работает, но состояние теряется после остановки backend. Для постоянного хранения задайте в корневом `.env` адреса **своих запущенных** PostgreSQL 16 и Redis 7 (`DATABASE_URL`, `REDIS_URL`) и запускайте `go run ./cmd/server` без пустых переопределений. Backend читает `.env` из своей папки или корня; Vite ожидает API на `8080`. [Хранение и повторные запросы →](docs/PERSISTENCE.md)
 
 <details>
-<summary>Модель, Telegram и диагностика запуска</summary>
+<summary>Подключить модель и Telegram · разобраться с ошибками запуска</summary>
 
 **Без ключей:** выбирается заглушка, внешние запросы к модели не нужны. Она демонстрирует основные ветки, но не заменяет свободный диалог с LLM.
 
@@ -240,7 +256,7 @@ npm run dev
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/readme/svg/check-dark.svg">
-  <img src="docs/readme/svg/check-light.svg" width="100%" alt="07 · Проверка за 5 минут">
+  <img src="docs/readme/svg/check-light.svg" width="100%" alt="07 · Пять минут — и всё понятно">
 </picture>
 
 Вход в прототип заменён переключателем учёток **в правом верхнем углу**. Пароли не нужны. Демонстрационная дата — **11 ноября 2026**, третий день стажировки Даниила; она берётся из фикстур, её можно изменить через `DEMO_TODAY`.
@@ -254,7 +270,7 @@ npm run dev
 При повторном прохождении уже оформленный отгул не дублируется — выберите другую дату. Внешняя модель может задавать уточняющие вопросы; подписи и длина ответа отличаются от заглушки.
 
 <details>
-<summary>Все тестовые учётки</summary>
+<summary>Кого выбрать в переключателе: все тестовые учётки</summary>
 
 | Учётка | Кто | Роль |
 |---|---|---|
@@ -289,7 +305,7 @@ npm run dev
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/readme/svg/quality-dark.svg">
-  <img src="docs/readme/svg/quality-light.svg" width="100%" alt="08 · Технологии и качество">
+  <img src="docs/readme/svg/quality-light.svg" width="100%" alt="08 · Красиво снаружи. Проверяемо внутри.">
 </picture>
 
 | Слой | Реализация |
@@ -300,7 +316,7 @@ npm run dev
 | Состояние | PostgreSQL 16: версионированный JSONB-документ с транзакциями; Redis 7: кэш, коды Telegram, лимиты и блокировки |
 | Доставка и наблюдаемость | Docker Compose, GitHub Actions, журнал событий; опциональная выгрузка в HTTP-коллектор или JSONL; feature flags |
 
-### Проверяемое качество
+### Что показали проверки
 
 Ниже — **сохранённые отчёты репозитория**, а не обещание результата нового запуска или качества на любых вопросах.
 
@@ -333,7 +349,7 @@ go run ./cmd/evals -mode live
 `go test` и команды `go run` выше выполняются из `backend`. PostgreSQL-интеграционные тесты требуют `TEST_DATABASE_URL` доступной тестовой БД; в CI она поднимается автоматически. [Скрипт покрытия](scripts/coverage.sh) и [тесты backend](backend/internal) позволяют воспроизвести проверки.
 
 <details>
-<summary>Границы прототипа и дополнительные точки входа</summary>
+<summary>Что пока ограничено в прототипе · MCP и CLI</summary>
 
 - Авторизация имитируется переключателем и `X-User`; настоящая корпоративная идентификация не подключена.
 - Сервисы и запись/транскрипт встречи синтетические; нет действующего подключения к корпоративным системам Авито, Grafana или Kafka. Для Kafka предусмотрен внешний HTTP-коллектор, а не прямой Kafka-клиент.
@@ -350,7 +366,7 @@ go run ./cmd/evals -mode live
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/readme/svg/docs-dark.svg">
-  <img src="docs/readme/svg/docs-light.svg" width="100%" alt="09 · Документация">
+  <img src="docs/readme/svg/docs-light.svg" width="100%" alt="09 · Хотите разобраться глубже?">
 </picture>
 
 | Раздел | Материалы |
