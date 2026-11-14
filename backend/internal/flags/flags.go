@@ -111,7 +111,7 @@ func (p *Provider) Enabled(name string, roles []string) bool {
 	return false
 }
 
-// Snapshot — текущие значения для /api/health (без ролей пользователя).
+// Snapshot — текущие значения для /api/naparnik (без ролей пользователя).
 func (p *Provider) Snapshot() map[string]bool {
 	out := map[string]bool{}
 	for _, n := range []string{Practice, Glossary, Meetings, Telegram, Watchers} {

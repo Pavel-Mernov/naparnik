@@ -42,7 +42,7 @@ cp .env.example .env          # необязательно: ключ модел�
 docker compose up --build -d --wait
 ```
 
-Откройте **http://localhost:3000** — интерфейс. API — на **http://localhost:8080** (`GET /api/health` — проверка, что сервер жив).
+Откройте **http://localhost:3000** — интерфейс. API — на **http://localhost:8080** (`GET /api/naparnik` — проверка, что сервер жив).
 
 PostgreSQL и Redis запускаются автоматически; данные сохраняются в томе `pgdata`. Обычная остановка — `docker compose down` (без `-v`). Проверка сохранения: создай заявку, выполни `docker compose restart backend` и обнови страницу. Подробнее: [хранение и повторы](docs/PERSISTENCE.md).
 
@@ -99,7 +99,7 @@ npm run dev
 | Не забывает людей | Привязка хранится в состоянии (PostgreSQL) и копией в Redis (AOF на томе `redis-data`): после пересоздания состояния бот при старте возвращает привязки. `docker compose down -v` удаляет оба тома — тогда привязку нужно повторить |
 | Журнал | Входящие команды бота (без кода привязки) и ошибки опроса пишутся в журнал сервера: `docker compose logs backend \| grep telegram` |
 
-Redis (`REDIS_URL`, в Docker задаётся сам) хранит копию привязок Telegram, одноразовые коды привязки, лимит сообщений модели (`LLM_RATE_PER_MIN`, по умолчанию 20 в минуту), блокировку отправки и кэш поиска по базе и подбора эксперта. Без Redis — память процесса. Счётчики кэша: `GET /api/health`.
+Redis (`REDIS_URL`, в Docker задаётся сам) хранит копию привязок Telegram, одноразовые коды привязки, лимит сообщений модели (`LLM_RATE_PER_MIN`, по умолчанию 20 в минуту), блокировку отправки и кэш поиска по базе и подбора эксперта. Без Redis — память процесса. Счётчики кэша: `GET /api/naparnik`.
 
 ---
 
@@ -198,7 +198,7 @@ npm --prefix frontend run build             # TypeScript и сборка React
 | `EVENTS_URL`, `EVENTS_TOKEN` / `EVENTS_FILE` | Выгрузка журнала событий пачками в коллектор (Clickstream, REST-прокси Kafka) или в JSONL-файл |
 | `FEATURE_FLAGS`, `FLAGS_FILE` | Флаги `practice`, `glossary`, `meetings`, `telegram`, `watchers`; файл перечитывается на лету, можно по ролям |
 
-Состояние флагов и выгрузки — `GET /api/health`.
+Состояние флагов и выгрузки — `GET /api/naparnik`.
 
 ### MCP-сервер инструментов
 

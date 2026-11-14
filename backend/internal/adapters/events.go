@@ -118,7 +118,7 @@ func (e *Exporter) Run(ctx context.Context) {
 	}
 }
 
-// Stats — сколько отправлено, отброшено и неудачных попыток (для /api/health).
+// Stats — сколько отправлено, отброшено и неудачных попыток (для /api/naparnik).
 func (e *Exporter) Stats() map[string]int {
 	e.mu.Lock()
 	defer e.mu.Unlock()

@@ -36,7 +36,7 @@ type Server struct {
 
 func (s *Server) Handler() http.Handler {
 	mux := http.NewServeMux()
-	mux.HandleFunc("GET /api/health", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("GET /api/naparnik", func(w http.ResponseWriter, r *http.Request) {
 		if err := s.Store.Refresh(r.Context()); err != nil {
 			writeJSON(w, 503, errBody("unavailable", "Хранилище недоступно"))
 			return
@@ -134,7 +134,7 @@ func (s *Server) Handler() http.Handler {
 		mux.HandleFunc("GET /{$}", func(w http.ResponseWriter, _ *http.Request) {
 			w.Header().Set("Content-Type", "text/html; charset=utf-8")
 			_, _ = fmt.Fprintf(w, `<!doctype html><meta charset="utf-8"><title>Напарник · API</title>`+
-				`<p>Это API Напарника. Интерфейс: <a href="%[1]s">%[1]s</a>. Проверка: <a href="/api/health">/api/health</a>.</p>`, html.EscapeString(front))
+				`<p>Это API Напарника. Интерфейс: <a href="%[1]s">%[1]s</a>. Проверка: <a href="/api/naparnik">/api/naparnik</a>.</p>`, html.EscapeString(front))
 		})
 	}
 	return mux

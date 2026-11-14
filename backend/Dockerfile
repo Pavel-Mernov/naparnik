@@ -20,5 +20,5 @@ RUN chmod -R a+rX /app
 ENV MOCK_DATA_DIR=/app/mock-data PORT=8080 TZ=Europe/Moscow
 EXPOSE 8080
 USER nobody
-HEALTHCHECK --interval=10s --timeout=3s --retries=5 CMD wget -qO- -Y off http://localhost:8080/api/health || exit 1
+HEALTHCHECK --interval=10s --timeout=3s --retries=5 CMD wget -qO- -Y off http://localhost:8080/api/naparnik || exit 1
 CMD ["/app/server"]

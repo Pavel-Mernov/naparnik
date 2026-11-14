@@ -25,7 +25,7 @@ const kbCacheTTL = 10 * time.Minute
 
 var cacheHits, cacheMisses syncatomic.Int64
 
-// CacheStats — сколько раз кэш сработал (для /api/health).
+// CacheStats — сколько раз кэш сработал (для /api/naparnik).
 func CacheStats() (hits, misses int64) { return cacheHits.Load(), cacheMisses.Load() }
 
 // kbVersion — отпечаток базы, видимой пользователю: id, статус и дата обновления страниц.

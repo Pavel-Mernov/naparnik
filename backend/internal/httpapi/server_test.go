@@ -47,7 +47,7 @@ func call(t *testing.T, h http.Handler, method, path, user, body string) (int, m
 
 func TestHealthAndAuth(t *testing.T) {
 	_, h := newServer(t)
-	if code, _ := call(t, h, "GET", "/api/health", "", ""); code != 200 {
+	if code, _ := call(t, h, "GET", "/api/naparnik", "", ""); code != 200 {
 		t.Fatal(code)
 	}
 	if code, _ := call(t, h, "GET", "/api/me", "", ""); code != 401 {

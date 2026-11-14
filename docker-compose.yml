@@ -1,4 +1,4 @@
-# Напарник: интерфейс на http://localhost:3000, API на http://localhost:8080
+# Напарник: интерфейс на http://localhost:3001, API на http://localhost:8082
 #
 #   cp .env.example .env      # вписать ключ в LLM_API_KEY (без ключа работает заглушка модели)
 #   docker compose up --build
@@ -39,7 +39,7 @@ services:
       dockerfile: backend/Dockerfile
       secrets:
         - proxy_ca
-    ports: ["8080:8080"]
+    ports: ["127.0.0.1:8082:8080"]
     env_file:
       - path: .env
         required: false
@@ -68,7 +68,7 @@ services:
       dockerfile: Dockerfile
       secrets:
         - proxy_ca
-    ports: ["3000:3000"]
+    ports: ["127.0.0.1:3001:3000"]
     depends_on:
       backend:
         condition: service_healthy
