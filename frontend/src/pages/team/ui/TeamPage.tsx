@@ -62,7 +62,7 @@ export const TeamPage = ({ overview, onRequests, onProfile, onPlanDraft }: { ove
     <Block title="Стажёры">
       {overview.interns.length ? overview.interns.map((i) => {
         const showDraft = unapproved(i.plan_status) || Boolean(i.review_status);
-        const end = (i.overdue_steps > 0 || showDraft) ? (
+        const tags = (
           <>
             {i.overdue_steps > 0 && <StatusTag status="Overdue" label={`Просрочено: ${i.overdue_steps}`} />}
             {showDraft && (
@@ -71,34 +71,54 @@ export const TeamPage = ({ overview, onRequests, onProfile, onPlanDraft }: { ove
                 label={i.plan_status === "draft" ? "План на согласовании" : "План не утверждён"}
               />
             )}
-            {showDraft && onPlanDraft && (
-              <Button data-testid={`plan-control-${i.id}`} variant="text" size="small" onClick={() => onPlanDraft(i.id)} sx={actionBtn}>
-                Утвердить план
-              </Button>
-            )}
+            {!showDraft && i.overdue_steps === 0 && <StatusTag status="Done" label="По плану" />}
           </>
-        ) : <StatusTag status="Done" label="По плану" />;
+        );
+        const planAction = !onPlanDraft ? undefined : showDraft ? (
+          <Button
+            data-testid={`plan-control-${i.id}`}
+            variant="contained"
+            size="small"
+            onClick={() => onPlanDraft(i.id)}
+            sx={{ minHeight: { xs: size.control, sm: size.controlSm }, width: { xs: "100%", sm: "auto" } }}
+          >
+            Утвердить план
+          </Button>
+        ) : (
+          <Button
+            data-testid={`plan-control-${i.id}`}
+            variant="text"
+            size="small"
+            onClick={() => onPlanDraft(i.id)}
+            sx={{ ...actionBtn, width: { xs: "100%", sm: "auto" } }}
+          >
+            План и согласование
+          </Button>
+        );
         return (
           <Row
             key={i.id}
-            align="flex-start"
+            align="center"
             stackEndOnMobile
             title={
               <Box>
-                <Typography fontWeight={type.weight.semibold} sx={{ overflowWrap: "anywhere" }}>
-                  {onProfile ? (
-                    <Link
-                      component="button"
-                      onClick={() => onProfile(i.id)}
-                      color="inherit"
-                      underline="hover"
-                      sx={{ font: "inherit", fontWeight: type.weight.semibold, textAlign: "left" }}
-                    >
-                      {i.name}
-                    </Link>
-                  ) : i.name}
-                </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mt: `${space[1]}px` }}>
+                <Stack direction="row" alignItems="center" flexWrap="wrap" gap={`${space[2]}px`} mb={`${space[1]}px`}>
+                  <Typography fontWeight={type.weight.semibold} sx={{ overflowWrap: "anywhere" }}>
+                    {onProfile ? (
+                      <Link
+                        component="button"
+                        onClick={() => onProfile(i.id)}
+                        color="inherit"
+                        underline="hover"
+                        sx={{ font: "inherit", fontWeight: type.weight.semibold, textAlign: "left" }}
+                      >
+                        {i.name}
+                      </Link>
+                    ) : i.name}
+                  </Typography>
+                  {tags}
+                </Stack>
+                <Typography variant="body2" color="text.secondary">
                   {i.week}-я неделя · бадди {i.buddy} · {i.stage || (i.plan_status === "draft" ? "план готовится" : "этапы пройдены")}
                 </Typography>
                 <Stack direction="row" alignItems="center" gap={`${space[3]}px`} mt={`${space[3]}px`} sx={{ width: "100%" }}>
@@ -116,7 +136,7 @@ export const TeamPage = ({ overview, onRequests, onProfile, onPlanDraft }: { ove
                 </Stack>
               </Box>
             }
-            end={<Stack gap={1} alignItems="flex-end" sx={{ textAlign: "right", width: { xs: "100%", sm: 200 }, minWidth: { sm: 200 }, flex: "none", boxSizing: "border-box" }}>{end}{!showDraft && onPlanDraft && <Button data-testid={`plan-control-${i.id}`} variant="text" size="small" onClick={() => onPlanDraft(i.id)}>План и согласование</Button>}</Stack>}
+            end={planAction}
           />
         );
       }) : <Empty text="В отделе пока нет стажёров." />}
