@@ -58,6 +58,8 @@
   <img src="docs/readme/diagrams/adaptation-unified-light.svg" width="100%" alt="Один процесс адаптации — свой контекст каждой команды. Единый чек-лист Авито, наполнение по направлению и отделу, согласование с бадди и руководителем, три принципа: корпоративный стандарт, контекст команды и сохранение проверенных знаний.">
 </picture>
 
+[Как работает петля знаний](docs/03-requirements/03-PROCESSES.md) · [Модель адаптации и бизнес-правила](docs/03-requirements/04-BUSINESS-RULES.md) · [Подключение новых отделов](docs/03-requirements/11-INTEGRATION.md)
+
 <a id="interface"></a>
 
 <picture>
