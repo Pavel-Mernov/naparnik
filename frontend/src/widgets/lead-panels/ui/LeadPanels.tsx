@@ -49,9 +49,27 @@ export const LeadPanels = ({ login, users, onAction }: {
     </Block>
 
     <Block title="Нагрузка бадди и экспертов" aside={<Typography variant="body2" color="text.secondary">оценка: ответ ≈ 10 мин, встреча ≈ 30 мин</Typography>}>
-      {m?.load.length ? m.load.map((r) => <Row key={r.id} title={`${r.name} · ${r.role}`}
-        sub={`вопросов: ${r.received} · ответил(а): ${r.answered} · встреч: ${r.meetings} · страниц в базе: ${r.pages}`}
-        end={<Typography fontWeight={(theme) => theme.type.weight.regular}>{mins(r.minutes)}</Typography>} />) : <Empty text="Нагрузка появится, когда стажёры начнут задавать вопросы людям." />}
+      {m?.load.length ? m.load.map((r, i) => (
+        <Row
+          key={r.id}
+          align="flex-start"
+          start={
+            <Box
+              aria-hidden
+              sx={{
+                width: 10,
+                height: 10,
+                mt: "6px",
+                flex: "none",
+                bgcolor: t.folderDot[i % t.folderDot.length],
+              }}
+            />
+          }
+          title={`${r.name} · ${r.role}`}
+          sub={`вопросов: ${r.received} · ответил(а): ${r.answered} · встреч: ${r.meetings} · страниц в базе: ${r.pages}`}
+          end={<Typography fontWeight={(theme) => theme.type.weight.regular}>{mins(r.minutes)}</Typography>}
+        />
+      )) : <Empty text="Нагрузка появится, когда стажёры начнут задавать вопросы людям." />}
     </Block>
 
     <KbSupport login={login} users={users} onAction={onAction} />

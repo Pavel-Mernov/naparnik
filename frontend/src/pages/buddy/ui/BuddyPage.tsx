@@ -129,7 +129,7 @@ export const BuddyPage = ({ data, onPlan, onQuestions, onProfile, onPlanDraft }:
                   {i.plan?.plan_status === "auto_activated" ? " · план не утверждён руководителем" : ""}
                 </Typography>
                 {i.plan && (
-                  <Stack direction="row" alignItems="center" gap={`${space[3]}px`} mt={`${space[3]}px`}>
+                  <Stack direction="row" alignItems="center" gap={`${space[3]}px`} mt={`${space[3]}px`} sx={{ width: "100%" }}>
                     <Box sx={{ flex: 1, height: 8, bgcolor: t.bg, minWidth: 0 }}>
                       <Box
                         sx={{
@@ -140,12 +140,12 @@ export const BuddyPage = ({ data, onPlan, onQuestions, onProfile, onPlanDraft }:
                         }}
                       />
                     </Box>
-                    <Typography variant="body2" sx={{ minWidth: 40, textAlign: "right", flex: "none" }}>{i.plan.progress_pct}%</Typography>
+                    <Typography variant="body2" sx={{ width: 40, textAlign: "right", flex: "none", fontVariantNumeric: "tabular-nums" }}>{i.plan.progress_pct}%</Typography>
                   </Stack>
                 )}
               </Box>
             }
-            end={<Stack gap={1}>{planAction}{i.plan && onPlanDraft && <Button data-testid={`plan-control-${i.id}`} variant="text" size="small" onClick={() => onPlanDraft(i.id)}>Редакции и согласование</Button>}</Stack>}
+            end={<Stack gap={1} alignItems="flex-end" sx={{ textAlign: "right", width: { xs: "100%", sm: 220 }, minWidth: { sm: 220 }, flex: "none", boxSizing: "border-box" }}>{planAction}{i.plan && onPlanDraft && <Button data-testid={`plan-control-${i.id}`} variant="text" size="small" onClick={() => onPlanDraft(i.id)}>Редакции и согласование</Button>}</Stack>}
           />
         );
       }) : <Empty text="За тобой пока не закреплены стажёры." />}

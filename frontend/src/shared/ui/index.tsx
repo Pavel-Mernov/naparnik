@@ -53,7 +53,20 @@ export const StatusTag = ({ status, label }: { status: string; label?: string })
   const bg: Record<Tone, string> = { ok: t.okSoft, bad: t.badSoft, wait: t.waitSoft, today: t.todaySoft, neutral: t.surface };
   const dot: Record<Tone, string> = { ok: brand.green, bad: brand.red, wait: brand.blue, today: brand.blue, neutral: t.muted };
   return (
-    <Box component="span" sx={{ display: "inline-flex", alignItems: "center", gap: `${space[1] + 2}px`, px: `${space[2]}px`, py: 0.25, bgcolor: bg[s.tone], color: "text.primary", fontSize: type.size.sm, fontWeight: type.weight.semibold, whiteSpace: "nowrap" }}>
+    <Box component="span" sx={{
+      display: "inline-flex",
+      alignItems: "center",
+      width: "fit-content",
+      maxWidth: "100%",
+      gap: `${space[1] + 2}px`,
+      px: `${space[2]}px`,
+      py: 0.25,
+      bgcolor: bg[s.tone],
+      color: "text.primary",
+      fontSize: type.size.sm,
+      fontWeight: type.weight.semibold,
+      whiteSpace: "nowrap",
+    }}>
       <Box component="span" aria-hidden sx={{ width: 6, height: 6, bgcolor: dot[s.tone], flex: "none" }} />
       {label ?? s.label}
     </Box>
@@ -153,11 +166,13 @@ export const Row = ({ start, title, sub, end, onClick, align = "center", stackEn
       {end && (
         <Stack
           direction="row"
-          alignItems="center"
+          alignItems={align === "flex-start" ? "flex-start" : "center"}
+          justifyContent="flex-end"
           flexWrap="wrap"
           gap={`${space[2]}px`}
           sx={{
             flex: stackEndOnMobile ? { xs: "1 1 100%", sm: "none" } : "none",
+            ml: "auto",
             // Под текстом, вровень с заголовком (чекбокс + gap), без «плывущего» отступа.
             pl: stackEndOnMobile && start ? { xs: `calc(${space[7]}px + ${space[3]}px)`, sm: 0 } : 0,
             ...(align === "flex-start" ? { pt: "2px" } : {}),

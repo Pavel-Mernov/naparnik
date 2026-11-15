@@ -101,7 +101,7 @@ export const TeamPage = ({ overview, onRequests, onProfile, onPlanDraft }: { ove
                 <Typography variant="body2" color="text.secondary" sx={{ mt: `${space[1]}px` }}>
                   {i.week}-я неделя · бадди {i.buddy} · {i.stage || (i.plan_status === "draft" ? "план готовится" : "этапы пройдены")}
                 </Typography>
-                <Stack direction="row" alignItems="center" gap={`${space[3]}px`} mt={`${space[3]}px`}>
+                <Stack direction="row" alignItems="center" gap={`${space[3]}px`} mt={`${space[3]}px`} sx={{ width: "100%" }}>
                   <Box sx={{ flex: 1, height: 8, bgcolor: t.bg, minWidth: 0 }} aria-label={`Прогресс ${i.name}`}>
                     <Box
                       sx={{
@@ -112,11 +112,11 @@ export const TeamPage = ({ overview, onRequests, onProfile, onPlanDraft }: { ove
                       }}
                     />
                   </Box>
-                  <Typography variant="body2" sx={{ minWidth: 40, textAlign: "right", flex: "none" }}>{i.progress_pct}%</Typography>
+                  <Typography variant="body2" sx={{ width: 40, textAlign: "right", flex: "none", fontVariantNumeric: "tabular-nums" }}>{i.progress_pct}%</Typography>
                 </Stack>
               </Box>
             }
-            end={<Stack gap={1}>{end}{!showDraft && onPlanDraft && <Button data-testid={`plan-control-${i.id}`} variant="text" size="small" onClick={() => onPlanDraft(i.id)}>План и согласование</Button>}</Stack>}
+            end={<Stack gap={1} alignItems="flex-end" sx={{ textAlign: "right", width: { xs: "100%", sm: 200 }, minWidth: { sm: 200 }, flex: "none", boxSizing: "border-box" }}>{end}{!showDraft && onPlanDraft && <Button data-testid={`plan-control-${i.id}`} variant="text" size="small" onClick={() => onPlanDraft(i.id)}>План и согласование</Button>}</Stack>}
           />
         );
       }) : <Empty text="В отделе пока нет стажёров." />}
