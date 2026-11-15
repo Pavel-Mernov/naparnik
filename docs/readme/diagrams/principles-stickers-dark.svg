@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-label="Три принципа Напарника: корпоративный стандарт, контекст команды, знание остаётся в команде.">
+<title>Три принципа Напарника</title>
+<rect width="1200" height="630" fill="#1C1C1C"/>
+<g font-family="Onest, Golos Text, Inter, system-ui, sans-serif">
+<text x="42" y="79" font-weight="700" font-size="51" fill="#FCFCFA" letter-spacing="-1.3">Три принципа Напарника</text>
+<rect x="758" y="126" width="86" height="68" fill="#00AAFF"/>
+<rect x="20" y="535" width="112" height="70" fill="#04E061"/>
+<rect x="1069" y="537" width="112" height="68" fill="#FF4053"/>
+<rect x="42" y="164" width="349" height="403" fill="#CDEBFB"/>
+<rect x="56" y="181" width="321" height="91" fill="#00AAFF"/>
+<text x="73" y="221" font-size="24" font-weight="700" fill="#1C1C1C">01 · Корпоративный</text>
+<text x="73" y="256" font-size="24" font-weight="700" fill="#1C1C1C">стандарт</text>
+<text x="70" y="317" font-size="20" font-weight="400" fill="#1C1C1C">План основан на чек-листе</text>
+<text x="70" y="348" font-size="20" font-weight="400" fill="#1C1C1C">Авито. Бадди корректирует</text>
+<text x="70" y="379" font-size="20" font-weight="400" fill="#1C1C1C">его, руководитель утверждает.</text>
+<text x="70" y="410" font-size="20" font-weight="400" fill="#1C1C1C">ИИ помогает, но <tspan font-weight="700">не оценивает</tspan></text>
+<text x="70" y="441" font-size="20" font-weight="400" fill="#1C1C1C"><tspan font-weight="700">стажёра</tspan> и не принимает</text>
+<text x="70" y="472" font-size="20" font-weight="400" fill="#1C1C1C">решения о его развитии.</text>
+<rect x="426" y="164" width="349" height="403" fill="#E4DDF6"/>
+<rect x="440" y="181" width="321" height="91" fill="#965EEB"/>
+<text x="457" y="221" font-size="24" font-weight="700" fill="#1C1C1C">02 · Контекст</text>
+<text x="457" y="256" font-size="24" font-weight="700" fill="#1C1C1C">команды</text>
+<text x="454" y="317" font-size="20" font-weight="400" fill="#1C1C1C">Напарник использует</text>
+<text x="454" y="348" font-size="20" font-weight="400" fill="#1C1C1C">доступную документацию,</text>
+<text x="454" y="379" font-size="20" font-weight="400" fill="#1C1C1C">знает сотрудников и их</text>
+<text x="454" y="410" font-size="20" font-weight="400" fill="#1C1C1C">зоны ответственности.</text>
+<text x="454" y="441" font-size="20" font-weight="400" fill="#1C1C1C">Если ответа нет, <tspan font-weight="700">помогает</tspan></text>
+<text x="454" y="472" font-size="20" font-weight="400" fill="#1C1C1C"><tspan font-weight="700">найти эксперта</tspan>, а не</text>
+<text x="454" y="503" font-size="20" font-weight="400" fill="#1C1C1C">отправляет любой вопрос</text>
+<text x="454" y="534" font-size="20" font-weight="400" fill="#1C1C1C">бадди.</text>
+<rect x="810" y="164" width="349" height="403" fill="#D9F9E6"/>
+<rect x="824" y="181" width="321" height="91" fill="#04E061"/>
+<text x="841" y="221" font-size="24" font-weight="700" fill="#1C1C1C">03 · Знание остаётся</text>
+<text x="841" y="256" font-size="24" font-weight="700" fill="#1C1C1C">в команде</text>
+<text x="838" y="317" font-size="20" font-weight="400" fill="#1C1C1C">Ответ эксперта — текстом</text>
+<text x="838" y="348" font-size="20" font-weight="400" fill="#1C1C1C">или после встречи —</text>
+<text x="838" y="379" font-size="20" font-weight="400" fill="#1C1C1C">превращается в черновик</text>
+<text x="838" y="410" font-size="20" font-weight="400" fill="#1C1C1C">статьи. <tspan font-weight="700">Автор подтверждает</tspan></text>
+<text x="838" y="441" font-size="20" font-weight="400" fill="#1C1C1C"><tspan font-weight="700">публикацию;</tspan> следующий</text>
+<text x="838" y="472" font-size="20" font-weight="400" fill="#1C1C1C">стажёр находит проверенный</text>
+<text x="838" y="503" font-size="20" font-weight="400" fill="#1C1C1C">ответ, не отвлекая коллег</text>
+<text x="838" y="534" font-size="20" font-weight="400" fill="#1C1C1C">повторно.</text>
+</g>
+</svg>
