@@ -44,7 +44,10 @@ describe("Полный цикл плана (SCR-L2)", () => {
     open("lead.kovalev");
     await userEvent.click(await screen.findByRole("button", { name: "Вернуть бадди" }));
     expect(screen.getByRole("button", { name: "Вернуть с комментарием" })).toBeDisabled();
-    await userEvent.type(screen.getByLabelText("Что нужно доработать"), "Уточни сроки");
+    const reason = screen.getByLabelText("Что нужно доработать");
+    expect(screen.getByText("Что нужно доработать").tagName).toBe("LABEL");
+    expect(screen.getByText("Что нужно доработать")).toHaveAttribute("for", reason.id);
+    await userEvent.type(reason, "Уточни сроки");
     await userEvent.click(screen.getByRole("button", { name: "Вернуть с комментарием" }));
     expect(await screen.findByText("Замечания руководителя")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Утвердить план" })).not.toBeInTheDocument();

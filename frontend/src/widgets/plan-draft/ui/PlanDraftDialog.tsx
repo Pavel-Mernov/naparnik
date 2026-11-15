@@ -114,7 +114,13 @@ export const PlanDraftDialog = ({ open, login, internId, onClose, onDone }: Plan
         {steps.filter((s) => !stages.some((stage) => stage.id === s.stage)).map(row)}
         {draft.can_edit && <TextField fullWidth multiline minRows={2} label="Комментарий руководителю" value={comment} onChange={(e) => setComment(e.target.value)} disabled={busy}
           slotProps={{ htmlInput: { maxLength: 2000 } }} sx={{ my: 2 }} helperText={draft.active_revision ? "Объясни, зачем меняется действующий план. Комментарий сохранится в истории." : "Комментарий сохранится в истории плана."} />}
-        {returning && <TextField autoFocus fullWidth multiline minRows={2} label="Что нужно доработать" value={reason} disabled={busy} onChange={(e) => setReason(e.target.value)} slotProps={{ htmlInput: { maxLength: 2000 } }} sx={{ my: 2 }} />}
+        {returning && <Box sx={{ my: 2 }}>
+          <Typography component="label" htmlFor="plan-return-reason" variant="body2" color="text.secondary" sx={{ display: "block", mb: 0.75 }}>
+            Что нужно доработать
+          </Typography>
+          <TextField id="plan-return-reason" autoFocus fullWidth multiline minRows={2} value={reason} disabled={busy}
+            onChange={(e) => setReason(e.target.value)} slotProps={{ htmlInput: { maxLength: 2000 } }} />
+        </Box>}
         <PlanHistory history={draft.history} />
       </>}
     </DialogContent>
