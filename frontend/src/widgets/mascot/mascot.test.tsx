@@ -94,6 +94,10 @@ describe("Mascot3D", () => {
     const idle = draw("idle");
     expect(idle.container.querySelector("[data-letter]")).toBeNull();
     idle.unmount();
+    // Бейдж уведомлений → письмо даже в idle (машет, пока есть urgent).
+    const withMail = render(<ThemeProvider theme={makeTheme("light")}><Mascot3D size={96} mood="idle" mail /></ThemeProvider>);
+    expect(withMail.container.querySelector('[data-letter="alert"]')).not.toBeNull();
+    withMail.unmount();
     const sleeping = draw("sleeping");
     expect(sleeping.container.querySelector("[data-letter]")).toBeNull();
     // Во сне ложится: появляются подушка и одеяло; проснувшись — убираются

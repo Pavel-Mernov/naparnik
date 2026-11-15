@@ -101,16 +101,22 @@ const Letter = ({ alert }: { alert: boolean }) => (
   </Box>
 );
 
-export const Mascot3D = ({ size, mood = "idle", badge }: {
+export const Mascot3D = ({ size, mood = "idle", badge, mail }: {
   size: number; mood?: MascotMood; badge?: ReactNode;
+  /** Письмо в лапе, пока есть уведомление (бейдж) — даже если маскот уже idle/drowsy. */
+  mail?: boolean;
 }) => {
   const w = size * 1.2;
   const h = w * ASPECT;
 
   const asleep = mood === "sleeping";
   const eyes = EYES[mood] ?? "open";
-  const letter = LETTER.includes(mood);
+  // Письмо: по mood события ИЛИ пока висит бейдж уведомлений (mail).
+  const letter = !asleep && (Boolean(mail) || LETTER.includes(mood));
   const blinkAnim = letter ? `${blinkTwice} 2.6s ease-in-out infinite` : `${blink} 6s ease-in-out infinite`;
+  const pawMotion = letter
+    ? (LETTER.includes(mood) ? PAW_MOTION[mood] : PAW_MOTION.has_answer)
+    : PAW_MOTION[mood];
   const stripe = Math.max(3, Math.round(size * 0.07));
   // На мелком размере (мобилка) filter даёт «мыло» — на десктопе оставляем тень.
   const compact = size < 90;
@@ -168,9 +174,9 @@ export const Mascot3D = ({ size, mood = "idle", badge }: {
                   ? "transform .9s ease-in-out, opacity .35s ease .85s"
                   : "transform .55s ease-out, opacity .2s ease",
               }}>
-                <Box sx={{ position: "relative", width: "100%", height: "100%", transformOrigin: PAW.pivot, animation: PAW_MOTION[mood] }}>
+                <Box sx={{ position: "relative", width: "100%", height: "100%", transformOrigin: PAW.pivot, animation: pawMotion }}>
                   <Box component="img" src={pawImg} alt="" draggable={false} sx={{ width: "100%", height: "100%", display: "block", userSelect: "none" }} />
-                  {letter && <Letter alert={mood === "reminder"} />}
+                  {letter && <Letter alert={mood === "reminder" || Boolean(mail && mood !== "has_answer" && mood !== "needs_confirm")} />}
                 </Box>
               </Box>
             </Box>

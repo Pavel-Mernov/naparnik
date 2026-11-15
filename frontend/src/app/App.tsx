@@ -528,6 +528,7 @@ function App() {
           }} /> : <Mascot3D
             size={mascotSize}
             mood={mood}
+            mail={urgent > 0}
             badge={urgent > 0 ? (
               <Box component="span" sx={{
                 position: "absolute", top: { xs: 4, md: 8 }, right: { xs: 4, md: 8 },
