@@ -4,8 +4,19 @@ import { Box, Button, Stack, Typography, useTheme } from "@mui/material";
 import type { ChatTurn, PlanStep } from "@/shared/api";
 import { longDate, plural } from "@/shared/lib";
 import type { DataState } from "@/shared/lib";
+import { brand } from "@/shared/theme";
 import { Block, Empty, PageHead, Row, StatusTag } from "@/shared/ui";
 import { Progress, StepRow } from "@/entities/plan";
+
+const Cube = ({ color }: { color: string }) => (
+  <Box aria-hidden sx={{ width: 10, height: 10, flex: "none", bgcolor: color }} />
+);
+
+const questionDot = (status: string) => {
+  if (status === "Answered") return brand.green;
+  if (status === "Sent" || status === "MeetingScheduled") return brand.blue;
+  return brand.violet;
+};
 
 const TodayBlock = ({ steps, today, onMarkDone, onHelp, onTeam }: {
   steps: PlanStep[]; today: string; onMarkDone: (s: PlanStep) => void; onHelp: (s: PlanStep) => void; onTeam?: () => void;
@@ -82,15 +93,24 @@ export const DayPage = ({ data, asked = [], onMarkDone, onAsk, onOpenPlan, onOpe
           {data.questions.slice(-3).reverse().map((q) => (
             <Row
               key={q.id}
+              align="flex-start"
+              start={<Box sx={{ mt: "6px" }}><Cube color={questionDot(q.status)} /></Box>}
               title={q.title || q.text || "Вопрос"}
               sub={`Кому: ${q.addressee}`}
               end={<StatusTag status={q.status} />}
               onClick={onOpenQuestions}
-              sx={q.status === "Answered" ? { bgcolor: t.okSoft } : q.status === "Sent" ? { bgcolor: t.waitSoft } : undefined}
             />))}
           {/* Вопросы людям важнее; свободные строки занимают последние вопросы Напарнику — они тоже не теряются. */}
           {(data.questions.length >= 3 ? [] : asked.slice(-(3 - data.questions.length))).reverse().map((x) => (
-            <Row key={x.id} title={x.question} sub={x.reply.sources.length ? `Напарник ответил по базе: ${x.reply.sources[0].title}` : "Ответил Напарник"} onClick={onOpenQuestions} />))}
+            <Row
+              key={x.id}
+              align="flex-start"
+              start={<Box sx={{ mt: "6px" }}><Cube color={brand.violet} /></Box>}
+              title={x.question}
+              sub={x.reply.sources.length ? `Напарник ответил по базе: ${x.reply.sources[0].title}` : "Ответил Напарник"}
+              end={<StatusTag status="Answered" label="Напарник" />}
+              onClick={onOpenQuestions}
+            />))}
           {!data.questions.length && !asked.length && <Empty text="Вопросов пока нет. Спроси Напарника — он сначала поищет в базе." variant={1} />}
         </Block>
         {waiting}

@@ -108,7 +108,7 @@ export const PageHead = ({ context, title, action }: { context?: string; title: 
 );
 
 /** Блок-секция Akita: серая плашка (surface) на белом холсте. tone оставляем для совместимости — визуально все плашки одинаковые. */
-export const Block = ({ title, aside, children, tone: _tone }: { title: string; aside?: ReactNode; children: ReactNode; tone?: "surface" }) => {
+export const Block = ({ title, aside, children, tone: _tone }: { title: ReactNode; aside?: ReactNode; children: ReactNode; tone?: "surface" }) => {
   const { t, space } = useTheme();
   return (
     <Box component="section" sx={{ bgcolor: t.surface, p: { xs: `${space[4]}px`, md: `${space[6]}px` } }}>
@@ -119,7 +119,9 @@ export const Block = ({ title, aside, children, tone: _tone }: { title: string; 
         gap={{ xs: `${space[2]}px`, sm: `${space[3]}px` }}
         mb={{ xs: `${space[3]}px`, md: `${space[5]}px` }}
       >
-        <Typography variant="h2" component="h2" sx={{ textWrap: "balance", fontSize: { xs: 20, md: undefined } }}>{title}</Typography>
+        {typeof title === "string" || typeof title === "number" ? (
+          <Typography variant="h2" component="h2" sx={{ textWrap: "balance", fontSize: { xs: 20, md: undefined } }}>{title}</Typography>
+        ) : title}
         {aside}
       </Stack>
       {children}
