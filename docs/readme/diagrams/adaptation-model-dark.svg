@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="634" viewBox="0 0 1200 634" role="img" aria-label="Схема модели адаптации Напарника: общий чек-лист Авито и контекст отдела, бадди проверяет, руководитель утверждает."><title>Схема модели адаптации Напарника: общий чек-лист Авито и контекст отдела, бадди проверяет, руководитель утверждает.</title>
+<rect x="0" y="0" width="1200" height="634" fill="#1C1C1C"/>
+<g style="font-kerning:normal;font-variant-ligatures:common-ligatures" font-family="Onest, 'Golos Text', Inter, system-ui, sans-serif">
+<text x="40" y="35" font-size="14" font-weight="700" fill="#B7B7B3" letter-spacing="1.5">КАК УСТРОЕНА АДАПТАЦИЯ</text>
+<rect x="40" y="53" width="1120" height="128" fill="#00D85F"/>
+<text x="62" y="83" font-size="13" font-weight="700" fill="#1C1C1C" letter-spacing="1.1">ОБЩЕЕ ДЛЯ ВСЕХ</text>
+<text x="62" y="120" font-size="31" font-weight="700" fill="#1C1C1C">Чек-лист и обязательные этапы Авито</text>
+<text x="62" y="158" font-size="19" font-weight="400" fill="#1C1C1C">Знакомство  ·  доступы  ·  инструменты  ·  первые задачи  ·  экватор</text>
+<g fill="none" stroke="#B7B7B3" stroke-width="2.5">
+<path d="M600 181 V223 M210 223 H990 M210 223 V251 M600 223 V251 M990 223 V251"/>
+</g>
+<rect x="40" y="253" width="340" height="198" fill="#CDEBFB"/>
+<rect x="430" y="253" width="340" height="198" fill="#E4DDF6"/>
+<rect x="820" y="253" width="340" height="198" fill="#CFFAC6"/>
+<text x="60" y="284" font-size="14" font-weight="700" fill="#1C1C1C" letter-spacing="1.0">01 / АНАЛИТИКА</text>
+<rect x="279" y="267" width="79" height="24" fill="#1FAEEE"/>
+<text x="318.5" y="284" font-size="12" font-weight="700" fill="#1C1C1C" text-anchor="middle">ДЕМО</text>
+<text x="60" y="328" font-size="25" font-weight="700" fill="#1C1C1C">Свои данные</text>
+<text x="60" y="357" font-size="25" font-weight="700" fill="#1C1C1C">и инструменты</text>
+<text x="60" y="393" font-size="16" font-weight="400" fill="#1C1C1C">Витрины, Redash, A/B-тесты</text>
+<text x="60" y="420" font-size="16" font-weight="400" fill="#1C1C1C">Эксперты отдела аналитики</text>
+<text x="450" y="284" font-size="14" font-weight="700" fill="#1C1C1C" letter-spacing="1.0">02 / BACKEND</text>
+<rect x="668" y="267" width="80" height="24" fill="#9A5CF5"/>
+<text x="708" y="284" font-size="12" font-weight="700" fill="#1C1C1C" text-anchor="middle">ПРИМЕР</text>
+<text x="450" y="328" font-size="25" font-weight="700" fill="#1C1C1C">Свои сервисы</text>
+<text x="450" y="357" font-size="25" font-weight="700" fill="#1C1C1C">и документация</text>
+<text x="450" y="393" font-size="16" font-weight="400" fill="#1C1C1C">API, код-стайл, карта сервисов</text>
+<text x="450" y="420" font-size="16" font-weight="400" fill="#1C1C1C">Пример набора знаний</text>
+<text x="840" y="284" font-size="14" font-weight="700" fill="#1C1C1C" letter-spacing="1.0">03 / НОВАЯ КОМАНДА</text>
+<rect x="1040" y="267" width="99" height="24" fill="#00D85F"/>
+<text x="1089.5" y="284" font-size="12" font-weight="700" fill="#1C1C1C" text-anchor="middle">РАЗВИТИЕ</text>
+<text x="840" y="328" font-size="25" font-weight="700" fill="#1C1C1C">Свои материалы</text>
+<text x="840" y="357" font-size="25" font-weight="700" fill="#1C1C1C">и сотрудники</text>
+<text x="840" y="393" font-size="16" font-weight="400" fill="#1C1C1C">Шаблон, знания, справочник</text>
+<text x="840" y="420" font-size="16" font-weight="400" fill="#1C1C1C">Та же логика Напарника</text>
+<path d="M600 451V477" fill="none" stroke="#B7B7B3" stroke-width="2.5"/>
+<rect x="40" y="479" width="1120" height="86" fill="#1C1C1C" stroke="#41413E" stroke-width="2"/>
+<rect x="40" y="479" width="7" height="86" fill="#9A5CF5"/>
+<text x="65" y="508" font-size="13" font-weight="700" fill="#B7B7B3" letter-spacing="1.1">ПЛАН КОНКРЕТНОГО СТАЖЁРА</text>
+<text x="65" y="544" font-size="23" font-weight="700" fill="#FCFCFA">Бадди проверяет и корректирует</text>
+<path d="M632 534 H661 M650 524 L661 534 L650 544" stroke="#9A5CF5" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="710" y="544" font-size="23" font-weight="700" fill="#FCFCFA">Руководитель утверждает</text>
+<text x="40" y="606" font-size="17" font-weight="400" fill="#B7B7B3">Напарник помогает пройти утверждённый путь. Оценка стажёра остаётся за людьми.</text>
+</g>
+</svg>
