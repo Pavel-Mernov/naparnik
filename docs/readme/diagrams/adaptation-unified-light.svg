@@ -1,0 +1,118 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="2350" viewBox="0 0 1200 2350" role="img" aria-labelledby="title desc">
+<title id="title">Один процесс адаптации, свой контекст команды — три принципа Напарника</title>
+<desc id="desc">Единый корпоративный путь стажёра Авито с наполнением по направлению и команде, утверждением плана бадди и руководителем, выбором эксперта и сохранением знаний.</desc>
+<rect width="1200" height="2350" fill="#FCFCFA"/>
+<g font-family="Onest, Inter Display, Inter, sans-serif" style="font-kerning:normal">
+<text x="46" y="47" font-size="15" font-weight="700" fill="#626362" letter-spacing="1.7">ПОДХОД / АДАПТАЦИЯ</text>
+<text x="1012" y="47" font-size="14" font-weight="600" fill="#626362">АВИТО × buddyGPT</text>
+<text x="46" y="117" font-size="58" font-weight="700" fill="#1C1C1C">Один процесс.</text>
+<rect x="40" y="137" width="930" height="76" fill="#04E061"/>
+<text x="49" y="194" font-size="58" font-weight="700" fill="#1C1C1C">Свой контекст команды.</text>
+<text x="46" y="243" font-size="19" font-weight="400" fill="#626362">Стандарт Авито — общий. Инструменты, знания и люди — свои у каждой команды.</text>
+<rect x="46" y="289" width="5" height="126" fill="#04E061"/>
+<text x="68" y="314" font-size="23" font-weight="600" fill="#1C1C1C">Напарник не придумывает стажировку заново —</text>
+<text x="68" y="346" font-size="23" font-weight="600" fill="#1C1C1C">он помогает пройти путь, предусмотренный Авито.</text>
+<text x="68" y="382" font-size="18" font-weight="400" fill="#626362">У всех стажёров общая логика адаптации: знакомство с командой, получение доступов,</text>
+<text x="68" y="409" font-size="18" font-weight="400" fill="#626362">освоение инструментов, первые задачи и контрольные точки. Но наполнение плана зависит</text>
+<text x="68" y="436" font-size="18" font-weight="400" fill="#626362">от направления и конкретной команды: у аналитика — витрины данных и Redash,</text>
+<text x="68" y="463" font-size="18" font-weight="400" fill="#626362">у бэкенд-разработчика — свои сервисы, инструменты и документация.</text>
+<g transform="translate(0 24)">
+<text x="46" y="489" font-size="15" font-weight="700" fill="#626362" letter-spacing="1.6">КАК УСТРОЕНА АДАПТАЦИЯ</text>
+<rect x="46" y="507" width="1108" height="119" fill="#04E061"/>
+<text x="68" y="534" font-size="13" font-weight="700" fill="#1C1C1C" letter-spacing="1.2">ОБЩЕЕ ДЛЯ ВСЕХ</text>
+<text x="68" y="574" font-size="29" font-weight="700" fill="#1C1C1C">Чек-лист и обязательные этапы Авито</text>
+<text x="68" y="603" font-size="17" font-weight="400" fill="#1C1C1C">Знакомство  ·  доступы  ·  инструменты  ·  первые задачи  ·  экватор</text>
+<path d="M600 626 L600 660" stroke="#D8DAD7" stroke-width="2" fill="none"/>
+<path d="M217 660 L983 660" stroke="#D8DAD7" stroke-width="2" fill="none"/>
+<path d="M216 660 L216 686" stroke="#D8DAD7" stroke-width="2" fill="none"/>
+<path d="M600 660 L600 686" stroke="#D8DAD7" stroke-width="2" fill="none"/>
+<path d="M984 660 L984 686" stroke="#D8DAD7" stroke-width="2" fill="none"/>
+<rect x="46" y="688" width="346" height="228" fill="#CDEBFB"/>
+<text x="64" y="720" font-size="14" font-weight="700" fill="#1C1C1C" letter-spacing="0.5">01 / АНАЛИТИКА</text>
+<rect x="311" y="696" width="65" height="28" fill="#00AAFF"/>
+<text x="323" y="716" font-size="12" font-weight="700" fill="#1C1C1C">ДЕМО</text>
+<text x="64" y="765" font-size="26" font-weight="700" fill="#1C1C1C">Свои данные</text>
+<text x="64" y="797" font-size="26" font-weight="700" fill="#1C1C1C">и инструменты</text>
+<text x="64" y="862" font-size="17" font-weight="400" fill="#1C1C1C">Витрины, Redash, A/B-тесты</text>
+<text x="64" y="889" font-size="17" font-weight="400" fill="#1C1C1C">Эксперты отдела аналитики</text>
+<rect x="427" y="688" width="346" height="228" fill="#E4DDF6"/>
+<text x="445" y="720" font-size="14" font-weight="700" fill="#1C1C1C" letter-spacing="0.5">02 / BACKEND</text>
+<rect x="672" y="696" width="85" height="28" fill="#965EEB"/>
+<text x="684" y="716" font-size="12" font-weight="700" fill="#1C1C1C">ПРИМЕР</text>
+<text x="445" y="765" font-size="26" font-weight="700" fill="#1C1C1C">Свои сервисы</text>
+<text x="445" y="797" font-size="26" font-weight="700" fill="#1C1C1C">и документация</text>
+<text x="445" y="862" font-size="17" font-weight="400" fill="#1C1C1C">API, код-стайл, карта сервисов</text>
+<text x="445" y="889" font-size="17" font-weight="400" fill="#1C1C1C">Пример набора знаний</text>
+<rect x="808" y="688" width="346" height="228" fill="#D9F9E6"/>
+<text x="826" y="720" font-size="14" font-weight="700" fill="#1C1C1C" letter-spacing="0.5">03 / НОВАЯ КОМАНДА</text>
+<rect x="1032" y="696" width="106" height="28" fill="#04E061"/>
+<text x="1044" y="716" font-size="12" font-weight="700" fill="#1C1C1C">РАЗВИТИЕ</text>
+<text x="826" y="765" font-size="26" font-weight="700" fill="#1C1C1C">Свои материалы</text>
+<text x="826" y="797" font-size="26" font-weight="700" fill="#1C1C1C">и сотрудники</text>
+<text x="826" y="862" font-size="17" font-weight="400" fill="#1C1C1C">Шаблон, знания, справочник</text>
+<text x="826" y="889" font-size="17" font-weight="400" fill="#1C1C1C">Та же логика Напарника</text>
+<path d="M600 916 L600 950" stroke="#D8DAD7" stroke-width="2" fill="none"/>
+<rect x="46" y="952" width="1108" height="107" fill="#F2F3F1" stroke="#D8DAD7" stroke-width="1"/>
+<rect x="46" y="952" width="6" height="107" fill="#965EEB"/>
+<text x="69" y="981" font-size="14" font-weight="700" fill="#626362" letter-spacing="0.8">ПЛАН КОНКРЕТНОГО СТАЖЁРА</text>
+<text x="69" y="1020" font-size="25" font-weight="700" fill="#1C1C1C">Бадди проверяет и корректирует</text>
+<path d="M648 1009 L690 1009" stroke="#965EEB" stroke-width="3" fill="none"/>
+<path d="M679 998 L690 1009" stroke="#965EEB" stroke-width="3" fill="none"/>
+<path d="M679 1020 L690 1009" stroke="#965EEB" stroke-width="3" fill="none"/>
+<text x="724" y="1020" font-size="25" font-weight="700" fill="#1C1C1C">Руководитель утверждает</text>
+<text x="46" y="1104" font-size="18" font-weight="400" fill="#626362">Напарник помогает пройти утверждённый путь. Оценка стажёра остаётся за людьми.</text>
+<path d="M46 1148 L1154 1148" stroke="#D8DAD7" stroke-width="2" fill="none"/>
+</g>
+<text x="46" y="1194" font-size="15" font-weight="700" fill="#626362" letter-spacing="1.4">ЧТО ОСТАЁТСЯ НЕИЗМЕННЫМ</text>
+<text x="46" y="1250" font-size="48" font-weight="700" fill="#1C1C1C">Три принципа Напарника</text>
+<rect x="16" y="1664" width="115" height="64" fill="#04E061"/>
+<rect x="756" y="1290" width="105" height="68" fill="#00AAFF"/>
+<rect x="1088" y="1664" width="90" height="65" fill="#FF4053"/>
+<rect x="46" y="1312" width="345" height="388" fill="#CDEBFB"/>
+<rect x="62" y="1330" width="313" height="96" fill="#00AAFF"/>
+<text x="75" y="1367" font-size="22" font-weight="700" fill="#1C1C1C">01 · Корпоративный</text>
+<text x="75" y="1401" font-size="22" font-weight="700" fill="#1C1C1C">стандарт</text>
+<text x="69" y="1468" font-size="19" font-weight="400" fill="#1C1C1C">План основан на чек-листе</text>
+<text x="69" y="1497" font-size="19" font-weight="400" fill="#1C1C1C">Авито. Бадди корректирует его,</text>
+<text x="69" y="1526" font-size="19" font-weight="400" fill="#1C1C1C">руководитель утверждает. ИИ</text>
+<text x="69" y="1555" font-size="19" font-weight="400" fill="#1C1C1C">помогает, но не оценивает</text>
+<text x="69" y="1584" font-size="19" font-weight="400" fill="#1C1C1C">стажёра и не принимает</text>
+<text x="69" y="1613" font-size="19" font-weight="400" fill="#1C1C1C">решения о его развитии.</text>
+<rect x="427" y="1312" width="345" height="388" fill="#E4DDF6"/>
+<rect x="443" y="1330" width="313" height="96" fill="#965EEB"/>
+<text x="456" y="1367" font-size="22" font-weight="700" fill="#1C1C1C">02 · Контекст</text>
+<text x="456" y="1401" font-size="22" font-weight="700" fill="#1C1C1C">команды</text>
+<text x="450" y="1468" font-size="19" font-weight="400" fill="#1C1C1C">Напарник использует доступную</text>
+<text x="450" y="1497" font-size="19" font-weight="400" fill="#1C1C1C">документацию, знает</text>
+<text x="450" y="1526" font-size="19" font-weight="400" fill="#1C1C1C">сотрудников и их зоны</text>
+<text x="450" y="1555" font-size="19" font-weight="400" fill="#1C1C1C">ответственности. Если ответа</text>
+<text x="450" y="1584" font-size="19" font-weight="400" fill="#1C1C1C">нет, помогает найти эксперта, а</text>
+<text x="450" y="1613" font-size="19" font-weight="400" fill="#1C1C1C">не отправляет любой вопрос</text>
+<text x="450" y="1642" font-size="19" font-weight="400" fill="#1C1C1C">бадди.</text>
+<rect x="808" y="1312" width="345" height="388" fill="#D9F9E6"/>
+<rect x="824" y="1330" width="313" height="96" fill="#04E061"/>
+<text x="837" y="1367" font-size="22" font-weight="700" fill="#1C1C1C">03 · Знание остаётся</text>
+<text x="837" y="1401" font-size="22" font-weight="700" fill="#1C1C1C">в команде</text>
+<text x="831" y="1468" font-size="19" font-weight="400" fill="#1C1C1C">Ответ эксперта — текстом или</text>
+<text x="831" y="1497" font-size="19" font-weight="400" fill="#1C1C1C">после встречи — превращается</text>
+<text x="831" y="1526" font-size="19" font-weight="400" fill="#1C1C1C">в черновик статьи. Автор</text>
+<text x="831" y="1555" font-size="19" font-weight="400" fill="#1C1C1C">подтверждает публикацию;</text>
+<text x="831" y="1584" font-size="19" font-weight="400" fill="#1C1C1C">следующий стажёр находит</text>
+<text x="831" y="1613" font-size="19" font-weight="400" fill="#1C1C1C">проверенный ответ, не отвлекая</text>
+<text x="831" y="1642" font-size="19" font-weight="400" fill="#1C1C1C">коллег повторно.</text>
+<text x="46" y="1769" font-size="15" font-weight="700" fill="#626362" letter-spacing="1.4">ПОЧЕМУ ЭТО УДОБНО ДЛЯ АВИТО</text>
+<text x="46" y="1822" font-size="31" font-weight="700" fill="#1C1C1C">Масштабируется настройками, а не новой логикой.</text>
+<text x="46" y="1870" font-size="19" font-weight="400" fill="#626362">Для нового направления не нужно переписывать основную логику Напарника: настраиваются шаблон</text>
+<text x="46" y="1900" font-size="19" font-weight="400" fill="#626362">адаптации, набор знаний и справочник команды. Корпоративные сервисы подключаются через</text>
+<text x="46" y="1930" font-size="19" font-weight="400" fill="#626362">адаптеры.</text>
+<text x="46" y="2008" font-size="18" font-weight="400" fill="#626362">В MVP подробно показан отдел аналитики; для бэкенда подготовлен пример отдельного набора знаний.</text>
+<text x="46" y="2037" font-size="18" font-weight="400" fill="#626362">Реальные корпоративные интеграции в прототипе заменены имитациями.</text>
+<rect x="46" y="2150" width="1108" height="117" fill="#F2F3F1"/>
+<rect x="46" y="2150" width="7" height="117" fill="#04E061"/>
+<text x="70" y="2198" font-size="25" font-weight="700" fill="#1C1C1C">Напарник не заменяет наставничество — он освобождает время</text>
+<text x="70" y="2235" font-size="25" font-weight="700" fill="#1C1C1C">сотрудников для вопросов, где действительно нужен человек.</text>
+<text x="46" y="2310" font-size="17" font-weight="600" fill="#626362">Петля знаний</text>
+<text x="335" y="2310" font-size="17" font-weight="600" fill="#626362">Модель адаптации</text>
+<text x="685" y="2310" font-size="17" font-weight="600" fill="#626362">Подключение отделов</text>
+</g>
+</svg>
