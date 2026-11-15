@@ -121,8 +121,8 @@ export const TeamPage = ({ overview, onRequests, onProfile, onPlanDraft }: { ove
                 <Typography variant="body2" color="text.secondary">
                   {i.week}-я неделя · бадди {i.buddy} · {i.stage || (i.plan_status === "draft" ? "план готовится" : "этапы пройдены")}
                 </Typography>
-                <Stack direction="row" alignItems="center" gap={`${space[3]}px`} mt={`${space[3]}px`} sx={{ width: "100%" }}>
-                  <Box sx={{ flex: 1, height: 8, bgcolor: t.bg, minWidth: 0 }} aria-label={`Прогресс ${i.name}`}>
+                <Box sx={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) 48px", alignItems: "center", gap: `${space[3]}px`, mt: `${space[3]}px`, width: "100%" }}>
+                  <Box sx={{ width: "100%", height: 8, bgcolor: t.bg, minWidth: 0 }} aria-label={`Прогресс ${i.name}`}>
                     <Box
                       sx={{
                         height: "100%",
@@ -132,8 +132,8 @@ export const TeamPage = ({ overview, onRequests, onProfile, onPlanDraft }: { ove
                       }}
                     />
                   </Box>
-                  <Typography variant="body2" sx={{ width: 40, textAlign: "right", flex: "none", fontVariantNumeric: "tabular-nums" }}>{i.progress_pct}%</Typography>
-                </Stack>
+                  <Typography variant="body2" sx={{ width: 48, textAlign: "right", fontVariantNumeric: "tabular-nums" }}>{i.progress_pct}%</Typography>
+                </Box>
               </Box>
             }
             end={planAction}
