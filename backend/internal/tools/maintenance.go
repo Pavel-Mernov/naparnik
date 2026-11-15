@@ -272,7 +272,8 @@ func SetKBOwner(c Ctx, userID string) (KBOwnerInfo, *Error) {
 		}
 		c.Store.SetKBOwner(userID)
 		if userID != c.User.ID {
-			c.Store.Notify(store.Notification{ID: "kbowner:" + userID + ":" + time.Now().Format(time.RFC3339), UserID: userID, Type: "kb_owner", View: "knowledge", TG: "pending",
+			// Store выдаёт уникальный ID в транзакции: повторное назначение в ту же секунду — новое событие.
+			c.Store.Notify(store.Notification{UserID: userID, Type: "kb_owner", View: "knowledge", TG: "pending",
 				Text: "📚 " + c.Store.Name(c.User.ID) + " назначил(а) тебя владельцем базы знаний отдела.\nЧто это: открытые вопросы, черновики без «Ок» и дубли теперь приходят тебе — смотри «Поддержку базы» в разделе «База знаний»."})
 		}
 		return KBOwner(c), nil

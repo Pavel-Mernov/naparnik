@@ -49,9 +49,9 @@ const ICONS: Record<View, ReactElement> = {
   knowledge: <AutoStoriesOutlined sx={navIconSx} />,
   requests: <DescriptionOutlined sx={navIconSx} />,
 };
-// Уведомления, которые рождаются на сервере по времени (утренний план, напоминание о событии, устаревшая страница):
-// их нет в данных экранов, поэтому подтягиваем раз в полминуты.
-const SERVER_ONLY = ["morning_plan", "event_reminder", "page_stale"];
+// Уведомления, которых нет в данных экранов: расписание, устаревшая страница, назначение владельца базы.
+// BR-34: kb_owner приходит отдельным событием — восстановить его из списка вопросов нельзя.
+const SERVER_ONLY = ["morning_plan", "event_reminder", "page_stale", "kb_owner"];
 type ServerNote = { id: string; type: string; text: string; view: View; read: boolean };
 
 const GREETING: ChatMessage = { role: "assistant", text: "Привет! Спроси про команду, процессы или задачи. Могу оформить отгул или доступ — без твоего «Подтвердить» ничего не отправлю." };
@@ -294,7 +294,7 @@ function App() {
     requests: data.requests, drafts: data.drafts, events: data.today?.events ?? [],
   }) : [];
   notes.unshift(...serverNotes.filter((n) => !n.read).map((n) => ({ id: n.id, text: n.text.split("\n")[0], meta: n.text.split("\n").slice(1).join(" ") || "Напарник",
-    urgent: n.type === "page_stale", go: (n.view === "plan" ? "day" : n.view) as Note["go"] })));
+    urgent: n.type === "page_stale" || (n.type === "kb_owner" && !seen.has(n.id)), go: (n.view === "plan" ? "day" : n.view) as Note["go"] })));
   const urgent = notes.filter((n) => n.urgent).length;
   // Важное: срочное, ответы людей, решения по заявкам. Новое — то, чего человек ещё не видел.
   const important = notes.filter((n) => n.urgent || n.id.startsWith("ans-") || n.id.startsWith("r-")).map((n) => n.id);
