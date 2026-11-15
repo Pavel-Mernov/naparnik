@@ -14,7 +14,7 @@ docker compose up --build -d
 docker compose ps
 ```
 
-Интерфейс: `http://localhost:3000`; API: `http://localhost:8080`.
+Интерфейс: `http://localhost:3001`; API: `http://localhost:8082`.
 Без ключей работает заглушка модели. PostgreSQL стартует первым; backend ждёт
 готовности БД, frontend — готовности backend. Веб-вход через тестовые учётки.
 
@@ -84,7 +84,7 @@ docker compose ps
 Пример формы через API:
 
 ```bash
-curl http://localhost:8080/api/requests \
+curl http://localhost:8082/api/requests \
   -H 'X-User: intern.sokolov' \
   -H 'Content-Type: application/json' \
   -H 'Idempotency-Key: demo-access-1' \
