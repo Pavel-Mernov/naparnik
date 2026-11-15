@@ -44,12 +44,6 @@ export const TeamPage = ({ overview, onRequests, onProfile, onPlanDraft }: { ove
   const unapproved = (s: string) => s === "draft" || s === "auto_activated";
   const pending = overview.requests.filter((r) => r.status === "pending");
   const title = behind.length ? `${behind.length} ${plural(behind.length, "стажёр отстаёт", "стажёра отстают", "стажёров отстают")} от плана` : "Все стажёры идут по плану";
-  const actionBtn = {
-    minHeight: { xs: size.control, sm: size.controlSm },
-    px: 1.5,
-    bgcolor: "transparent",
-    "&:hover": { bgcolor: t.surfaceHover },
-  };
   return <>
     <PageHead context={overview.department} title={title}
       action={pending.length > 0 && <Button variant="contained" onClick={onRequests}>Согласовать заявки: {pending.length}</Button>} />
@@ -74,70 +68,80 @@ export const TeamPage = ({ overview, onRequests, onProfile, onPlanDraft }: { ove
             {!showDraft && i.overdue_steps === 0 && <StatusTag status="Done" label="По плану" />}
           </>
         );
-        const planAction = !onPlanDraft ? undefined : showDraft ? (
+        const planAction = !onPlanDraft ? null : showDraft ? (
           <Button
             data-testid={`plan-control-${i.id}`}
             variant="contained"
             size="small"
             onClick={() => onPlanDraft(i.id)}
-            sx={{ minHeight: { xs: size.control, sm: size.controlSm }, width: { xs: "100%", sm: "auto" } }}
+            sx={{ minHeight: { xs: size.control, sm: size.controlSm }, width: "100%" }}
           >
             Утвердить план
           </Button>
         ) : (
           <Button
             data-testid={`plan-control-${i.id}`}
-            variant="text"
+            variant="contained"
             size="small"
             onClick={() => onPlanDraft(i.id)}
-            sx={{ ...actionBtn, width: { xs: "100%", sm: "auto" } }}
+            sx={{ minHeight: { xs: size.control, sm: size.controlSm }, width: "100%" }}
           >
             План и согласование
           </Button>
         );
         return (
-          <Row
+          <Box
             key={i.id}
-            align="center"
-            stackEndOnMobile
-            title={
-              <Box>
-                <Stack direction="row" alignItems="center" flexWrap="wrap" gap={`${space[2]}px`} mb={`${space[1]}px`}>
-                  <Typography fontWeight={type.weight.semibold} sx={{ overflowWrap: "anywhere" }}>
-                    {onProfile ? (
-                      <Link
-                        component="button"
-                        onClick={() => onProfile(i.id)}
-                        color="inherit"
-                        underline="hover"
-                        sx={{ font: "inherit", fontWeight: type.weight.semibold, textAlign: "left" }}
-                      >
-                        {i.name}
-                      </Link>
-                    ) : i.name}
-                  </Typography>
-                  {tags}
-                </Stack>
-                <Typography variant="body2" color="text.secondary">
-                  {i.week}-я неделя · бадди {i.buddy} · {i.stage || (i.plan_status === "draft" ? "план готовится" : "этапы пройдены")}
+            sx={{
+              display: "grid",
+              gridTemplateColumns: { xs: "1fr", sm: "minmax(0, 1fr) 200px" },
+              columnGap: `${space[3]}px`,
+              rowGap: `${space[3]}px`,
+              alignItems: "center",
+              px: { xs: `${space[3]}px`, md: `${space[4]}px` },
+              py: `${space[4]}px`,
+              borderBottom: `1px solid ${t.line}`,
+              "&:last-child": { borderBottom: "none" },
+            }}
+          >
+            <Box minWidth={0}>
+              <Stack direction="row" alignItems="center" flexWrap="wrap" gap={`${space[2]}px`} mb={`${space[1]}px`}>
+                <Typography fontWeight={type.weight.semibold} sx={{ overflowWrap: "anywhere" }}>
+                  {onProfile ? (
+                    <Link
+                      component="button"
+                      onClick={() => onProfile(i.id)}
+                      color="inherit"
+                      underline="hover"
+                      sx={{ font: "inherit", fontWeight: type.weight.semibold, textAlign: "left" }}
+                    >
+                      {i.name}
+                    </Link>
+                  ) : i.name}
                 </Typography>
-                <Box sx={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) 48px", alignItems: "center", gap: `${space[3]}px`, mt: `${space[3]}px`, width: "100%" }}>
-                  <Box sx={{ width: "100%", height: 8, bgcolor: t.bg, minWidth: 0 }} aria-label={`Прогресс ${i.name}`}>
-                    <Box
-                      sx={{
-                        height: "100%",
-                        width: `${i.progress_pct}%`,
-                        bgcolor: i.overdue_steps > 0 ? brand.red : brand.green,
-                        minWidth: i.progress_pct > 0 ? 4 : 0,
-                      }}
-                    />
-                  </Box>
-                  <Typography variant="body2" sx={{ width: 48, textAlign: "right", fontVariantNumeric: "tabular-nums" }}>{i.progress_pct}%</Typography>
+                {tags}
+              </Stack>
+              <Typography variant="body2" color="text.secondary">
+                {i.week}-я неделя · бадди {i.buddy} · {i.stage || (i.plan_status === "draft" ? "план готовится" : "этапы пройдены")}
+              </Typography>
+              <Box sx={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) 48px", alignItems: "center", gap: `${space[3]}px`, mt: `${space[3]}px`, width: "100%" }}>
+                <Box sx={{ width: "100%", height: 8, bgcolor: t.bg, minWidth: 0 }} aria-label={`Прогресс ${i.name}`}>
+                  <Box
+                    sx={{
+                      height: "100%",
+                      width: `${i.progress_pct}%`,
+                      bgcolor: i.overdue_steps > 0 ? brand.red : brand.green,
+                      minWidth: i.progress_pct > 0 ? 4 : 0,
+                    }}
+                  />
                 </Box>
+                <Typography variant="body2" sx={{ width: 48, textAlign: "right", fontVariantNumeric: "tabular-nums" }}>{i.progress_pct}%</Typography>
               </Box>
-            }
-            end={planAction}
-          />
+            </Box>
+            <Box sx={{ width: "100%", display: "flex", justifyContent: { xs: "stretch", sm: "flex-end" }, alignItems: "center", minHeight: { sm: size.controlSm } }}>
+              {planAction}
+            </Box>
+          </Box>
         );
       }) : <Empty text="В отделе пока нет стажёров." />}
     </Block>
