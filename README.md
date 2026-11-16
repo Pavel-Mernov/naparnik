@@ -16,7 +16,9 @@
 </p>
 
 <p align="center">
-  <a href="#start">Быстрый запуск</a> · <a href="#docs">Документация</a>
+  <a href="#start"><img src="docs/readme/svg/link-quick-start.svg" width="154" height="34" alt="Быстрый запуск"></a>
+  <a href="#docs"><img src="docs/readme/svg/link-docs.svg" width="146" height="34" alt="Документация"></a>
+  <a href="docs/02-concept/CJM.md"><img src="docs/readme/svg/link-cjm.svg" width="156" height="34" alt="Карта адаптации"></a>
 </p>
 
 <picture>
@@ -186,7 +188,7 @@ React отправляет запрос в Go API. Агент получает �
 </a>
 
 
-**[Открыть видеодемонстрацию на Яндекс Диске ↗](https://disk.yandex.ru/d/xxAoKDQs5wWt0g)**
+<a href="https://disk.yandex.ru/d/xxAoKDQs5wWt0g"><img src="docs/readme/svg/link-video-demo.svg" width="154" height="34" alt="Смотреть видео"></a>
 
 **Продуктовая презентация:** по [статусу материалов](docs/STATUS.md) финальный PDF подготовлен командой вне репозитория. Утверждённой копии и публичной ссылки в GitHub пока нет.
 
