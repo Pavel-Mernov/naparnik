@@ -28,7 +28,7 @@
 
 ## Навигация
 
-### О продукте
+**О продукте** (Выберите раздел, чтобы перейти к нему)
 
 <p>
   <a href="#interface"><img src="docs/readme/svg/nav-interface.svg" width="117" height="36" alt="Интерфейс"></a>
