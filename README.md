@@ -9,16 +9,14 @@
 
 Стажёру проще освоиться. Бадди — наставник стажёра — получает сформулированные вопросы. Эксперт сохраняет ответ для следующих новичков, а руководитель видит прогресс адаптации.
 
-<p align="center">
-  <a href="https://naparnik.pavelmernov.ru/"><img src="docs/readme/svg/link-web-demo.svg" width="168" height="34" alt="Открыть веб-демо"></a>
-  <a href="https://disk.yandex.ru/d/xxAoKDQs5wWt0g"><img src="docs/readme/svg/link-video-demo.svg" width="154" height="34" alt="Смотреть видео"></a>
-  <a href="https://t.me/buddyAiSuper_bot"><img src="docs/readme/svg/link-telegram-bot.svg" width="140" height="34" alt="Telegram-бот"></a>
-</p>
-
-<p align="center">
-  <a href="#start"><img src="docs/readme/svg/link-quick-start.svg" width="154" height="34" alt="Быстрый запуск"></a>
-  <a href="#docs"><img src="docs/readme/svg/link-docs.svg" width="146" height="34" alt="Документация"></a>
-  <a href="docs/02-concept/CJM.md"><img src="docs/readme/svg/link-cjm.svg" width="156" height="34" alt="Карта адаптации"></a>
+<p>
+  <a href="https://naparnik.pavelmernov.ru/"><img src="docs/readme/svg/link-web-demo.svg" width="168" height="36" alt="Открыть веб-демо"></a>
+  <a href="https://disk.yandex.ru/d/xxAoKDQs5wWt0g"><img src="docs/readme/svg/link-video-demo.svg" width="151" height="36" alt="Смотреть видео"></a>
+  <a href="https://t.me/buddyAiSuper_bot"><img src="docs/readme/svg/link-telegram-bot.svg" width="127" height="36" alt="Telegram-бот"></a>
+  <br>
+  <a href="#start"><img src="docs/readme/svg/link-quick-start.svg" width="149" height="36" alt="Быстрый запуск"></a>
+  <a href="#docs"><img src="docs/readme/svg/link-docs.svg" width="137" height="36" alt="Документация"></a>
+  <a href="docs/02-concept/CJM.md"><img src="docs/readme/svg/link-cjm.svg" width="157" height="36" alt="Карта адаптации"></a>
 </p>
 
 <picture>
@@ -64,7 +62,7 @@
   <img src="docs/readme/diagrams/adaptation-unified-light.svg" width="100%" alt="Один процесс адаптации — свой контекст каждой команды. Единый чек-лист Авито, наполнение по направлению и отделу, согласование с бадди и руководителем, три принципа: корпоративный стандарт, контекст команды и сохранение проверенных знаний.">
 </picture>
 
-[Как работает петля знаний](docs/03-requirements/03-PROCESSES.md) · [Модель адаптации и бизнес-правила](docs/03-requirements/04-BUSINESS-RULES.md) · [Подключение новых отделов](docs/03-requirements/11-INTEGRATION.md)
+[![Как работает петля знаний](docs/readme/svg/link-material-67-1.svg)](docs/03-requirements/03-PROCESSES.md) [![Модель адаптации и бизнес-правила](docs/readme/svg/link-material-67-2.svg)](docs/03-requirements/04-BUSINESS-RULES.md) [![Подключение новых отделов](docs/readme/svg/link-material-67-3.svg)](docs/03-requirements/11-INTEGRATION.md)
 
 <a id="interface"></a>
 
@@ -159,7 +157,7 @@
 
 React отправляет запрос в Go API. Агент получает контекст пользователя и выбирает инструмент; **права и допустимость действия проверяет код**. Чтение выполняется сразу, действия с внешним эффектом сначала становятся черновиком. Подтверждённая операция сохраняет результат и квитанцию.
 
-Корпоративные вики, трекер, календарь, ВКС и сервисы заявок в демо заменены **имитациями**. Интерфейсы адаптеров позволяют подключить реальные системы; для сервиса отсутствий уже есть REST-клиент. Поиск и подбор эксперта лексические, без эмбеддингов. [Архитектура и границы интеграций →](docs/spec/00-overview.md)
+Корпоративные вики, трекер, календарь, ВКС и сервисы заявок в демо заменены **имитациями**. Интерфейсы адаптеров позволяют подключить реальные системы; для сервиса отсутствий уже есть REST-клиент. Поиск и подбор эксперта лексические, без эмбеддингов. [![Архитектура и границы интеграций →](docs/readme/svg/link-material-162-1.svg)](docs/spec/00-overview.md)
 
 <a id="roles"></a>
 
@@ -177,7 +175,7 @@ React отправляет запрос в Go API. Агент получает �
 | **Эксперт** | Ответы теряются в личных переписках | Ответ или встреча → проверенная статья с авторством | Меньше повторных объяснений |
 | **Руководитель** | Адаптацию приходится выяснять вручную | Прогресс, просрочки, заявки и метрики нагрузки | Видимость проблем и вклада команды |
 
-Это гипотезы эффекта, а не результаты внедрения. [Ценность по ролям](docs/03-requirements/10-ROLE-VALUE.md) · [Метрики и план пилота](docs/03-requirements/09-METRICS.md). Главная продуктовая метрика — время до первой полезной задачи.
+Это гипотезы эффекта, а не результаты внедрения. [![Ценность по ролям](docs/readme/svg/link-material-180-1.svg)](docs/03-requirements/10-ROLE-VALUE.md) [![Метрики и план пилота](docs/readme/svg/link-material-180-2.svg)](docs/03-requirements/09-METRICS.md). Главная продуктовая метрика — время до первой полезной задачи.
 
 <a id="video"></a>
 <a href="https://disk.yandex.ru/d/xxAoKDQs5wWt0g">
@@ -188,7 +186,7 @@ React отправляет запрос в Go API. Агент получает �
 </a>
 
 
-<a href="https://disk.yandex.ru/d/xxAoKDQs5wWt0g"><img src="docs/readme/svg/link-video-demo.svg" width="154" height="34" alt="Смотреть видео"></a>
+<a href="https://disk.yandex.ru/d/xxAoKDQs5wWt0g"><img src="docs/readme/svg/link-video-demo.svg" width="151" height="36" alt="Смотреть видео"></a>
 
 **Продуктовая презентация:** по [статусу материалов](docs/STATUS.md) финальный PDF подготовлен командой вне репозитория. Утверждённой копии и публичной ссылки в GitHub пока нет.
 
@@ -245,7 +243,7 @@ npm ci
 npm run dev
 ```
 
-Без PostgreSQL и Redis локальное демо работает, но состояние теряется после остановки backend. Для постоянного хранения задайте в корневом `.env` адреса **своих запущенных** PostgreSQL 16 и Redis 7 (`DATABASE_URL`, `REDIS_URL`) и запускайте `go run ./cmd/server` без пустых переопределений. Backend читает `.env` из своей папки или корня; Vite ожидает API на `8080`. [Хранение и повторные запросы →](docs/PERSISTENCE.md)
+Без PostgreSQL и Redis локальное демо работает, но состояние теряется после остановки backend. Для постоянного хранения задайте в корневом `.env` адреса **своих запущенных** PostgreSQL 16 и Redis 7 (`DATABASE_URL`, `REDIS_URL`) и запускайте `go run ./cmd/server` без пустых переопределений. Backend читает `.env` из своей папки или корня; Vite ожидает API на `8080`. [![Хранение и повторные запросы →](docs/readme/svg/link-material-248-1.svg)](docs/PERSISTENCE.md)
 
 <details>
 <summary>Подключить модель и Telegram · разобраться с ошибками запуска</summary>
@@ -283,9 +281,9 @@ npm run dev
 
 При повторном прохождении уже оформленный отгул не дублируется — выберите другую дату. Внешняя модель может задавать уточняющие вопросы; подписи и длина ответа отличаются от заглушки.
 
-**Полный цикл плана:** `buddy.belova` → «Проверить черновик» → правки и комментарий → «Сохранить правки» → «Отправить на согласование». `lead.kovalev` → карточка плана → «Вернуть бадди» с замечанием или «Утвердить план». Для действующего плана бадди открывает «Редакции и согласование» → «Изменить действующий план»: стажёр продолжает работать по прежней редакции до утверждения. Выполненные шаги сохраняются, история применённых редакций видна в «Моём плане». [Контракт →](docs/spec/10-plan-lifecycle.md)
+**Полный цикл плана:** `buddy.belova` → «Проверить черновик» → правки и комментарий → «Сохранить правки» → «Отправить на согласование». `lead.kovalev` → карточка плана → «Вернуть бадди» с замечанием или «Утвердить план». Для действующего плана бадди открывает «Редакции и согласование» → «Изменить действующий план»: стажёр продолжает работать по прежней редакции до утверждения. Выполненные шаги сохраняются, история применённых редакций видна в «Моём плане». [![Контракт →](docs/readme/svg/link-material-286-1.svg)](docs/spec/10-plan-lifecycle.md)
 
-**Приёмка перед сдачей:** отдельный Docker-стенд и браузерный сценарий с перезапуском PostgreSQL/Redis/backend, сбоем модели и безопасным повтором заявки — [инструкция и результаты](docs/ACCEPTANCE.md).
+**Приёмка перед сдачей:** отдельный Docker-стенд и браузерный сценарий с перезапуском PostgreSQL/Redis/backend, сбоем модели и безопасным повтором заявки — [![инструкция и результаты](docs/readme/svg/link-material-288-1.svg)](docs/ACCEPTANCE.md).
 
 <details>
 <summary>Кого выбрать в переключателе: все тестовые учётки</summary>
@@ -391,14 +389,14 @@ go run ./cmd/evals -mode live
 
 | Раздел | Материалы |
 |---|---|
-| Кейс и критерии | [Оригинал PDF](docs/00-case/avito-case.pdf) · [Критерии](docs/00-case/acceptance-criteria.md) · [Сверка с кейсом](docs/CASE-CHECK.md) |
-| Исследование | [Интервью, отзывы и вводные Авито](docs/01-discovery/README.md) |
-| Концепция | [Идея и сценарии](docs/02-concept/IDEA-AND-FLOWS.md) · [CJM](docs/02-concept/CJM.md) · [Гипотезы](docs/02-concept/HYPOTHESES.md) |
-| Требования | [PRD](docs/03-requirements/01-PRD.md) · [Роли и права](docs/03-requirements/02-ROLES.md) · [Бизнес-процессы](docs/03-requirements/03-PROCESSES.md) · [Правила](docs/03-requirements/04-BUSINESS-RULES.md) |
-| Дизайн и ценность | [Дизайн](docs/03-requirements/08-DESIGN.md) · [Ценность по ролям](docs/03-requirements/10-ROLE-VALUE.md) |
-| Архитектура и AI | [Обзор SDD](docs/spec/00-overview.md) · [Поведение агента](docs/spec/04-agent-behavior.md) · [Инструменты и API](docs/spec/05-tools-api.md) |
-| Данные и интеграции | [Мок-данные](docs/04-mock-data/README.md) · [Адаптеры](docs/spec/09-adapters.md) · [Хранение](docs/PERSISTENCE.md) |
-| Метрики | [Оценка эффекта и пилот](docs/03-requirements/09-METRICS.md) · [Эталонный набор](docs/04-mock-data/evals.json) |
-| Статус и устойчивость | [Реализация и ограничения](docs/STATUS.md) · [Поведение при сбоях](docs/03-requirements/12-RESILIENCE.md) |
+| Кейс и критерии | [![Оригинал PDF](docs/readme/svg/link-material-394-1.svg)](docs/00-case/avito-case.pdf) [![Критерии](docs/readme/svg/link-material-394-2.svg)](docs/00-case/acceptance-criteria.md) [![Сверка с кейсом](docs/readme/svg/link-material-394-3.svg)](docs/CASE-CHECK.md) |
+| Исследование | [![Интервью, отзывы и вводные Авито](docs/readme/svg/link-material-395-1.svg)](docs/01-discovery/README.md) |
+| Концепция | [![Идея и сценарии](docs/readme/svg/link-material-396-1.svg)](docs/02-concept/IDEA-AND-FLOWS.md) [![CJM](docs/readme/svg/link-material-396-2.svg)](docs/02-concept/CJM.md) [![Гипотезы](docs/readme/svg/link-material-396-3.svg)](docs/02-concept/HYPOTHESES.md) |
+| Требования | [![PRD](docs/readme/svg/link-material-397-1.svg)](docs/03-requirements/01-PRD.md) [![Роли и права](docs/readme/svg/link-material-397-2.svg)](docs/03-requirements/02-ROLES.md) [![Бизнес-процессы](docs/readme/svg/link-material-397-3.svg)](docs/03-requirements/03-PROCESSES.md) [![Правила](docs/readme/svg/link-material-397-4.svg)](docs/03-requirements/04-BUSINESS-RULES.md) |
+| Дизайн и ценность | [![Дизайн](docs/readme/svg/link-material-398-1.svg)](docs/03-requirements/08-DESIGN.md) [![Ценность по ролям](docs/readme/svg/link-material-180-1.svg)](docs/03-requirements/10-ROLE-VALUE.md) |
+| Архитектура и AI | [![Обзор SDD](docs/readme/svg/link-material-399-1.svg)](docs/spec/00-overview.md) [![Поведение агента](docs/readme/svg/link-material-399-2.svg)](docs/spec/04-agent-behavior.md) [![Инструменты и API](docs/readme/svg/link-material-399-3.svg)](docs/spec/05-tools-api.md) |
+| Данные и интеграции | [![Мок-данные](docs/readme/svg/link-material-400-1.svg)](docs/04-mock-data/README.md) [![Адаптеры](docs/readme/svg/link-material-400-2.svg)](docs/spec/09-adapters.md) [![Хранение](docs/readme/svg/link-material-400-3.svg)](docs/PERSISTENCE.md) |
+| Метрики | [![Оценка эффекта и пилот](docs/readme/svg/link-material-401-1.svg)](docs/03-requirements/09-METRICS.md) [![Эталонный набор](docs/readme/svg/link-material-401-2.svg)](docs/04-mock-data/evals.json) |
+| Статус и устойчивость | [![Реализация и ограничения](docs/readme/svg/link-material-402-1.svg)](docs/STATUS.md) [![Поведение при сбоях](docs/readme/svg/link-material-402-2.svg)](docs/03-requirements/12-RESILIENCE.md) |
 
-[Полный указатель документации →](docs/README.md) · [Вернуться наверх ↑](#top)
+[![Полный указатель документации →](docs/readme/svg/link-material-404-1.svg)](docs/README.md) [![Вернуться наверх ↑](docs/readme/svg/link-material-404-2.svg)](#top)

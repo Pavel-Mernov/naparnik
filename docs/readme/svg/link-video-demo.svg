@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="154" height="34" viewBox="0 0 154 34" role="img" aria-label="Смотреть видео">
-  <rect width="154" height="34" fill="#F4F4F4"/>
-  <g transform="translate(6 3)" fill="none" stroke="#171717" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m11 8 10 6-10 6z"/></g>
-  <text x="36" y="22" fill="#171717" font-family="Arial, sans-serif" font-size="13" font-weight="400">Смотреть видео</text>
+<svg xmlns="http://www.w3.org/2000/svg" width="151" height="36" viewBox="0 0 151 36" role="img">
+  <title>Смотреть видео</title>
+  <rect width="151" height="36" fill="#F1F1F1"/>
+  <text x="75.5" y="23.5" fill="#111111" font-family="Arial, Helvetica, sans-serif" font-size="16" font-weight="400" text-anchor="middle">Смотреть видео</text>
 </svg>

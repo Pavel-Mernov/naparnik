@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="140" height="34" viewBox="0 0 140 34" role="img" aria-label="Telegram-бот">
-  <rect width="140" height="34" fill="#F4F4F4"/>
-  <g transform="translate(6 3)" fill="none" stroke="#171717" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m7 13 16-6-4 14-5-5-3 2 1-5 8-4"/></g>
-  <text x="36" y="22" fill="#171717" font-family="Arial, sans-serif" font-size="13" font-weight="400">Telegram-бот</text>
+<svg xmlns="http://www.w3.org/2000/svg" width="127" height="36" viewBox="0 0 127 36" role="img">
+  <title>Telegram-бот</title>
+  <rect width="127" height="36" fill="#F1F1F1"/>
+  <text x="63.5" y="23.5" fill="#111111" font-family="Arial, Helvetica, sans-serif" font-size="16" font-weight="400" text-anchor="middle">Telegram-бот</text>
 </svg>
