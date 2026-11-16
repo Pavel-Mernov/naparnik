@@ -10,13 +10,13 @@
 Стажёру проще освоиться. Бадди — наставник стажёра — получает сформулированные вопросы. Эксперт сохраняет ответ для следующих новичков, а руководитель видит прогресс адаптации.
 
 <p>
-  <a href="https://naparnik.pavelmernov.ru/"><img src="docs/readme/svg/link-web-demo.svg" width="168" height="36" alt="Открыть веб-демо"></a>
-  <a href="https://disk.yandex.ru/d/xxAoKDQs5wWt0g"><img src="docs/readme/svg/link-video-demo.svg" width="151" height="36" alt="Смотреть видео"></a>
-  <a href="https://t.me/buddyAiSuper_bot"><img src="docs/readme/svg/link-telegram-bot.svg" width="127" height="36" alt="Telegram-бот"></a>
+  <a href="https://naparnik.pavelmernov.ru/"><img src="docs/readme/svg/link-web-demo.svg" width="173" height="36" alt="Открыть веб-демо"></a>
+  <a href="https://disk.yandex.ru/d/xxAoKDQs5wWt0g"><img src="docs/readme/svg/link-video-demo.svg" width="155" height="36" alt="Смотреть видео"></a>
+  <a href="https://t.me/buddyAiSuper_bot"><img src="docs/readme/svg/link-telegram-bot.svg" width="133" height="36" alt="Telegram-бот"></a>
   <br>
-  <a href="#start"><img src="docs/readme/svg/link-quick-start.svg" width="149" height="36" alt="Быстрый запуск"></a>
-  <a href="#docs"><img src="docs/readme/svg/link-docs.svg" width="137" height="36" alt="Документация"></a>
-  <a href="docs/02-concept/CJM.md"><img src="docs/readme/svg/link-cjm.svg" width="157" height="36" alt="Карта адаптации"></a>
+  <a href="#start"><img src="docs/readme/svg/link-quick-start.svg" width="155" height="36" alt="Быстрый запуск"></a>
+  <a href="#docs"><img src="docs/readme/svg/link-docs.svg" width="142" height="36" alt="Документация"></a>
+  <a href="docs/02-concept/CJM.md"><img src="docs/readme/svg/link-cjm.svg" width="161" height="36" alt="Карта адаптации"></a>
 </p>
 
 <picture>
@@ -157,7 +157,9 @@
 
 React отправляет запрос в Go API. Агент получает контекст пользователя и выбирает инструмент; **права и допустимость действия проверяет код**. Чтение выполняется сразу, действия с внешним эффектом сначала становятся черновиком. Подтверждённая операция сохраняет результат и квитанцию.
 
-Корпоративные вики, трекер, календарь, ВКС и сервисы заявок в демо заменены **имитациями**. Интерфейсы адаптеров позволяют подключить реальные системы; для сервиса отсутствий уже есть REST-клиент. Поиск и подбор эксперта лексические, без эмбеддингов. [![Архитектура и границы интеграций →](docs/readme/svg/link-material-162-1.svg)](docs/spec/00-overview.md)
+Корпоративные вики, трекер, календарь, ВКС и сервисы заявок в демо заменены **имитациями**. Интерфейсы адаптеров позволяют подключить реальные системы; для сервиса отсутствий уже есть REST-клиент. Поиск и подбор эксперта лексические, без эмбеддингов.
+
+[![Архитектура и границы интеграций →](docs/readme/svg/link-material-162-1.svg)](docs/spec/00-overview.md)
 
 <a id="roles"></a>
 
@@ -175,7 +177,9 @@ React отправляет запрос в Go API. Агент получает �
 | **Эксперт** | Ответы теряются в личных переписках | Ответ или встреча → проверенная статья с авторством | Меньше повторных объяснений |
 | **Руководитель** | Адаптацию приходится выяснять вручную | Прогресс, просрочки, заявки и метрики нагрузки | Видимость проблем и вклада команды |
 
-Это гипотезы эффекта, а не результаты внедрения. [![Ценность по ролям](docs/readme/svg/link-material-180-1.svg)](docs/03-requirements/10-ROLE-VALUE.md) [![Метрики и план пилота](docs/readme/svg/link-material-180-2.svg)](docs/03-requirements/09-METRICS.md). Главная продуктовая метрика — время до первой полезной задачи.
+Это гипотезы эффекта, а не результаты внедрения. Главная продуктовая метрика — время до первой полезной задачи.
+
+[![Ценность по ролям](docs/readme/svg/link-material-180-1.svg)](docs/03-requirements/10-ROLE-VALUE.md) [![Метрики и план пилота](docs/readme/svg/link-material-180-2.svg)](docs/03-requirements/09-METRICS.md)
 
 <a id="video"></a>
 <a href="https://disk.yandex.ru/d/xxAoKDQs5wWt0g">
@@ -186,7 +190,7 @@ React отправляет запрос в Go API. Агент получает �
 </a>
 
 
-<a href="https://disk.yandex.ru/d/xxAoKDQs5wWt0g"><img src="docs/readme/svg/link-video-demo.svg" width="151" height="36" alt="Смотреть видео"></a>
+<a href="https://disk.yandex.ru/d/xxAoKDQs5wWt0g"><img src="docs/readme/svg/link-video-demo.svg" width="155" height="36" alt="Смотреть видео"></a>
 
 **Продуктовая презентация:** по [статусу материалов](docs/STATUS.md) финальный PDF подготовлен командой вне репозитория. Утверждённой копии и публичной ссылки в GitHub пока нет.
 
@@ -243,7 +247,9 @@ npm ci
 npm run dev
 ```
 
-Без PostgreSQL и Redis локальное демо работает, но состояние теряется после остановки backend. Для постоянного хранения задайте в корневом `.env` адреса **своих запущенных** PostgreSQL 16 и Redis 7 (`DATABASE_URL`, `REDIS_URL`) и запускайте `go run ./cmd/server` без пустых переопределений. Backend читает `.env` из своей папки или корня; Vite ожидает API на `8080`. [![Хранение и повторные запросы →](docs/readme/svg/link-material-248-1.svg)](docs/PERSISTENCE.md)
+Без PostgreSQL и Redis локальное демо работает, но состояние теряется после остановки backend. Для постоянного хранения задайте в корневом `.env` адреса **своих запущенных** PostgreSQL 16 и Redis 7 (`DATABASE_URL`, `REDIS_URL`) и запускайте `go run ./cmd/server` без пустых переопределений. Backend читает `.env` из своей папки или корня; Vite ожидает API на `8080`.
+
+[![Хранение и повторные запросы →](docs/readme/svg/link-material-248-1.svg)](docs/PERSISTENCE.md)
 
 <details>
 <summary>Подключить модель и Telegram · разобраться с ошибками запуска</summary>
@@ -281,9 +287,13 @@ npm run dev
 
 При повторном прохождении уже оформленный отгул не дублируется — выберите другую дату. Внешняя модель может задавать уточняющие вопросы; подписи и длина ответа отличаются от заглушки.
 
-**Полный цикл плана:** `buddy.belova` → «Проверить черновик» → правки и комментарий → «Сохранить правки» → «Отправить на согласование». `lead.kovalev` → карточка плана → «Вернуть бадди» с замечанием или «Утвердить план». Для действующего плана бадди открывает «Редакции и согласование» → «Изменить действующий план»: стажёр продолжает работать по прежней редакции до утверждения. Выполненные шаги сохраняются, история применённых редакций видна в «Моём плане». [![Контракт →](docs/readme/svg/link-material-286-1.svg)](docs/spec/10-plan-lifecycle.md)
+**Полный цикл плана:** `buddy.belova` → «Проверить черновик» → правки и комментарий → «Сохранить правки» → «Отправить на согласование». `lead.kovalev` → карточка плана → «Вернуть бадди» с замечанием или «Утвердить план». Для действующего плана бадди открывает «Редакции и согласование» → «Изменить действующий план»: стажёр продолжает работать по прежней редакции до утверждения. Выполненные шаги сохраняются, история применённых редакций видна в «Моём плане».
 
-**Приёмка перед сдачей:** отдельный Docker-стенд и браузерный сценарий с перезапуском PostgreSQL/Redis/backend, сбоем модели и безопасным повтором заявки — [![инструкция и результаты](docs/readme/svg/link-material-288-1.svg)](docs/ACCEPTANCE.md).
+[![Контракт →](docs/readme/svg/link-material-286-1.svg)](docs/spec/10-plan-lifecycle.md)
+
+**Приёмка перед сдачей:** отдельный Docker-стенд и браузерный сценарий с перезапуском PostgreSQL/Redis/backend, сбоем модели и безопасным повтором заявки.
+
+[![инструкция и результаты](docs/readme/svg/link-material-288-1.svg)](docs/ACCEPTANCE.md)
 
 <details>
 <summary>Кого выбрать в переключателе: все тестовые учётки</summary>
