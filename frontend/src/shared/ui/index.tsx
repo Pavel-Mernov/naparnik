@@ -198,10 +198,10 @@ export const Shapes = ({ variant = 0, size = 72 }: { variant?: number; size?: nu
 };
 
 /** Пустое состояние: больше воздуха внутри плашки, иконка и текст в одной вертикали. */
-export const Empty = ({ text, action, variant }: { text: string; action?: ReactNode; variant?: number }) => (
+export const Empty = ({ text, action, variant, icon = true }: { text: string; action?: ReactNode; variant?: number; icon?: boolean }) => (
   <Stack direction="row" alignItems="flex-start" gap={{ xs: 2, md: 2.5 }} sx={{ py: { xs: 2, md: 3 } }}>
-    <Shapes variant={variant} size={56} />
-    <Box sx={{ pt: 0.5, minWidth: 0, flex: 1 }}>
+    {icon && <Shapes variant={variant} size={56} />}
+    <Box sx={{ pt: icon ? 0.5 : 0, minWidth: 0, flex: 1 }}>
       <Typography sx={{ textWrap: "balance" }}>{text}</Typography>
       {action && (
         <Box mt={2} sx={{ "& > .MuiButton-root, & > .MuiStack-root > .MuiButton-root": { width: { xs: "100%", sm: "auto" } } }}>

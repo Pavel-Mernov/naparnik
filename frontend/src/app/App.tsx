@@ -29,7 +29,7 @@ import {
   type Question, type RequestItem, type Services, type TeamOverview, type TodayData, type User, type ChatHistory, type ChatTurn,
 } from "@/shared/api";
 import { STORAGE } from "@/shared/config";
-import { brand, makeTheme, tokens, type Mode } from "@/shared/theme";
+import { makeTheme, tokens, type Mode } from "@/shared/theme";
 import { buildNotes, initials, requestTitle, statusOf, ROLE_RU, primaryRole, mobileNavLabel, viewLabel, viewsFor, type DataState, type Note, type View } from "@/shared/lib";
 import { Block, DaySkeleton, DialogClose, Empty, KnowledgeSkeleton, ListSkeleton, Row, StatusTag } from "@/shared/ui";
 import { DayPage } from "@/pages/day";
@@ -331,11 +331,9 @@ function App() {
     if (!data || !role) return null;
     if (view === "day") {
       if (role === "intern") return <DayPage data={data} asked={asked} onTeam={() => setTeamOpen(true)} onMarkDone={(s) => void markDone(s)} onAsk={openChat} onOpenPlan={() => nav("plan")} onOpenQuestions={() => nav("questions")}
-        waiting={<Block title="Новости">{news.length ? news.map((n) => {
-          const rejected = n.go === "requests" && /отклонен/i.test(n.text);
-          const dot = n.id.startsWith("ans-") || (n.go === "requests" && !rejected) ? brand.green : rejected ? brand.red : brand.blue;
-          return <Row key={n.id} align="flex-start" start={<Box aria-hidden sx={{ width: 10, height: 10, mt: "6px", flex: "none", bgcolor: dot }} />} title={n.text} sub={n.meta} end={newsTag(n)} onClick={() => nav(n.go)} />;
-        }) : <Empty text="Ответы людей и статусы заявок появятся здесь." variant={0} />}</Block>} />;
+        waiting={<Block title="Новости">{news.length ? news.map((n) => (
+          <Row key={n.id} title={n.text} sub={n.meta} end={newsTag(n)} onClick={() => nav(n.go)} />
+        )) : <Empty text="Ответы людей и статусы заявок появятся здесь." icon={false} />}</Block>} />;
       if (role === "lead") return <><TeamPage overview={data.overview} onRequests={() => nav("requests")} onProfile={setProfileOf} onPlanDraft={setPlanDraftOf} />
         <LeadPanels login={login} users={data.users} onAction={perform} /></>;
       if (role === "buddy") return <BuddyPage data={data} onPlan={(id) => { setSelectedIntern(id); nav("plan"); }} onQuestions={() => nav("questions")} onProfile={setProfileOf} onPlanDraft={setPlanDraftOf} />;
