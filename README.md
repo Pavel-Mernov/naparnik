@@ -10,9 +10,13 @@
 Стажёру проще освоиться. Бадди — наставник стажёра — получает сформулированные вопросы. Эксперт сохраняет ответ для следующих новичков, а руководитель видит прогресс адаптации.
 
 <p align="center">
-  <a href="https://disk.yandex.ru/d/xxAoKDQs5wWt0g"><b>Смотреть видеодемонстрацию ↗</b></a> ·
-  <a href="#start"><b>Быстрый запуск</b></a> ·
-  <a href="#docs"><b>Документация</b></a>
+  <a href="https://naparnik.pavelmernov.ru/"><img src="docs/readme/svg/link-web-demo.svg" width="168" height="34" alt="Открыть веб-демо"></a>
+  <a href="https://disk.yandex.ru/d/xxAoKDQs5wWt0g"><img src="docs/readme/svg/link-video-demo.svg" width="154" height="34" alt="Смотреть видео"></a>
+  <a href="https://t.me/buddyAiSuper_bot"><img src="docs/readme/svg/link-telegram-bot.svg" width="140" height="34" alt="Telegram-бот"></a>
+</p>
+
+<p align="center">
+  <a href="#start">Быстрый запуск</a> · <a href="#docs">Документация</a>
 </p>
 
 <picture>
