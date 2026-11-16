@@ -26,17 +26,31 @@
 
 Прототип по [кейсу Авито](docs/00-case/avito-case.pdf). Все сотрудники и данные синтетические; инструкции в демо помечены как тестовые.
 
-| Навигация | Что посмотреть |
-|---|---|
-| 01 · [Интерфейс](#interface) | Настоящие экраны работающего приложения |
-| 02 · [Возможности](#features) | От ответа с источником до заявки с квитанцией |
-| 03 · [Как это работает](#how) | Агент, инструменты, права и интеграции |
-| 04 · [Четыре роли](#roles) | Ценность для стажёра и команды |
-| 05 · [Видео и презентация](#video) | Материалы для знакомства с продуктом |
-| 06 · [Быстрый запуск](#start) | Docker и локальная разработка |
-| 07 · [Проверка за 5 минут](#check) | Учётки и последовательность действий |
-| 08 · [Технологии и качество](#quality) | Тесты, сохранённые отчёты, ограничения |
-| 09 · [Документация](#docs) | Исследование, требования, спецификации |
+## Навигация
+
+### О продукте
+
+<p>
+  <a href="#interface"><img src="docs/readme/svg/nav-interface.svg" width="117" height="36" alt="Интерфейс"></a>
+  <a href="#features"><img src="docs/readme/svg/nav-features.svg" width="136" height="36" alt="Возможности"></a>
+  <a href="#how"><img src="docs/readme/svg/nav-how.svg" width="162" height="36" alt="Как это работает"></a>
+  <a href="#roles"><img src="docs/readme/svg/nav-roles.svg" width="129" height="36" alt="Четыре роли"></a>
+  <a href="#video"><img src="docs/readme/svg/nav-video.svg" width="195" height="36" alt="Видео и презентация"></a>
+</p>
+
+### Проверка и запуск
+
+<p>
+  <a href="#check"><img src="docs/readme/svg/nav-check.svg" width="192" height="36" alt="Проверка за 5 минут"></a>
+  <a href="#start"><img src="docs/readme/svg/nav-start.svg" width="155" height="36" alt="Быстрый запуск"></a>
+</p>
+
+### Технические материалы
+
+<p>
+  <a href="#quality"><img src="docs/readme/svg/nav-quality.svg" width="208" height="36" alt="Технологии и качество"></a>
+  <a href="#docs"><img src="docs/readme/svg/nav-docs.svg" width="142" height="36" alt="Документация"></a>
+</p>
 
 <a id="почему-появился-напарник"></a>
 
