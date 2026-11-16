@@ -10,9 +10,9 @@
 Стажёру проще освоиться. Бадди — наставник стажёра — получает сформулированные вопросы. Эксперт сохраняет ответ для следующих новичков, а руководитель видит прогресс адаптации.
 
 <p>
-  <a href="https://naparnik.pavelmernov.ru/"><img src="docs/readme/svg/link-web-demo.svg" width="173" height="36" alt="Открыть веб-демо"></a>
-  <a href="https://disk.yandex.ru/d/xxAoKDQs5wWt0g"><img src="docs/readme/svg/link-video-demo.svg" width="155" height="36" alt="Смотреть видео"></a>
-  <a href="https://t.me/buddyAiSuper_bot"><img src="docs/readme/svg/link-telegram-bot.svg" width="133" height="36" alt="Telegram-бот"></a>
+  <a href="https://naparnik.pavelmernov.ru/"><img src="docs/readme/svg/link-web-demo.svg" width="189" height="36" alt="Открыть веб-демо"></a>
+  <a href="https://disk.yandex.ru/d/xxAoKDQs5wWt0g"><img src="docs/readme/svg/link-video-demo.svg" width="171" height="36" alt="Смотреть видео"></a>
+  <a href="https://t.me/buddyAiSuper_bot"><img src="docs/readme/svg/link-telegram-bot.svg" width="149" height="36" alt="Telegram-бот"></a>
   <br>
   <a href="#start"><img src="docs/readme/svg/link-quick-start.svg" width="155" height="36" alt="Быстрый запуск"></a>
   <a href="#docs"><img src="docs/readme/svg/link-docs.svg" width="142" height="36" alt="Документация"></a>
@@ -21,7 +21,7 @@
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/readme/svg/stack-dark.svg">
-  <img src="docs/readme/svg/stack-light.svg" width="100%" alt="Стек: Go, React, TypeScript, PostgreSQL, Redis, Docker">
+  <img src="docs/readme/svg/stack-light.svg" width="395" alt="Стек: Go, React, TypeScript, PostgreSQL, Redis, Docker">
 </picture>
 
 Прототип по [кейсу Авито](docs/00-case/avito-case.pdf). Все сотрудники и данные синтетические; инструкции в демо помечены как тестовые.
@@ -159,7 +159,7 @@ React отправляет запрос в Go API. Агент получает �
 
 Корпоративные вики, трекер, календарь, ВКС и сервисы заявок в демо заменены **имитациями**. Интерфейсы адаптеров позволяют подключить реальные системы; для сервиса отсутствий уже есть REST-клиент. Поиск и подбор эксперта лексические, без эмбеддингов.
 
-[![Архитектура и границы интеграций →](docs/readme/svg/link-material-162-1.svg)](docs/spec/00-overview.md)
+[![Архитектура и границы интеграций](docs/readme/svg/link-material-162-1.svg)](docs/spec/00-overview.md)
 
 <a id="roles"></a>
 
@@ -190,7 +190,7 @@ React отправляет запрос в Go API. Агент получает �
 </a>
 
 
-<a href="https://disk.yandex.ru/d/xxAoKDQs5wWt0g"><img src="docs/readme/svg/link-video-demo.svg" width="155" height="36" alt="Смотреть видео"></a>
+<a href="https://disk.yandex.ru/d/xxAoKDQs5wWt0g"><img src="docs/readme/svg/link-video-demo.svg" width="171" height="36" alt="Смотреть видео"></a>
 
 **Продуктовая презентация:** по [статусу материалов](docs/STATUS.md) финальный PDF подготовлен командой вне репозитория. Утверждённой копии и публичной ссылки в GitHub пока нет.
 
@@ -249,7 +249,7 @@ npm run dev
 
 Без PostgreSQL и Redis локальное демо работает, но состояние теряется после остановки backend. Для постоянного хранения задайте в корневом `.env` адреса **своих запущенных** PostgreSQL 16 и Redis 7 (`DATABASE_URL`, `REDIS_URL`) и запускайте `go run ./cmd/server` без пустых переопределений. Backend читает `.env` из своей папки или корня; Vite ожидает API на `8080`.
 
-[![Хранение и повторные запросы →](docs/readme/svg/link-material-248-1.svg)](docs/PERSISTENCE.md)
+[![Хранение и повторные запросы](docs/readme/svg/link-material-248-1.svg)](docs/PERSISTENCE.md)
 
 <details>
 <summary>Подключить модель и Telegram · разобраться с ошибками запуска</summary>
@@ -289,7 +289,7 @@ npm run dev
 
 **Полный цикл плана:** `buddy.belova` → «Проверить черновик» → правки и комментарий → «Сохранить правки» → «Отправить на согласование». `lead.kovalev` → карточка плана → «Вернуть бадди» с замечанием или «Утвердить план». Для действующего плана бадди открывает «Редакции и согласование» → «Изменить действующий план»: стажёр продолжает работать по прежней редакции до утверждения. Выполненные шаги сохраняются, история применённых редакций видна в «Моём плане».
 
-[![Контракт →](docs/readme/svg/link-material-286-1.svg)](docs/spec/10-plan-lifecycle.md)
+[![Контракт](docs/readme/svg/link-material-286-1.svg)](docs/spec/10-plan-lifecycle.md)
 
 **Приёмка перед сдачей:** отдельный Docker-стенд и браузерный сценарий с перезапуском PostgreSQL/Redis/backend, сбоем модели и безопасным повтором заявки.
 
@@ -409,4 +409,4 @@ go run ./cmd/evals -mode live
 | Метрики | [![Оценка эффекта и пилот](docs/readme/svg/link-material-401-1.svg)](docs/03-requirements/09-METRICS.md) [![Эталонный набор](docs/readme/svg/link-material-401-2.svg)](docs/04-mock-data/evals.json) |
 | Статус и устойчивость | [![Реализация и ограничения](docs/readme/svg/link-material-402-1.svg)](docs/STATUS.md) [![Поведение при сбоях](docs/readme/svg/link-material-402-2.svg)](docs/03-requirements/12-RESILIENCE.md) |
 
-[![Полный указатель документации →](docs/readme/svg/link-material-404-1.svg)](docs/README.md) [![Вернуться наверх ↑](docs/readme/svg/link-material-404-2.svg)](#top)
+[![Полный указатель документации](docs/readme/svg/link-material-404-1.svg)](docs/README.md) [![Вернуться наверх](docs/readme/svg/link-material-404-2.svg)](#top)
