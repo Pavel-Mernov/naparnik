@@ -1,7 +1,9 @@
 package tools
 
 import (
+	"sort"
 	"strings"
+	"time"
 
 	"github.com/worker4556/naparnik/backend/internal/store"
 )
@@ -35,9 +37,19 @@ func targetIntern(c Ctx, internID string) (string, *Result) {
 
 func planViews(c Ctx, internID string) []stepView {
 	var out []stepView
+	day := c.Store.Today.Format(time.DateOnly)
 	for _, st := range c.Store.PlanSteps(internID) {
 		t, _ := c.Store.TemplateStep(st.StepID)
-		out = append(out, stepView{st.StepID, t.Title, t.Stage, t.Owner, st.DueDate, st.Status, t.Source, t.PreparedAction})
+		status := st.Status
+		if status != "Done" && st.DueDate != "" {
+			switch {
+			case st.DueDate < day:
+				status = "Overdue"
+			case st.DueDate == day:
+				status = "Today"
+			}
+		}
+		out = append(out, stepView{st.StepID, t.Title, t.Stage, t.Owner, st.DueDate, status, t.Source, t.PreparedAction})
 	}
 	return out
 }
@@ -85,9 +97,10 @@ func getPlan(c Ctx, args map[string]any) Result {
 }
 
 func getToday(c Ctx, _ map[string]any) Result {
-	var overdue, today []stepView
+	day := c.Store.Today.Format(time.DateOnly)
+	var overdue, today, upcoming []stepView
 	for _, s := range planViews(c, c.User.ID) {
-		if s.Owner != store.RoleIntern {
+		if s.Owner != store.RoleIntern || s.Status == "Done" {
 			continue
 		}
 		switch s.Status {
@@ -95,13 +108,22 @@ func getToday(c Ctx, _ map[string]any) Result {
 			overdue = append(overdue, s)
 		case "Today":
 			today = append(today, s)
+		default:
+			upcoming = append(upcoming, s)
 		}
 	}
 	steps := append(overdue, today...)
+	if len(steps) == 0 {
+		// Если все шаги на демо-дату закрыты, показываем ближайшие
+		// невыполненные шаги существующего плана без изменения их сроков.
+		sort.SliceStable(upcoming, func(i, j int) bool {
+			return upcoming[i].DueDate < upcoming[j].DueDate
+		})
+		steps = upcoming
+	}
 	if len(steps) > 3 {
 		steps = steps[:3]
 	}
-	day := c.Store.Today.Format("2006-01-02")
 	var events []map[string]string
 	for _, e := range calendarEvents(c) {
 		if strings.HasPrefix(e.Start, day) && containsStr(e.Participants, c.User.ID) {

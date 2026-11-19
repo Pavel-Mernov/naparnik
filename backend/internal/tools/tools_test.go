@@ -132,6 +132,37 @@ func TestGetToday(t *testing.T) {
 	}
 }
 
+func TestGetTodayUsesExistingUnfinishedSteps(t *testing.T) {
+	s := newStore(t)
+	c := ctxFor(t, s, "intern.sokolov")
+	// Сохранённый статус может устареть относительно срока шага.
+	s.SetStepStatus(c.User.ID, "s-04", "Planned")
+	steps := data(t, Run(c, "get_today", nil))["steps"].([]stepView)
+	if len(steps) == 0 || steps[0].ID != "s-04" || steps[0].Status != "Overdue" {
+		t.Fatalf("просроченный шаг из БД должен быть виден: %+v", steps)
+	}
+
+	// После закрытия задач дня показываем следующие шаги плана,
+	// не возвращая выполненные задачи и не меняя сохранённые статусы.
+	for _, id := range []string{"s-01", "s-03", "s-04"} {
+		s.SetStepStatus(c.User.ID, id, "Done")
+	}
+	steps = data(t, Run(c, "get_today", nil))["steps"].([]stepView)
+	if len(steps) == 0 || len(steps) > 3 || steps[0].ID != "s-10" || steps[0].Status != "Planned" {
+		t.Fatalf("ожидались ближайшие невыполненные шаги: %+v", steps)
+	}
+	for _, step := range steps {
+		if step.Status == "Done" || step.Owner != store.RoleIntern {
+			t.Fatalf("лишний шаг в выдаче: %+v", step)
+		}
+	}
+	for _, step := range s.PlanSteps(c.User.ID) {
+		if step.StepID == "s-10" && step.Status != "Planned" {
+			t.Fatal("выдача изменила сохранённый статус", step)
+		}
+	}
+}
+
 // 02-ROLES: план видят стажёр, его бадди и руководитель.
 func TestPlanVisibility(t *testing.T) {
 	s := newStore(t)

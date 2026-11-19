@@ -24,10 +24,13 @@ export const DayPage = ({ data, asked = [], onMarkDone, onAsk, onOpenPlan, onOpe
   const first = data.me.name.split(" ")[0];
   const steps = [...(data.today?.steps ?? [])].sort((a, b) => Number(b.status === "Overdue") - Number(a.status === "Overdue"));
   const open = steps.filter((s) => s.status !== "Done");
+  const dueToday = open.some((s) => s.status === "Today" || s.status === "Overdue");
   const events = data.today?.events ?? [];
   return <>
     <PageHead context={`${longDate(data.me.today)} · ${data.me.week}-я неделя стажировки`}
-      title={open.length ? `${first}, на сегодня ${open.length} ${plural(open.length, "шаг", "шага", "шагов")}` : `${first}, на сегодня всё сделано`} />
+      title={dueToday ? `${first}, на сегодня ${open.length} ${plural(open.length, "шаг", "шага", "шагов")}`
+        : open.length ? `${first}, следующие ${open.length} ${plural(open.length, "шаг", "шага", "шагов")} плана`
+          : `${first}, на сегодня всё сделано`} />
     <Box sx={{
       display: "grid",
       gridTemplateColumns: { xs: "1fr", md: "minmax(0, 1.6fr) minmax(280px, 1fr)" },
